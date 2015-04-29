@@ -1,0 +1,6 @@
+1.1 Rima
+ 	* Fixed the error on TypeError: super(type, obj): obj must be an instance or subtype of type
+ 	 when a sale order is confirmed
+
+1.0 Rima
+	* Added the module

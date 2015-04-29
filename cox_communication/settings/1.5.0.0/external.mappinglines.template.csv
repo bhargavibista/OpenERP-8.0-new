@@ -1,0 +1,22 @@
+"id","sequence","type","evaluation_type","external_field","field_id:id","external_type","alternative_key","mapping_id:id","function_name","in_function","out_function","child_mapping_id:id","datetime_format"
+"mag1500_sale_order_coupon_code=>",,"in","function","coupon_code",,"unicode","False","magentoerpconnect.mag1500_sale_order","coupon_code","result=[('promo_code', ifield)]",,,
+"mag1500_res_partner_ref",,"in_out","direct","customer_id","base.field_res_partner_ref","unicode","False","magentoerpconnect.mag1500_res_partner",,,,,
+"mag1500_sale_order_line_item_id",,"in","direct","item_id","field_sale_order_line_order_item_id","int","False","magentoerpconnect.mag1500_sale_order_line",,,,,
+"magentoerpconnect.mag1500_sale_order_line_price=>",,"in","function","price",,"unicode","False","magentoerpconnect.mag1500_sale_order_line","price","result=[
+('price_unit_tax_included', (float(resource['row_total']) + float(resource['tax_amount']))/float(resource['qty_ordered'])),
+('price_unit_tax_excluded', (float(resource['row_total']))/float(resource['qty_ordered'])),
+('tax_rate', float(resource['tax_percent'])/100),
+]",,,
+"magentoerpconnect.mag1500_sale_order_date_order=>",,"in","function","created_at","sale.field_sale_order_date_order","unicode","False","magentoerpconnect.mag1500_sale_order","date_mapping","if ifield:
+   result=[('date_order',str(ifield.split()[0]))]",,,
+"mag1500_free_trail_days",,"in","function","free_trial","field_sale_order_line_free_trial_days","unicode","False","magentoerpconnect.mag1500_sale_order_line","free_trail","if resource:
+   result=[('free_trial_days',resource.get('free_trial'))]",,,
+"magentoerpconnect.mag1500_sale_order_line_product_id=>",,"in","function","product_id","sale.field_sale_order_line_product_id","int","False","magentoerpconnect.mag1500_sale_order_line","product_id","if ifield:
+    if ifield in [12,14]:
+        result=[('product_id',26)]
+    elif ifield in [13,15]:
+        result=[('product_id',27)]
+    else:
+        result=[('product_id',self.pool.get('product.product').get_or_create_oeid(cr, uid, external_session,ifield,{}))]",,,
+"mag1500_res_partner_address_date_validation",,"in","function","date_validation",,"unicode","False","magentoerpconnect.mag1500_res_partner","date_validation","import time
+result=[('date_validation',time.strftime('%Y-%m-%d'))]",,,

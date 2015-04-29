@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+        <record forcecreate="True" id="ir_cron_repelnish_scheduler_action" model="ir.cron">
+            <field name="name">Run Replenish scheduler</field>
+            <field eval="False" name="active"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field eval="'stock.warehouse.replenish'" name="model"/>
+            <field eval="'run_replinsh_scheduler'" name="function"/>
+            <field eval="'(False,True)'" name="args"/>
+        </record>
+
+        <record id="sequence_stock_warehouse_replenish" model="ir.sequence.type">
+            <field name="name">Stock Replenish</field>
+            <field name="code">stock.warehouse.replenish</field>
+        </record>
+
+        <record id="sequence_stock_replenish" model="ir.sequence">
+            <field name="name">Stock Replenish</field>
+            <field name="code">stock.warehouse.replenish</field>
+            <field name="prefix">RE/</field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+
+        <record id="sequence_stock_replenish_order" model="ir.sequence.type">
+            <field name="name">Stock Replenish Order</field>
+            <field name="code">stock.replenish</field>
+        </record>
+
+        <record id="sequence_stock_replenish_order_seq" model="ir.sequence">
+            <field name="name">Stock Replenish Order</field>
+            <field name="code">stock.replenish</field>
+            <field name="prefix">RE_OR/</field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+    </data>
+</openerp>

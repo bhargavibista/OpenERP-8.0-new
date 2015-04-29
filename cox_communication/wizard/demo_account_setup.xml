@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record id="view_demo_account_setup" model="ir.ui.view">
+            <field name="name">view.demo.account.setup</field>
+            <field name="model">demo.account.setup</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Demo Account Setup">
+                    <field name="magento_location" required="1" widget="selection"/>
+                    <newline/>
+                    <field name="emailid" required="1"/>
+                    <newline/>
+                    <field name="password" on_change="onchange_password(password,context)"/>
+                    <newline/>
+		    <field name="product_id" required = "1" domain="[('type','=','service'), ('recurring_service', '=',True)]"/> <!--Added by Preeti-->
+                    <newline/>
+                    <field name="send_email" on_change="onchange_send_email(send_email,context)"/>
+                    <newline/>
+                    <separator string ="Email Body"/>
+                    <newline/>
+                    <field name="email_subject" attrs="{'invisible':[('send_email','=',False)],'required':[('send_email','=',True)]}"/>
+                    <newline/>
+                    <field name="email_body" attrs="{'invisible':[('send_email','=',False)],'required':[('send_email','=',True)]}"/>
+                    <newline/>
+                    <button name="create_demo_account" string="Create Demo Account" type="object"/>
+               </form>
+            </field>
+        </record>
+
+        <act_window name="Demo Account Set Up"
+            res_model="demo.account.setup"
+            src_model="res.partner"
+            view_mode="form"
+            target="new"
+            id="action_demo_account_setup"/>
+    </data>
+</openerp>
+

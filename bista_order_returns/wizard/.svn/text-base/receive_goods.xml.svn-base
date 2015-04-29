@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_recieve_goods" model="ir.ui.view">
+            <field name="name">view.recieve.goods</field>
+            <field name="model">receive.goods</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="">
+                    <group col="4" colspan="4">
+                        <separator string="Goods Received ?" colspan="8"/>
+                        <newline/>
+                        <button name="receive_goods" string="Yes" type="object" icon="gtk-ok"/>
+                        <button name="no_receive_goods" string="No" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_receive_goods" model="ir.actions.act_window">
+            <field name="name">Goods Received</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">receive.goods</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="view_recieve_goods"/>
+            <field name="target">new</field>
+        </record>
+    </data>
+</openerp>

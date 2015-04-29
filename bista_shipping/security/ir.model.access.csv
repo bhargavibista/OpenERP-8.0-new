@@ -1,0 +1,14 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_shipping_ups_group_stock_manager","shipping_ups group_stock_manager","model_shipping_ups","stock.group_stock_manager",1,1,1,1
+"access_shipping_usps_group_stock_manager","shipping_usps group_stock_manager","model_shipping_usps","stock.group_stock_manager",1,1,1,1
+"access_shipping_fedex_group_stock_manager","shipping_fedex group_stock_manager","model_shipping_fedex","stock.group_stock_manager",1,1,1,1
+"access_shipping_response_group_stock_manager","shipping_response group_stock_manager","model_shipping_response","stock.group_stock_manager",1,1,1,1
+"access1_shipping_manager_group","shipping_manager_group1","model_shipping_method","grp_shipping_manager",1,1,1,1
+"access2_shipping_manager_group","shipping_manager_group2","model_shipping_usps","grp_shipping_manager",1,1,1,1
+"access3_shipping_manager_group","shipping_manager_group3","model_shipping_fedex","grp_shipping_manager",1,1,1,1
+"access4_shipping_manager_group","shipping_manager_group4","model_shipping_ups","grp_shipping_manager",1,1,1,1
+
+"access_pack_track_manager","pack.track","model_pack_track","stock.group_stock_manager",1,1,1,1
+"access_pack_track_user","pack.track","model_pack_track","stock.group_stock_user",1,1,1,1
+"access_product_product_shipping_user","product.product.shipping","model_product_product_shipping","stock.group_stock_manager",1,1,1,1
+"access_product_product_shipping_user","product.product.shipping","model_product_product_shipping","stock.group_stock_user",1,1,1,1

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+<data>
+
+<!-- Records for Sales-Churn-Ending Subs -->
+
+<record id="view_sale_churn_ending_subs_tree" model="ir.ui.view">
+        <field eval="1" name="priority"/>
+        <field name="name">sale.churn.ending.subs.tree</field>
+        <field name="model">sale.churn.ending.subs</field>
+        <field name="arch" type="xml">
+            <tree string="Sales-Churn-Ending Subs" create="false">
+                <field name="month" invisible="1"/>
+                 <field name="year" invisible="1"/>
+                 <field name="category" invisible="1"/>
+                 <field name="count"/>
+                 <!--<field name="return_count"/>
+                 <field name="diff_count"/>-->
+                 <!--<field name="previous_count"/>-->
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sale_churn_ending_subs_graph" model="ir.ui.view">
+         <field name="name">sale.churn.ending.subs.graph</field>
+         <field name="model">sale.churn.ending.subs</field>
+         <field name="arch" type="xml">
+             <graph string="Sales-Churn-Ending Subs" type="line">
+                 <!--<field name="category"/>-->
+                 <field name="month"/>
+                 <field name="count"/>
+                 <!--<field name="return_count" />
+                 <field name="diff_count" />-->
+             </graph>
+         </field>
+    </record>
+
+    <record id="view_sale_churn_ending_subs_search" model="ir.ui.view">
+        <field name="name">sale.churn.ending.subs.search</field>
+        <field name="model">sale.churn.ending.subs</field>
+        <field name="arch" type="xml">
+            <search string="Sales-Churn-Ending Subs">
+               
+                <group expand="0" string="Extended Filters...">
+                     <filter string="Year" name="year" icon="terp-go-year" context="{'group_by':'year'}" help="Group by Year"/>
+                     <filter string="Month" name="month" icon="terp-go-month" context="{'group_by':'month'}" help="Group by Month"/>
+                     <filter string="Category" name="category" icon="terp-go-month" context="{'group_by':'category'}" help="Group by Category"/>
+                     <!--<filter string="Previous Sales" name="previous_count" icon="terp-go-year" context="{'group_by':'previous_count'}" help="Group by Current Previous Count"/>-->
+                </group>
+
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sale_churn_ending_subs_all" model="ir.actions.act_window">
+        <field name="name">Sales-Churn-Ending Subs</field>
+        <field name="res_model">sale.churn.ending.subs</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">graph</field>
+        <field name="search_view_id" ref="view_sale_churn_ending_subs_search"/>
+        <field name="view_id" ref="view_sale_churn_ending_subs_tree"/>
+        <field name="domain">[]</field>
+        <field name="context">{'group_by':['month','category']}</field>
+        <field name="help">This report performs analysis of Sales, Churn and Ending Subs.</field>
+    </record>
+
+ <menuitem action="action_sale_churn_ending_subs_all" id="menu_report_sale_churn_ending_subs" parent="menu_reporting_custom_report" sequence="12"/>
+
+    </data>
+</openerp>

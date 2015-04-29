@@ -1,0 +1,387 @@
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+#from rdflib.syntax.parsers.TriXHandler import state
+import time
+from operator import itemgetter
+from itertools import groupby
+
+from osv import fields, osv
+from tools.translate import _
+import netsvc
+import tools
+from tools import float_compare
+import decimal_precision as dp
+import logging
+
+
+class mrp_repair(osv.osv):
+    _inherit = 'mrp.repair'
+    _columns = {
+        'move_id': fields.many2one('stock.move', 'Move',domain="[('product_id','=',product_id)]", readonly=True, states={'draft':[('readonly',False)]}),
+        'sale_return_id':fields.many2one('return.order','Sale Return Ref'),
+        'state': fields.selection([
+            ('draft','Quotation'),
+            ('confirmed','Confirmed'),
+            ('ready','Ready to Repair'),
+            ('under_repair','Under Repair'),
+            ('2binvoiced','To be Invoiced'),
+            ('invoice_except','Invoice Exception'),
+            ('done','Done'),
+            ('cancel','Cancel'),
+            ('non_repairable','Non Repairable'),
+            ('waiting_invoice','Waiting For Invoice')
+            ], 'State', readonly=True,
+            help=' * The \'Draft\' state is used when a user is encoding a new and unconfirmed repair order. \
+            \n* The \'Confirmed\' state is used when a user confirms the repair order. \
+            \n* The \'Ready to Repair\' state is used to start to repairing, user can start repairing only after repair order is confirmed. \
+            \n* The \'To be Invoiced\' state is used to generate the invoice before or after repairing done. \
+            \n* The \'Done\' state is set when repairing is completed.\
+            \n* The \'Cancelled\' state is used when user cancel repair order.'),
+        'description_reason': fields.many2one('return.description', 'Return Reason'),
+        'failure_analysis': fields.many2one('failure.analysis','Failure Analysis'),
+        'scheduled_date' : fields.date('Scheduled Date'),
+    }
+
+    def action_non_repairable(self,cr,uid,ids,context=None):
+        print"ids",ids
+        mrp_repair_obj = self.pool.get('mrp.repair').browse(cr,uid,ids[0])
+        sale_return_id = mrp_repair_obj.sale_return_id.id
+        sale_return_obj = mrp_repair_obj.sale_return_id
+        scrapped_location_id = self.pool.get('stock.location').search(cr,uid,[('name','=','Scrapped')])
+        product_obj = mrp_repair_obj.product_id
+        product_uom = product_obj.uom_id.id
+        product_id = product_obj.id
+        move_obj = mrp_repair_obj.move_id
+        default_location = 12
+        cust_loc_id = 7
+#        print"move_id",move_id
+
+        cust_loc_id = move_obj.location_dest_id.id
+        if product_obj.default_location.id:
+            default_location = product_obj.default_location.id
+
+
+        new_picking_id = self.pool.get('stock.picking').create(cr,uid,{
+                'type': 'internal',
+                'sale_id' : sale_return_id,
+                'origin' : mrp_repair_obj.sale_return_id.name + "/Scrapped"
+            })
+        new_stock_move_id = self.pool.get('stock.move').create(cr,uid,{
+                'product_id':product_id,
+                'location_id':default_location,
+                'location_dest_id':scrapped_location_id[0],
+                'product_uom':product_uom,
+                'product_qty':1,
+                'picking_id':new_picking_id,
+                'name' : product_obj.name,
+            })
+        print"new_stock_move_id",new_stock_move_id
+
+#        final_picking_id = self.pool.get('stock.picking').create(cr,uid,{
+#        'type': 'out',
+#        'sale_id':sale_return_id,
+#        'address_id':sale_return_obj.partner_shipping_id.id
+#            })
+##        print"new_pikcing_id",new_pikcing_id
+#        final_stock_move_id = self.pool.get('stock.move').create(cr,uid,{
+#                'product_id':product_id,
+#                'location_id':default_location,
+#                'location_dest_id':cust_loc_id,
+#                'product_uom':product_uom,
+#                'product_qty':1,
+#                'picking_id':final_picking_id,
+#                'name' : product_obj.name,
+#            })
+#        print"final_stock_move_id",final_stock_move_id
+        context['from_nonrepairable'] = True
+        mrp_repair_obj.write({'state':'non_repairable'})
+        print "inside action non-repairable"
+        mrp_repair_obj.action_repair_done(context)
+        return True
+
+    def action_cancel(self, cr, uid, ids, context=None):
+        """ Cancels repair order.
+        @return: True
+        """
+#        print"only cancel###"
+        if context is None:
+            context = {}
+        mrp_repair_obj = self.pool.get('mrp.repair').browse(cr,uid,ids[0])
+        mrp_line_obj = self.pool.get('mrp.repair.line')
+        for repair in self.browse(cr, uid, ids, context=context):
+            mrp_line_obj.write(cr, uid, [l.id for l in repair.operations], {'state': 'cancel'}, context=context)
+        context['from_cancel'] = True
+        self.write(cr,uid,ids,{'state':'cancel'})
+#        print "inside action cancel"
+        mrp_repair_obj.action_repair_done(context)
+        return True
+
+    def action_repair_ready(self, cr, uid, ids, context=None):
+        """ Writes repair order state to 'Ready'
+        @return: True
+        """
+        for repair in self.browse(cr, uid, ids, context=context):
+            self.pool.get('mrp.repair.line').write(cr, uid, [l.id for
+                    l in repair.operations], {'state': 'confirmed'}, context=context)
+            self.write(cr, uid, [repair.id], {'state': 'waiting_invoice'})
+        return True
+
+    def action_invoice_create(self, cr, uid, ids, group=False, context=None):
+        """ Creates invoice(s) for repair order.
+        @param group: It is set to true when group invoice is to be generated.
+        @return: Invoice Ids.
+        """
+        res = {}
+        invoices_group = {}
+        inv_line_obj = self.pool.get('account.invoice.line')
+        inv_obj = self.pool.get('account.invoice')
+        repair_line_obj = self.pool.get('mrp.repair.line')
+        repair_fee_obj = self.pool.get('mrp.repair.fee')
+        for repair in self.browse(cr, uid, ids, context=context):
+            res[repair.id] = False
+            if repair.state in ('draft','cancel') or repair.invoice_id:
+                continue
+            if not (repair.partner_id.id and repair.partner_invoice_id.id):
+                raise osv.except_osv(_('No partner !'),_('You have to select a Partner Invoice Address in the repair form !'))
+            comment = repair.quotation_notes
+            
+            if (repair.invoice_method != 'none'):
+                if group and repair.partner_invoice_id.id in invoices_group:
+                    inv_id = invoices_group[repair.partner_invoice_id.id]
+                    invoice = inv_obj.browse(cr, uid, inv_id)
+                    invoice_vals = {
+                        'name': invoice.name +', '+repair.name,
+                        'origin': invoice.origin+', '+repair.sale_return_id and repair.sale_return_id.name,
+                        'comment':(comment and (invoice.comment and invoice.comment+"\n"+comment or comment)) or (invoice.comment and invoice.comment or ''),
+                    }
+                    inv_obj.write(cr, uid, [inv_id], invoice_vals, context=context)
+                else:
+                    if not repair.partner_id.property_account_receivable:
+                        raise osv.except_osv(_('Error !'), _('No account defined for partner "%s".') % repair.partner_id.name )
+                    account_id = repair.partner_id.property_account_receivable.id
+                    
+                    inv = {
+                        'name': repair.name,
+                        'origin':repair.sale_return_id.name,
+                        'type': 'out_invoice',
+                        'account_id': account_id,
+                        'partner_id': repair.partner_id.id,
+                        'address_invoice_id': repair.address_id.id,
+                        'currency_id': repair.pricelist_id.currency_id.id,
+                        'comment': repair.quotation_notes,
+                        'fiscal_position': repair.partner_id.property_account_position.id,
+                        'return_id': repair.sale_return_id.id
+                    }
+                    inv_id = inv_obj.create(cr, uid, inv)
+                    cr.execute("insert into return_order_invoice_rel (order_id,invoice_id) values(%s,%s)",(repair.sale_return_id.id,inv_id))
+                    invoices_group[repair.partner_invoice_id.id] = inv_id
+                self.write(cr, uid, repair.id, {'invoiced': True, 'invoice_id': inv_id})
+
+                for operation in repair.operations:
+                    if operation.to_invoice == True:
+                        if group:
+                            name = repair.name + '-' + operation.name
+                        else:
+                            name = operation.name
+
+                        if operation.product_id.property_account_income:
+                            account_id = operation.product_id.property_account_income.id
+                        elif operation.product_id.categ_id.property_account_income_categ:
+                            account_id = operation.product_id.categ_id.property_account_income_categ.id
+                        else:
+                            raise osv.except_osv(_('Error !'), _('No account defined for product "%s".') % operation.product_id.name )
+
+                        invoice_line_id = inv_line_obj.create(cr, uid, {
+                            'invoice_id': inv_id,
+                            'name': name,
+                            'origin': repair.name,
+                            'account_id': account_id,
+                            'quantity': operation.product_uom_qty,
+                            'invoice_line_tax_id': [(6,0,[x.id for x in operation.tax_id])],
+                            'uos_id': operation.product_uom.id,
+                            'price_unit': operation.price_unit,
+                            'price_subtotal': operation.product_uom_qty*operation.price_unit,
+                            'product_id': operation.product_id and operation.product_id.id or False
+                        })
+                        repair_line_obj.write(cr, uid, [operation.id], {'invoiced': True, 'invoice_line_id': invoice_line_id})
+                for fee in repair.fees_lines:
+                    if fee.to_invoice == True:
+                        if group:
+                            name = repair.name + '-' + fee.name
+                        else:
+                            name = fee.name
+                        if not fee.product_id:
+                            raise osv.except_osv(_('Warning !'), _('No product defined on Fees!'))
+
+                        if fee.product_id.property_account_income:
+                            account_id = fee.product_id.property_account_income.id
+                        elif fee.product_id.categ_id.property_account_income_categ:
+                            account_id = fee.product_id.categ_id.property_account_income_categ.id
+                        else:
+                            raise osv.except_osv(_('Error !'), _('No account defined for product "%s".') % fee.product_id.name)
+
+                        invoice_fee_id = inv_line_obj.create(cr, uid, {
+                            'invoice_id': inv_id,
+                            'name': name,
+                            'origin': repair.name,
+                            'account_id': account_id,
+                            'quantity': fee.product_uom_qty,
+                            'invoice_line_tax_id': [(6,0,[x.id for x in fee.tax_id])],
+                            'uos_id': fee.product_uom.id,
+                            'product_id': fee.product_id and fee.product_id.id or False,
+                            'price_unit': fee.price_unit,
+                            'price_subtotal': fee.product_uom_qty*fee.price_unit,
+                        })
+                        repair_fee_obj.write(cr, uid, [fee.id], {'invoiced': True, 'invoice_line_id': invoice_fee_id})
+                res[repair.id] = inv_id
+#                print"res@@@",res
+        return res
+
+
+        
+    def action_repair_done(self, cr, uid, ids, context=None):
+        """ Creates stock move and picking for repair order.
+        @return: Picking ids.
+        """
+        print"radj",ids
+        if context==None:
+            context = {}
+        res = {}
+        move_obj = self.pool.get('stock.move')
+        wf_service = netsvc.LocalService("workflow")
+        repair_line_obj = self.pool.get('mrp.repair.line')
+        seq_obj = self.pool.get('ir.sequence')
+        pick_obj = self.pool.get('stock.picking')
+        repair_obj = self.pool.get('mrp.repair')
+        for repair in self.browse(cr, uid, ids, context=context):
+            if repair.state == 'done':
+                continue
+            for move in repair.operations:
+#                print "repair name",repair.name
+                op_move_id = move_obj.create(cr, uid, {
+                    'name': move.name,
+#                    'origin': repair.name,
+                    'product_id': move.product_id.id,
+                    'product_qty': move.product_uom_qty,
+                    'product_uom': move.product_uom.id,
+                    'address_id': repair.address_id and repair.address_id.id or False,
+                    'location_id': move.location_id.id,
+                    'location_dest_id': move.location_dest_id.id,
+                    'tracking_id': False,
+                    'prodlot_id': move.prodlot_id and move.prodlot_id.id or False,
+                    'state': 'done',
+                })
+                cr.execute('''
+                        update stock_move set origin='%s' where id=%s
+
+                '''%(repair.name,op_move_id))
+                operation_move = move_obj.browse(cr, uid, op_move_id)
+#                print "operation move origin",operation_move.origin
+                move_obj._create_product_valuation_moves(cr, uid, operation_move, context=context)
+                repair_line_obj.write(cr, uid, [move.id], {'move_id': op_move_id, 'state': 'done'}, context=context)
+
+#            print"repair.deliver_bool",repair.deliver_bool
+            
+            if repair.deliver_bool:
+                no_delivery = True
+                customized_origin = ''
+                return_ref_id = repair_obj.browse(cr,uid,ids[0]).sale_return_id.id
+                state = repair_obj.browse(cr,uid,ids[0]).state
+                invoice_method = repair_obj.browse(cr, uid, ids[0]).invoice_method
+                if state=='under_repair':
+                    self.write(cr, uid, ids[0], {'state': 'done'})
+                if state=='under_repair' and invoice_method == 'after_repair':
+                    self.write(cr, uid, ids[0], {'state': 'waiting_invoice'})
+                list_of_same_delivery_ids = repair_obj.search(cr,uid,[('sale_return_id','=',return_ref_id)])
+                for list_of_same_delivery_id in list_of_same_delivery_ids:
+#                    print"list_of_same_delivery_id",list_of_same_delivery_id
+                    state = repair_obj.browse(cr,uid,list_of_same_delivery_id).state
+                    customized_origin += repair_obj.browse(cr,uid,list_of_same_delivery_id).name +','
+#                    print"customized_origin",customized_origin
+                    if state=='draft' or state=='confirmed' or state=='ready' or state=='2binvoiced' or state=='invoice_except' or state=='under_repair':
+                        no_delivery=False
+                
+#                print"no_delivery",no_delivery
+
+                if no_delivery:
+                    pick_name = seq_obj.get(cr, uid, 'stock.picking.out')
+                    picking = pick_obj.create(cr, uid, {
+                        'name': pick_name,
+                        'origin': customized_origin,
+                        'state': 'draft',
+                        'move_type': 'one',
+                        'address_id': repair.address_id and repair.address_id.id or False,
+                        'note': repair.internal_notes,
+                        'invoice_state': 'none',
+                        'type': 'out',
+                        'return_id':repair.sale_return_id.id,
+                        'rma_return':repair.sale_return_id.name+'/Repair'
+
+                    })
+                    for list_of_same_delivery_id in list_of_same_delivery_ids:
+                        move_repair_obj = repair_obj.browse(cr,uid,list_of_same_delivery_id)
+                        move_id = move_obj.create(cr, uid, {
+                            'name': move_repair_obj.name,
+                            'picking_id': picking,
+                            'product_id': move_repair_obj.product_id.id,
+                            'product_qty': 1.0,
+                            'product_uom': move_repair_obj.product_id.uom_id.id,
+                            'prodlot_id': move_repair_obj.prodlot_id and move_repair_obj.prodlot_id.id or False,
+                            'address_id': move_repair_obj.address_id and move_repair_obj.address_id.id or False,
+                            'location_id': move_repair_obj.location_id.id,
+                            'location_dest_id': move_repair_obj.location_dest_id.id,
+                            'tracking_id': False,
+                            'state': 'assigned',
+                        })
+                    wf_service.trg_validate(uid, 'stock.picking', picking, 'button_confirm', cr)
+                    if 'from_nonrepairable' in context.keys():
+#                        print"hayayay"
+                        self.write(cr, uid, [repair.id], {'state': 'non_repairable', 'picking_id': picking})
+                        res[repair.id] = picking
+                    elif 'from_cancel' in context.keys():
+#                        print"in cancel"
+                        self.write(cr, uid, [repair.id], {'state': 'cancel', 'picking_id': picking})
+                        res[repair.id] = picking
+                    elif repair.invoice_method=='after_repair':
+                        self.write(cr, uid, [repair.id], {'state': 'waiting_invoice','picking_id':picking})
+                    else:
+#                        print"kjdnsdo"
+                        self.write(cr, uid, [repair.id], {'state': 'done', 'picking_id': picking})
+                        res[repair.id] = picking
+                else:
+                    if repair.invoice_method=='after_repair':
+                        self.write(cr, uid, [repair.id], {'state': 'waiting_invoice'})
+            else:
+                self.write(cr, uid, [repair.id], {'state': 'done'})
+            return res
+
+
+
+    def action_repair_end(self, cr, uid, ids, context=None):
+        """ Writes repair order state to 'To be invoiced' if invoice method is
+        After repair else state is set to 'Ready'.
+        @return: True
+        """
+        print "repair done"
+        mrp_repair_obj = self.pool.get('mrp.repair')
+        repair_check = False
+        for order in self.browse(cr, uid, ids, context=context):
+            val = {}
+            val['repaired'] = True
+            if (not order.invoiced and order.invoice_method=='after_repair'):
+#                val['state'] = '2binvoiced'
+                repair_check_invoice = True # setting to true to create the delivery order
+                                            # instead of state change to 2binvoiced
+            if (not order.invoiced and order.invoice_method=='b4repair'):
+                val['state'] = 'ready'
+            else:
+                pass
+
+
+            self.write(cr, uid, [order.id], val)
+        print "inside end repair function"
+        status = mrp_repair_obj.action_repair_done(cr, uid, ids)
+
+        return True
+
+mrp_repair()

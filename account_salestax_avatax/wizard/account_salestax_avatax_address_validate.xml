@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <!-- Partner Address Validate -->
+
+         <record id="view_account_salestax_avatax_address_validate" model="ir.ui.view">
+            <field name="name">Address Validatation</field>
+            <field name="model">account.salestax.avatax.address.validate</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Address Validation">
+                    <group colspan="4" col="8">
+                        <group colspan="1">
+                            <separator string="Original Address" colspan="4"/>
+                            <field name="original_street" colspan="4" width="220"/>
+                            <field name="original_street2" colspan="4" width="220"/>
+                            <field name="original_city" colspan="4" width="220"/>
+                            <field name="original_state" colspan="4" width="220"/>
+                            <field name="original_zip" colspan="4" width="220"/>
+                            <field name="original_country" colspan="4" width="220"/>
+                        </group>
+                        <separator orientation="vertical" rowspan="10"/>
+                        <group colspan="6">
+                            <separator string="Validated Address" colspan="4"/>
+                            <field name="street" colspan="4" width="220"/>
+                            <field name="street2" colspan="4"/>
+                            <field name="city" colspan="4"/>
+                            <field name="state" colspan="4"/>
+                            <field name="zip" colspan="4"/>
+                            <field name="country" colspan="4"/>
+                        </group>
+                        <group colspan="8" col="8">
+                            <button special="cancel" string="Cancel" icon="gtk-cancel"/>
+                            <button name="accept_valid_address" type="object" icon="gtk-ok" string="_Accept"/>
+                        </group>
+                     </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_account_salestax_avatax_address_validate" model="ir.actions.act_window">
+             <field name="name">Address Validation</field>
+             <field name="type">ir.actions.act_window</field>
+             <field name="res_model">account.salestax.avatax.address.validate</field>
+             <field name="view_type">form</field>
+             <field name="view_mode">form</field>
+             <field name="view_id" ref="view_account_salestax_avatax_address_validate"/>
+             <field name="target">new</field>
+        </record>
+
+    </data>
+</openerp>

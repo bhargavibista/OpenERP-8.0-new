@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <!-- Sales dashboard -->
+        <record id="action_replenish_incoming_shipment" model="ir.actions.act_window">
+            <field name="name">Replenish Orders</field>
+            <field name="res_model">stock.replenish</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('type','=','out'),('state','=','draft'),('origin','ilike','RE')]</field>
+            <field name="view_id" ref="stock_replenish_tree"/>
+        </record>
+
+        <record id="action_replenish_rules" model="ir.actions.act_window">
+            <field name="name">Replenish Rules</field>
+            <field name="res_model">stock.warehouse.replenish</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="view_id" ref="cox_reorder.view_stock_warehouse_replenish_tree"/>
+        </record>
+
+        <record id="action_replenish_delivery_shipment" model="ir.actions.act_window">
+            <field name="name">Replenish Delivery Order</field>
+            <field name="res_model">stock.picking</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('picking_type_id.code','=','outgoing'),('state','=','draft'),('origin','ilike','RE')]</field>
+            <field name="view_id" ref="stock.vpicktree"/>
+        </record>
+
+
+
+        <!--<record id="view_turnover_by_month_tree" model="ir.ui.view">
+            <field name="name">turnover.by.month.tree</field>
+            <field name="model">account.invoice.report</field>
+            <field name="priority" eval="32"/>
+            <field name="arch" type="xml">
+                <tree string="Monthly Turnover">
+                    <field name="month"/>
+                    <field name="price_total"/>
+                </tree>
+            </field>
+        </record>
+        <record id="view_turnover_by_month_graph" model="ir.ui.view">
+            <field name="name">turnover.by.month.graph</field>
+            <field name="model">account.invoice.report</field>
+            <field name="priority" eval="32"/>
+            <field name="arch" type="xml">
+                <graph string="Monthly Turnover" type="bar">
+                    <field name="month"/>
+                    <field name="price_total" operator="+"/>
+                </graph>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_turnover_by_month">
+            <field name="name">Monthly Turnover</field>
+            <field name="res_model">account.invoice.report</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">graph,tree</field>
+            <field name="view_id" ref="view_turnover_by_month_graph"/>
+            <field name="domain">[('year','ilike',time.strftime('%Y')),('user_id','=',uid)]</field>
+            <field name="context">{'group_by_no_leaf':1,'group_by':['month']}</field>
+        </record>-->
+
+        <record id="board_replenish_form" model="ir.ui.view">
+            <field name="name">board.replenish.form</field>
+            <field name="model">board.board</field>
+            <field name="arch" type="xml">
+                <form string="Replenish Dashboard" version="7.0">
+                    <board style="1-1-1">
+                        <column>
+                            <action name="%(action_replenish_incoming_shipment)d" string="Replenish Order"/>
+                        </column>
+                        <column>
+                            <action name="%(action_replenish_rules)d" string="Replenish Rules"/>
+                        </column>
+                        <column>
+                            <action name="%(action_replenish_delivery_shipment)d" string="Replenish Delivery Shipment"/>
+                        </column>
+                    </board>
+                </form>
+            </field>
+        </record>
+
+        <record id="open_board_replenish" model="ir.actions.act_window">
+            <field name="name">Replenish</field>
+            <field name="res_model">board.board</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="board_replenish_form"/>
+        </record>
+
+        <menuitem id="menu_dashboard_replenish"
+                  sequence="15"
+                  parent="base.menu_reporting_dashboard"
+                  action="open_board_replenish"
+                  groups="base.group_sale_salesman"/>
+
+    </data>
+</openerp>

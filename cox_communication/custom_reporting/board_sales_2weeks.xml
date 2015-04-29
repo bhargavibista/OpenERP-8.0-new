@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+<data>
+
+        <record id="view_sales2weeks_tree" model="ir.ui.view">
+        <field eval="1" name="priority"/>
+        <field name="name">view.sales2weeks.tree</field>
+        <field name="model">sale.report.analysis</field>
+        <field name="arch" type="xml">
+            <tree string="Sales Reps Leader board" create="false">
+                <field name="user_id" invisible="1"/>
+<!--                <field name="day" invisible="1"/> -->
+                <field name="sale_count"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sales2weeks_graph" model="ir.ui.view">
+         <field name="name">view.sales2weeks.graph</field>
+         <field name="model">sale.report.analysis</field>
+         <field name="arch" type="xml">
+             <graph string="Sales Reps Leader board" type="bar">
+                 <field name="user_id"/>
+                 <field name="sale_count"/>
+             </graph>
+         </field>
+    </record>
+
+    <record id="view_sales2weeks_search" model="ir.ui.view">
+        <field name="name">view.sales2weeks.search</field>
+        <field name="model">sale.report.analysis</field>
+        <field name="arch" type="xml">
+            <search string="Sales Reps Leader board">
+                <field name="user_id"/>
+                <group expand="1" string="Group By...">
+                    <filter string="Salesperson" icon="terp-personal" name="User" context="{'group_by':'user_id'}"/>
+<!--                    <filter string="Day" icon="terp-go-today" context="{'group_by':'day'}" help="Ordered date of the sales order"/> -->
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sales_2weeks" model="ir.actions.act_window">
+        <field name="name">Sales Reps Leader board</field>
+        <field name="res_model">sale.report.analysis</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">graph</field>
+        <field name="search_view_id" ref="view_sales2weeks_search"/>
+        <field name="view_id" ref="view_sales2weeks_tree"/>
+        <field name="domain">[]</field>
+        <field name="context">{'group_by':['user_id']}</field>
+<!--        <field name="help">This report performs analysis on your quotations and sales orders. Analysis check your sales revenues and sort it by different group criteria (salesman, partner, product, etc.) Use this report to perform analysis on sales not having invoiced yet. If you want to analyse your turnover, you should use the Invoice Analysis report in the Accounting application.</field>-->
+    </record>
+
+    <menuitem action="action_sales_2weeks" id="menu_report_analysis_product" parent="menu_reporting_custom_report" sequence="4"/>
+</data>
+</openerp>

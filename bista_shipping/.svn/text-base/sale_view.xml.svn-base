@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_shop_form_shp1" model="ir.ui.view">
+           <field name="name">sale.shop.form.shp1</field>
+           <field name="model">sale.shop</field>
+           <!--<field name="type">form</field>-->
+           <field name="inherit_id" ref="sale_stock.view_sale_shop_form_inherit"/>
+           <field name="arch" type="xml">
+               <xpath expr="//field[@name='warehouse_id']" position="after">
+                   <group>
+                   <field name="suffix"/>
+                   <field name="cust_address"/>
+                   </group>
+               </xpath>
+           </field>
+       </record>
+
+    	<!--<record id="view_order_form_inherit_frm_shp1" model="ir.ui.view">
+            <field name="name">sale.order.form.inherit.frm.shp1</field>
+            <field name="model">sale.order</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="sale_stock.view_order_form_inherit" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='shipped']">
+                <field name="shipped" position="after">
+                   <field name="invalid_addr"/>
+                </field>
+                </xpath>
+                
+                </field>
+            </field>
+        </record>-->
+
+        <record id="view_order_form_inherit_frm_bista_shp" model="ir.ui.view">
+            <field name="name">sale.order.form.inherit.frm.bista.shp</field>
+            <field name="model">sale.order</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="sale.view_order_form"/> 
+            <field name="arch" type="xml">
+                <!--<xpath expr="//form/sheet/group/group[2]/field[@name='currency_id']" position="after">
+                    <field name="journal_id"/>
+                </xpath>-->
+                <xpath expr="//form/sheet/group/group[2]/field[@name='client_order_ref']" position="after">
+                   <field name="tracking_no"/>
+                </xpath>
+           </field>
+        </record>
+
+        <!--<record id="view_sales_order_filter_inherit1" model="ir.ui.view">
+            <field name="name">sale.order.list.select.inherit1</field>
+            <field name="model">sale.order</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="sale.view_sales_order_filter" />
+            <field name="arch" type="xml">
+                <xpath expr="/search/field[@name='user_id']" position="after">
+                    <field name="invalid_addr" string="Invalid Address"/>
+                </xpath>
+                <field name="user_id" position="after">
+                   <field name="invalid_addr"/>
+                </field>
+            </field>
+        </record>-->
+
+
+
+
+        <!--<record id="view_sale_order_form1" model="ir.ui.view">
+            <field name="name">sale.order.form1</field>
+            <field name="model">sale.order</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="sale.view_order_form" />
+            <field name="arch" type="xml">
+                <xpath expr="/form/notebook" position="inside">
+                    <page string="Shipping Info">
+                        <group colspan="4" col="4" >
+                            <separator string = "Shipping Type" colspan="4"/>
+                            <field name="use_shipping" />
+                            <field name="shipping_type" />
+                        </group>
+
+                        <group colspan="4" col="4" >
+                            <separator string = "Weight" colspan="4"/>
+                            <field name="weight_package" />
+                            <field name="weight_unit" nolabel="1"/>
+                            <button name="dummy_fun" string="Calculate Weight" type="object" icon="gtk-go-forward" attrs="{'readonly':[('state','!=','draft')]}"/>
+                        </group>
+
+                        <group attrs="{'invisible':[('shipping_type','!=','Canada Post'), ('shipping_type','!=','All')]}" colspan="4" col="4">
+                            <separator string = "Canada Post" colspan="4" />
+                            <group colspan="4" col="4" >
+                                <field name="services" attrs="{'required': [('shipping_type','in',['Canada Post','All'])]}" on_change="onchange_shipping_rates(services,response_usps_ids,shipping_type)"/>
+                                <field name="cana_weight" />
+                                <field name="cana_length" />
+                                <field name="cana_width" />
+                                <field name="cana_height" />
+                                <field name="rates" readonly="1" />
+                                <group colspan="4" col="4" >
+                                    <button type="object" name="get_rates" string="Get Rates" icon="gtk-go-forward"/>
+                                    <button name="cana_generate_shipping" string="Accept" type="object" icon="gtk-go-forward" />
+                                </group>
+                            </group>
+                        </group>
+
+                        <group colspan="4" col="4" name="usps" attrs="{'invisible':[('shipping_type','!=','USPS'), ('shipping_type','!=','All')]}" >
+                            <separator string = "USPS" colspan="4" />
+
+                            <group colspan="4" col="4" >
+                                <field name="service_type_usps" attrs="{'required':['|', ('shipping_type','=','USPS'),('shipping_type','=','All')]}" on_change="onchange_shipping_rates(service_type_usps,response_usps_ids,shipping_type)"/>
+                                <field name="container_usps" />
+                                <field name="size_usps" attrs="{'required':['|', ('shipping_type','=','USPS'),('shipping_type','=','All')]}" />
+                                <field name="first_class_mail_type_usps" attrs="{'invisible':[('service_type_usps','not in',('First Class','First Class HFP Commercial'))]}" />
+                            </group>
+
+                            <group colspan="4" col="4" attrs="{'invisible':[('size_usps','!=','LARGE')]}" >
+                                <separator string = "USPS Dimension" colspan="4" />
+                                <field name="width_usps" />
+                                <field name="length_usps" />
+                                <field name="height_usps" />
+                                <field name="girth_usps" attrs="{'invisible':['|', ('container_usps','!=','Non-Rectangular'), ('container_usps','!=','Variable'), ('container_usps','!=','')]}" />
+                            </group>
+
+                        </group>
+
+                        <group colspan="4" col="4" name="fedex" attrs="{'invisible':[('shipping_type','!=','Fedex'), ('shipping_type','!=','All')]}" >
+                            <separator string = "Fedex" colspan="4" />
+
+                            <group colspan="4" col="4" >
+                                <field name="dropoff_type_fedex" attrs="{'required':['|', ('shipping_type','=','Fedex'),('shipping_type','=','All')]}" />
+                                <field name="service_type_fedex" attrs="{'required':['|', ('shipping_type','=','Fedex'),('shipping_type','=','All')]}" on_change="onchange_shipping_rates(service_type_fedex,response_usps_ids,shipping_type)"/>
+                                <field name="customsvalue" attrs="{'invisible':[('service_type_fedex','not in',['INTERNATIONAL_ECONOMY','INTERNATIONAL_ECONOMY_FREIGHT','INTERNATIONAL_FIRST','INTERNATIONAL_PRIORITY','INTERNATIONAL_PRIORITY_FREIGHT','INTERNATIONAL_GROUND','EUROPE_FIRST_INTERNATIONAL_PRIORITY'])]}"/>
+                                <field name="currency_id" attrs="{'invisible':[('service_type_fedex','not in',['INTERNATIONAL_ECONOMY','INTERNATIONAL_ECONOMY_FREIGHT','INTERNATIONAL_FIRST','INTERNATIONAL_PRIORITY','INTERNATIONAL_PRIORITY_FREIGHT','INTERNATIONAL_GROUND','EUROPE_FIRST_INTERNATIONAL_PRIORITY'])]}"/>
+                               
+                                <field name="packaging_type_fedex" attrs="{'required':['|', ('shipping_type','=','Fedex'),('shipping_type','=','All')]}" />
+                                <field name="package_detail_fedex" attrs="{'required':['|', ('shipping_type','=','Fedex'),('shipping_type','=','All')]}" />
+                                <field name="payment_type_fedex" attrs="{'required':['|', ('shipping_type','=','Fedex'),('shipping_type','=','All')]}" />
+                                <field name="physical_packaging_fedex" attrs="{'required':['|', ('shipping_type','=','Fedex'),('shipping_type','=','All')]}" />
+                                <field name="pack_length" />
+                                <field name="pack_width" />
+                                <field name="pack_height" />
+                            </group>
+
+                        </group>
+
+                        <group colspan="4" col="4" name="ups" attrs="{'invisible':[('shipping_type','!=','UPS'), ('shipping_type','!=','All')]}" >
+                            <separator string = "UPS" colspan="4" />
+
+                            <group colspan="4" col="4" >
+                                <field name="pickup_type_ups" attrs="{'required':['|', ('shipping_type','=','UPS'),('shipping_type','=','All')]}" />
+                                <field name="service_type_ups" attrs="{'required':['|', ('shipping_type','=','UPS'),('shipping_type','=','All')]}" on_change="onchange_shipping_rates(service_type_ups,response_usps_ids,shipping_type)"/>
+                                <field name="packaging_type_ups" attrs="{'required':['|', ('shipping_type','=','UPS'),('shipping_type','=','All')]}" />
+                            </group>
+
+                        </group>
+
+                        <group colspan="4" col="2">
+                                    <separator string = "UPS Dimension" colspan="2" attrs="{'invisible':[('shipping_type','!=','UPS'), ('shipping_type','!=','All')]}"/>
+                                    <field name="tracking_ids" nolabel="1" widget="one2many_list"  colspan="2" attrs="{'invisible':[('shipping_type','!=','UPS'), ('shipping_type','!=','All')]}" >
+                                        <tree>
+                                            <field name="name"/>
+                                            <field name="length_ups" />
+                                            <field name="width_ups" />
+                                            <field name="height_ups" />
+                                        </tree>
+                                        <form string="Pack Details Form">
+                                            <field name="name"/>
+                                            <field name="length_ups" />
+                                            <field name="width_ups" />
+                                            <field name="height_ups" />
+                                        </form>
+                                    </field>
+                            </group>
+
+                        <group colspan="4" col="1" >
+                            <separator/>
+                            <button string="Generate Shipping Quotes" icon="gtk-apply" name="generate_shipping" type="object" attrs="{'readonly':[('state','!=','draft')]}"/>
+                        </group>
+
+                        <group colspan="4" col="2" >
+                            <separator string = "Shipping Quotes" colspan="2" />
+                            <field name="response_usps_ids" nolabel="1" widget="one2many_list"  colspan="2" >
+                                <tree string="Shipping Quotes" >
+                                    <button name="generate_tracking_sale" string="Accept" type="object" icon="gtk-go-forward" />
+                                    <field name="name"/>
+                                    <field name="type"/>
+                                    <field name="rate" />
+                                </tree>
+                                <form string="Shipping Quotes" >
+                                    <field name="name"/>
+                                    <field name="type"/>
+                                    <field name="rate" />
+                                </form>
+                            </field>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>-->
+    </data>
+</openerp>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+      <record id="view_account_invoice_form_return" model="ir.ui.view">
+           <field name="name">view.account.invoice.form.return</field>
+           <field name="model">account.invoice</field>
+           <field name="type">form</field>
+           <field name="inherit_id" ref="account.invoice_form" />
+           <field name="arch" type="xml">
+               <xpath expr="/form/sheet/notebook/page[@string='Other Info']/group/group[2]/field[@name='name']" position="after">
+                   <field name ="return_ref"/>
+           </xpath>
+           </field>
+      </record>
+   </data>
+</openerp>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record id="view_return_shipment_label_form" model="ir.ui.view">
+            <field name="name">view.return.shipment.label.form</field>
+            <field name="model">return.shipment.label</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Shipment Needed?">
+		    <separator string="Will the customer need a return shipment label"/>
+		     <newline/>
+                    <button string="Yes" name="generate_label" type="object" icon="gtk-apply"/>
+                    <button string="No" name="receive_refund" type="object" icon="gtk-cancel"/>
+                </form>
+            </field>
+        </record>
+    </data>
+</openerp>

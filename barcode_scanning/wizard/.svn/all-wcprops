@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/coax_cox/!svn/ver/139/barcode_scanning/wizard
+END
+picking_scanning_new.py
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/coax_cox/!svn/ver/175/barcode_scanning/wizard/picking_scanning_new.py
+END
+__init__.py
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/coax_cox/!svn/ver/43/barcode_scanning/wizard/__init__.py
+END
+shipping_process.py
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/coax_cox/!svn/ver/115/barcode_scanning/wizard/shipping_process.py
+END
+shipping_process_view.xml
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/coax_cox/!svn/ver/43/barcode_scanning/wizard/shipping_process_view.xml
+END
+stock_partial_picking.py
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/coax_cox/!svn/ver/236/barcode_scanning/wizard/stock_partial_picking.py
+END
+picking_scanning_view.xml
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/coax_cox/!svn/ver/143/barcode_scanning/wizard/picking_scanning_view.xml
+END

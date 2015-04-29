@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_task_tree" model="ir.ui.view">
+            <field name="name">project.task.tree</field>
+            <field name="model">project.task</field>
+            <field eval="99" name="priority"/>
+            <field name="arch" type="xml">
+                <tree colors="red:date_deadline&lt;current_date;blue:date_deadline==current_date;black:date_deadline&gt;current_date" string="My Tasks">
+                    <field name="name"/>
+                    <field name="project_id"/>
+                    <field name="date_deadline"/>
+                    <field name="priority"/>
+                    <field name="planned_hours" widget="float_time"/>
+                    <field name="effective_hours" widget="float_time"/>
+                    <field name="progress" widget="progressbar"/>
+                    <field name="stage_id" invisible="context.get('set_visible',False)"/>
+                    <!--<field name="state" invisible="1"/>-->
+                </tree>
+            </field>
+        </record>
+
+        <record id="my_open_tasks_action" model="ir.actions.act_window">
+            <field name="name">My Tasks</field>
+            <field name="res_model">project.task</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <!--<field name="domain">[('user_id','=',uid),('state','not in',('cancel','done'))]</field>-->
+            <field name="domain">[('user_id','=',uid)]</field>
+            <field name="view_id" ref="view_task_tree"/>
+        </record>
+        
+        <record id="view_task_history_graph" model="ir.ui.view">
+            <field name="name">project.task.history.cumulative.graph</field>
+            <field name="model">project.task.history.cumulative</field>
+            <field name="arch" type="xml">
+<!--                 <field name="project_id"/> -->
+                <graph string="Project Tasks" type="bar">
+                    <field name="date"/>
+                    <field name="planned_hours" operator="+"/>
+                    <field name="type_id" group="True"/>
+                </graph>
+            </field>
+        </record>
+        
+        <record id="action_view_task_history_cumulative" model="ir.actions.act_window">
+            <field name="name">Cumulative Flow</field>
+            <field name="res_model">project.task.history.cumulative</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">graph,tree</field>
+            <field name="view_id" ref="view_task_history_graph"/>
+            <field name="filter" eval="False"/>
+            <field name="context">{"search_default_open":1, "search_default_this_month": 1}</field>
+        </record>
+
+        <record id="board_project_form" model="ir.ui.view">
+            <field name="name">board.project.form</field>
+            <field name="model">board.board</field>
+            <field name="arch" type="xml">
+                <form string="My Board">
+                    <board style="2-1">
+                        <column>
+                            <action name="%(my_open_tasks_action)d" string="My Tasks"/>
+                        </column>
+                        <column>
+                            <action name="%(action_view_task_history_cumulative)d" string="Open Tasks"/>
+                        </column>
+                    </board>
+                </form>
+            </field>
+        </record>
+
+        <record id="open_board_project" model="ir.actions.act_window">
+            <field name="name">Project</field>
+            <field name="res_model">board.board</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="usage">menu</field>
+            <field name="view_id" ref="board_project_form"/>
+        </record>
+
+<!--        <menuitem id="menu_project_dashboard"
+                  sequence="35"
+                  parent="base.menu_reporting_dashboard"
+                  action="open_board_project"/>-->
+            <menuitem id="menu_project_dashboard"
+                 sequence="35"
+                 parent="base.menu_reporting_dashboard"
+                 action="open_board_project"
+                 groups="group_internal_operations,group_internal_operations_manager,group_support"/>
+
+    </data>
+</openerp>

@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<openerp>
+    <data>
+        <record id="view_credit_service_form" model="ir.ui.view">
+            <field name="name">view.credit.service.form</field>
+            <field name="model">credit.service</field>
+            <!--<field name="type">form</field>-->
+            <field name="arch" type="xml">
+                <form string="Service Credit" version="7.0">
+                    <header>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
+                    </header>
+                    <sheet>
+                    <group>
+                        <group col="4" colspan="4">
+                            <field name="name" readonly="1"/>
+                            <field name="date_order"/>
+                            
+                        </group>
+
+                    </group>
+                    <notebook>
+                        <page string="Credit Order">
+                            <group>
+                                <field name="partner_id" required="1" change_default="1"  select="True" context="{'search_default_customer':1}" on_change="onchange_partner_id(partner_id)" domain="[('customer','=',True)]"/>
+                                 <field domain="[('partner_id','=',partner_id)]" name="customer_name" options='{"quick_create": false}'/>
+                                <field domain="[('partner_id','=',partner_id)]" name="partner_invoice_id" required="1"  options='{"quick_create": false}'/>
+                                <field domain="[('partner_id','=',partner_id)]" name="partner_shipping_id" required="1"  options='{"quick_create": false}'/>
+                                <field domain="[('type','=','sale')]" name="pricelist_id" required="1" on_change="onchange_pricelist_id(pricelist_id,order_line)" invisible="1"/>
+                            <newline/>
+                            </group>
+                           <field name="order_line" nolabel="1" string="Credit Service Line">
+                                <form string="Credit Service Line">
+                                            <group colspan="4" col="2">
+                                                <field name="service_id" context="{'order_line':parent.order_line}" domain="[('agmnt_partner','=',parent.partner_id),('active_service','=',True)]" on_change="onchange_service_id(service_id,context)" required="True" options="{'limit': 20, 'create': false, 'create_edit': false ,'always_reload': True}"/>
+                                            <field name="product_id" invisible="1"/>
+                                            <newline/>
+                                            <field name="name"/>
+                                            <field name="product_uom_qty" string="Qty(UoM)" readonly="1"/>
+                                            <!--<field name="product_uom" string="UoM"/>-->
+                                            <field groups="product.group_uos" name="product_uos_qty" string="Qty(UoS)"/>
+                                            <field groups="product.group_uos" name="product_uos" string="UoS"/>
+                                            <!--<field name="discount"/>-->
+                                            <newline/>
+                                            <field name="price_unit" on_change="onchange_price_unit(price_unit,service_id,parent.partner_id)"/>
+                                            <!--<field name="price_subtotal"/>-->
+                                            <field name="start_date" readonly="1" string="Start Date"/>
+                                            <newline/>
+                                            <field name="return_reason" string="Cancellation/Credit Reason" required="1" domain="[('module','=','returns'),('active','=',True)]" on_change="onchange_return_reason(return_reason)" widget="selection"/>
+                                            <field name="notes" invisible="1"/>
+                                                    </group>
+                                </form>
+                                <!--<tree string="Service Credit Lines" editable="bottom">-->
+                                <tree string="Service Credit Lines">
+	                            <field name="service_id" context="{'order_line':parent.order_line}" domain="[('agmnt_partner','=',parent.partner_id)]" on_change="onchange_service_id(service_id,context)" required="True"/>
+                                    <field name="product_id" invisible="1"/>
+                                    <field name="name"/>
+                                    <!--<field name="product_uom_qty" string="Qty(UoM)" readonly="1"/>-->
+                                    <!--<field name="product_uom" string="UoM"/>-->
+                                    <field groups="product.group_uos" name="product_uos_qty" string="Qty(UoS)"/>
+                                    <field groups="product.group_uos" name="product_uos" string="UoS"/>
+                                    <!--<field name="discount"/>-->
+                                    <field name="price_unit"/>
+                                    <field name="price_subtotal"/>
+                                    <field name="start_date" readonly="1" string="Start Date"/>
+                                    <!--<field name="notes" attrs="{'invisible':[('discount','=',0.00)]}"/>-->
+                                    <field name="notes" />
+                                </tree>
+                            </field>
+                            
+                            <newline/>
+                            <group col="13" colspan="10">
+                                <field name="amount_untaxed" sum="Untaxed amount"/>
+                                <field name="amount_tax"/>
+                                <field name="amount_total"/>
+                                <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
+                            </group>
+                            <group col="17" colspan="4">
+                                
+                                <button name="return_confirm" string="Choose Option" icon="gtk-apply" type="object" attrs="{'invisible':[('state','=','done')]}"/>
+                            </group>
+                        </page>
+                        <page string="Other Information">
+                            <group colspan="2" col="2">
+                                <separator string="References" colspan="2"/>
+                                <field name="user_id"/>
+                                <field name="company_id" widget="selection" groups="base.group_multi_company"/>
+                                <field name="create_date"/>
+                                <field name="date_confirm"/>
+				<field name="cancellation_type" readonly="True"/>
+                                <field name="note"/>
+                            </group>
+                        </page>
+                        <page string="History">
+                            <group colspan="2" col="2">
+                                <field name="invoice_ids" nolabel="1"/>
+                            </group>
+                        </page>
+                        <page string="Authorize.Net Payment">
+                        <separator string="Transaction Response Fields" colspan="8"/>
+                        <group colspan="3" col="6" >
+                            <field name="auth_transaction_id"/>
+                            <field name="customer_profile"/>
+                            <field name="customer_payment_profile_id"/>
+                            <field name="cc_number"/>
+                            </group>
+                            <newline/>
+                          <separator string="Response Message" colspan="8"/>
+                          <group>
+                            <field name="auth_respmsg" colspan="8"  nolabel="1"/>
+                            </group>
+                     </page>
+                    </notebook>
+
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_credit_service_tree" model="ir.ui.view">
+            <field name="name">view.credit.service.tree</field>
+            <field name="model">credit.service</field>
+            <field name="type">tree</field>
+            <field name="priority">2</field>
+            <field name="arch" type="xml">
+                <tree string="Service Credit">
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="date_order"/>
+                    <field name="user_id"/>
+                    <field name="amount_untaxed" sum="Total Tax Excluded"/>
+                    <field name="amount_total" sum="Total Tax Included"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+
+        <record id="credit_service_search_form_view" model="ir.ui.view">
+            <field name="name">credit.service.search.form.view</field>
+            <field name="model">credit.service</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Credit Service">
+                    <field name="name"/>
+                    <field name="state"/>
+		    <field name="partner_id"/>  	
+                </search>
+            </field>
+        </record>
+
+        <record id="action_credit_service" model="ir.actions.act_window">
+            <field name="name">Credits and Cancellations</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">credit.service</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_credit_service_tree"/>
+            <field name="search_view_id" ref="credit_service_search_form_view"/>
+        </record>
+        <menuitem action="action_credit_service" id="menu_credit_service" parent="base.menu_sales" sequence="4" groups="base.group_sale_manager"/>
+        <!--,group_retail_sales_associate,group_retail_sales_manager,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox"/>-->-->
+
+<record id="crm.crm_case_section_salesteams_act" model="ir.actions.act_window">
+            <field name="name">Sales Overview</field>
+            <field name="res_model">crm.case.section</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="view_id" ref="crm.crm_case_section_salesteams_view_kanban"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click here to define a new sales team.
+                </p><p>
+                    Use sales team to organize your different salespersons or
+                    departments into separate teams. Each team will work in
+                    its own list of opportunities.
+                </p>
+            </field>
+        </record>
+
+        <record id="crm.crm_case_section_act" model="ir.actions.act_window">
+            <field name="name">Sales Overview</field>
+            <field name="res_model">crm.case.section</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="sales_team.crm_case_section_view_tree"/> <!--cox gen2-->
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click here to define a new sales team.
+                </p><p>
+                    Use sales team to organize your different salespersons or
+                    departments into separate teams. Each team will work in
+                    its own list of opportunities.
+                </p>
+            </field>
+        </record>
+
+
+<!--<menuitem  name="Returns and Cancellations" id="menu_returns_and_cancellation" parent="base.menu_base_partner" sequence="3" groups="base.group_sale_manager,group_retail_sales_manager,group_retail_sales_associate"/>-->
+<menuitem  name="Returns and Cancellations" id="menu_returns_and_cancellation" parent="base.menu_base_partner" sequence="3" />
+<menuitem action="bista_order_returns.action_sales_return" id="bista_order_returns.menu_sale_return" parent="menu_returns_and_cancellation" sequence="2"
+        groups="base.group_sale_salesman,base.group_sale_manager,group_retail_sales_manager,group_retail_sales_associate,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox,group_third_party_reseller"/>
+
+<menuitem action="action_credit_service" id="menu_credit_service" parent="menu_returns_and_cancellation" sequence="1"
+        groups="base.group_sale_manager,group_retail_sales_associate,group_retail_sales_manager,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox"/>
+
+<menuitem  name="Customers and Subscriptions" id="menu_cust_subscription"  parent="base.menu_base_partner" sequence="2" />
+<!--<menuitem  name="Customers and Subscriptions" id="menu_cust_subscription"  parent="base.menu_base_partner" sequence="2" groups="base.group_sale_manager,group_retail_sales_manager,group_retail_sales_associate"/>-->
+<menuitem id="base.menu_partner_form" parent="menu_cust_subscription" action="base.action_partner_form" sequence="1"/>
+<menuitem id="menu_partner_contact_form" parent="menu_cust_subscription" action="action_partner_contact_form_cox" sequence="2"/>
+<menuitem action="action_res_partner_policy" id="menu_customer_subscription" parent="menu_cust_subscription" sequence="3"/>
+
+<menuitem id="base.menu_aftersale" name="After-Sale Services" sequence="4" parent="base.menu_base_partner" />
+    <!--groups="base.group_sale_manager,group_retail_sales_manager,group_retail_sales_associate,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox,group_third_party_reseller"/>-->
+
+<record id="board_sales_overview_form" model="ir.ui.view">
+            <field name="name">board.sales.overview.form</field>
+            <field name="model">board.board</field>
+            <field name="arch" type="xml">
+                <form string="Sales Overview" version="7.0">
+                    <board style="1">
+                        <column>
+                            <action name="%(action_sales_2weeks)d" string="Sales Reps Leader board"/>
+                            <action name="%(action_month_to_month_sales)d" string="Month to Month Sales"/>
+                        </column>
+                    </board>
+                </form>
+            </field>
+        </record>
+
+        <record id="open_board_sales_overview_analysis" model="ir.actions.act_window">
+            <field name="name">Sales Overview</field>
+            <field name="res_model">board.board</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="context">{'my_dashboard':True}</field>
+            <field name="view_id" ref="board_sales_overview_form"/>
+        </record>
+
+<menuitem id="crm.menu_crm_case_section_act"
+            action="open_board_sales_overview_analysis"
+            sequence="1"
+            parent="base.menu_sales"
+            groups="base.group_multi_salesteams,group_retail_sales_associate,group_retail_sales_manager,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox"
+            name="Sales Overview"/>
+
+<!-- Action changes for the Survey to show only open surveys -->
+<!--COX GEN2-->
+<!--        <record model="ir.actions.act_window" id="survey.action_survey_form1">
+            <field name="name">Surveys</field>
+            <field name="res_model">survey</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,kanban</field>
+            <field name="domain">[]</field>
+	    <field name="context">{"search_default_state":'open'}</field>
+            <field name="view_id" ref="survey.survey_tree"></field>
+            <field name="search_view_id" ref="survey.survey_search"/>
+            <field name="help" type="html">
+              <p class="oe_view_nocontent_create">
+                Click to create a new survey.
+              </p><p>
+                You can create survey for different purposes: recruitment
+                interviews, employee's periodical evaluations, marketing
+                campaigns, etc.
+              </p><p>
+                A survey is made of pages containing questions
+                of several types: text, multiple choices, etc.
+              </p>
+	
+            </field>
+        </record>
+	<record id="survey_search_inherit" model="ir.ui.view">
+            <field name="name">survey_search</field>
+            <field name="model">survey</field>
+            <field name="inherit_id" ref="survey.survey_search"/>
+            <field name="arch" type="xml">
+                <xpath expr="/search/field[@name='type']" position="after">
+                        <field name="state"/>
+                </xpath>
+                <xpath expr="/search/filter[@string='Open']" position="after">
+                        <filter icon="terp-camera_test" string="Closed" domain="[('state','=','close')]" help="All Closed Survey"/>
+                </xpath>
+            </field>
+        </record>
+	<record id="action_survey_kanban_cox" model="ir.actions.act_window.view">
+            <field eval="0" name="sequence"/>
+            <field name="view_mode">kanban</field>
+            <field name="view_id" ref="survey.view_survey_kanban"/>
+            <field name="act_window_id" ref="survey.action_survey_form1"/>
+        </record>
+	<record id="action_survey_tree_cox" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="survey.survey_tree"/>
+            <field name="act_window_id" ref="survey.action_survey_form1"/>
+        </record>
+        <record id="action_survey_form_cox" model="ir.actions.act_window.view">
+            <field eval="2" name="sequence"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="survey.survey_form"/>
+            <field name="act_window_id" ref="survey.action_survey_form1"/>
+        </record>-->
+
+    </data>
+</openerp>

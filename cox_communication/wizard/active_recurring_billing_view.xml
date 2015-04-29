@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<openerp>
+    <data>
+        <record id="view_active_recurring_billing" model="ir.ui.view">
+            <field name="name">view.active.recurring.billing</field>
+            <field name="model">active.recurring.billing</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Active Recurring Billing">
+                    <!--<field name="save_report_loc"/>-->
+                    <newline/>
+                     <group colspan="4" col="4">
+                         <field name="active_policy_id" nolabel="1">
+                            <tree string="Selected Services" editable="bottom" create="false" delete="false">
+                                <field name="service_name" readonly="1"/>
+                                <field name="start_date" readonly="1"/>
+                                <field name="end_date" readonly="1"/>
+                                <field name="no_recurring"/>
+                            </tree>
+                        </field>
+                     </group>
+                    
+                    <newline/>
+                    <button name="active_recurring_billing" string="Active Recurring Billing" type="object"/>
+               </form>
+            </field>
+        </record>
+
+        <act_window name="Active Recurring Billing"
+            res_model="active.recurring.billing"
+            src_model="res.partner"
+            view_mode="form"
+            target="new"
+            id="action_view_active_recurring_billing"
+            groups="group_retail_sales_associate,group_retail_sales_manager,group_support"/>
+    </data>
+</openerp>
