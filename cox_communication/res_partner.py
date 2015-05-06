@@ -799,7 +799,7 @@ class res_partner(osv.Model):
                     return return_val
 
     def recurring_billing(self,cr,uid,context={}):
-	#print "in recurring billing"
+	print "in recurring billing"
         partner_ids,payment_profile_id,start_date=[],False,''
         sale_obj=self.pool.get('sale.order')
         invoice_obj = self.pool.get('account.invoice')
@@ -861,8 +861,6 @@ class res_partner(osv.Model):
 		#print "action_invoice_merge",sale_info	
                 res_id=sale_obj.action_invoice_merge(cr, uid, maerge_invoice_data, today, nextmonth, start_date,payment_profile_id, context=context)
                 
-                print"res_id",res_id
-                jfgkflj
                 if res_id:
                     if partner_obj.payment_policy=='pro':
                         partner_obj.write({'auto_import':True,'billing_date':str(nextmonth)},context)
