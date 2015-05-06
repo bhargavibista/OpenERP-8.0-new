@@ -127,8 +127,8 @@ class account_invoice(models.Model):
     @api.depends('invoice_line')
     def _avatax_calc(self):
         res = {}
-        avatax_config_obj = self.pool.get('account.salestax.avatax')
-        avatax_config = avatax_config_obj._get_avatax_config_company(request.cr, request.uid)
+        avatax_config_obj = self.env['account.salestax.avatax']
+        avatax_config = avatax_config_obj._get_avatax_config_company()
         print"avatax_config",avatax_config
         for invoice in self:
             #Extra Code Starts here
@@ -139,8 +139,8 @@ class account_invoice(models.Model):
             ###Ends Here###############
             #Code to skip avalara tax calculation for the magento Orders
             if invoice.origin:
-                request.cr.execute("select cox_sales_channels from sale_order where name='%s'"%(invoice.origin))
-                sales_channel = filter(None, map(lambda x:x[0], request.cr.fetchall()))
+                self._cr.execute("select cox_sales_channels from sale_order where name='%s'"%(invoice.origin))
+                sales_channel = filter(None, map(lambda x:x[0], self._cr.fetchall()))
                 if sales_channel and len(sales_channel) > 0:
                     if sales_channel[0] == 'ecommerce':
                         res[invoice.id] = False
@@ -150,21 +150,21 @@ class account_invoice(models.Model):
             if invoice.type in ['out_invoice', 'out_refund'] and \
             avatax_config and not avatax_config.disable_tax_calculation and \
             avatax_config.default_tax_schedule_id.id == invoice.partner_id.tax_schedule_id.id:
-                request.cr.execute("select tax_id from account_invoice_line_tax where invoice_line_id in (select id from account_invoice_line where invoice_id = %d)"%(invoice.id))
-                tax_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
+                self._cr.execute("select tax_id from account_invoice_line_tax where invoice_line_id in (select id from account_invoice_line where invoice_id = %d)"%(invoice.id))
+                tax_id = filter(None, map(lambda x:x[0], self._cr.fetchall()))
                 if tax_id:
                     res[invoice.id] = False
                 else:
                     if invoice.origin:
                         amount_tax = 0.0
                         if 'SO' in invoice.origin:
-                            request.cr.execute("select amount_tax from sale_order where name='%s'"%(invoice.origin))
-                            amount_tax = filter(None, map(lambda x:x[0], request.cr.fetchall()))
+                            self._cr.execute("select amount_tax from sale_order where name='%s'"%(invoice.origin))
+                            amount_tax = filter(None, map(lambda x:x[0], self._cr.fetchall()))
                             print"amount_tax",amount_tax
                             
                         elif 'RO' in invoice.origin:
-                            request.cr.execute("select amount_tax from return_order where name='%s'"%(invoice.origin))
-                            amount_tax = filter(None, map(lambda x:x[0], request.cr.fetchall()))
+                            self._cr.execute("select amount_tax from return_order where name='%s'"%(invoice.origin))
+                            amount_tax = filter(None, map(lambda x:x[0], self._cr.fetchall()))
                         if amount_tax and amount_tax[0] > 0.0:
                             res[invoice.id] = True
                         else:
