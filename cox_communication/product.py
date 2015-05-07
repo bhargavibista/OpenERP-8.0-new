@@ -89,7 +89,7 @@ class product_template(osv.osv):
                                                "Expressed in the default unit of measure of the product.",)
     }
     _defaults={
-    'recurring_service':True,
+    'recurring_service':False,
     }
 product_template()
 
