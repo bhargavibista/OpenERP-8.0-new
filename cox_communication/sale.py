@@ -1614,7 +1614,6 @@ class sale_order(osv.osv):
             template_search = template_obj.search(cr,uid,[('model','=',model)])
         else:
             template_search = template_obj.search(cr,uid,[('model','=',model),('email_type','=',email_type)])
-        print "template_searchhhhh",template_search
         if template_search:
 #        template_id_obj = template_obj.browse(cr,uid,template_search[0])
             self.pool.get('email.template').send_mail(cr,uid,template_search[0],ids_obj.id,'True',False,context)
@@ -1908,17 +1907,14 @@ class schedular_function(osv.osv):
             except Exception, e:
                 print "Error in URLLIB",str(e)
     def recurring_payment_reminder(self,cr,uid,context={}):
-        print "recurring_payment_reminderrrrr"
         so_obj = self.pool.get('sale.order')
         payment_error_obj = self.pool.get('partner.payment.error')
         search_exceptions = payment_error_obj.search(cr,uid,[('cc_update_date','=',False),('invoice_date','>=','2014-05-10'),('status','=',False),('active_payment','=',True)])
-        print "search_exceptionssssssssss",search_exceptions
         if search_exceptions:
             today=datetime.now()
             for each_exception in payment_error_obj.browse(cr,uid,search_exceptions):
                 invoice_date=datetime.strptime(each_exception.invoice_date, "%Y-%m-%d").date()
                 difference= today.date()-invoice_date
-                print "differenceeeeeeeeeee",difference
                 if int(difference.days) == 15:
                     so_obj.email_to_customer(cr,uid,each_exception,'partner.payment.error','payment_exception',each_exception.email_id,context)
   
