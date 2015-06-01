@@ -2191,4 +2191,12 @@ class sub_components(osv.osv):
         'recurring_price':fields.float('Recurring Price'),
         'no_recurring':fields.boolean('No Recurring'),
      }
+    def need_procurement(self, cr, uid, ids, context=None):
+        #when sale is installed only, there is no need to create procurements, that's only
+        #further installed modules (sale_service, sale_stock) that will change this.
+        prod_obj = self.pool.get('product.product')
+        for line in self.browse(cr, uid, ids, context=context):
+            if prod_obj.need_procurement(cr, uid, [line.product_id.id], context=context):
+                return True
+        return False
 sub_components()
