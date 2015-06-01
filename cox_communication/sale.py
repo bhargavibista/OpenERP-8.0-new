@@ -452,6 +452,85 @@ sale_order_line()
 
 class sale_order(osv.osv):
     _inherit='sale.order'
+
+    def action_ship_create(self, cr, uid, ids, context=None):
+        """Create the required procurements to supply sales order lines, also connecting
+        the procurements to appropriate stock moves in order to bring the goods to the
+        sales order's requested location.
+
+        :return: True
+        """
+        procurement_obj = self.pool.get('procurement.order')
+        sale_line_obj = self.pool.get('sale.order.line')
+        sub_component_obj = self.pool.get('sub.components')
+        for order in self.browse(cr, uid, ids, context=context):
+            proc_ids = []
+            vals = self._prepare_procurement_group(cr, uid, order, context=context)
+            if not order.procurement_group_id:
+                group_id = self.pool.get("procurement.group").create(cr, uid, vals, context=context)
+                order.write({'procurement_group_id': group_id})
+
+            for line in order.order_line:
+                #Try to fix exception procurement (possible when after a shipping exception the user choose to recreate)
+                if line.procurement_ids:
+                    #first check them to see if they are in exception or not (one of the related moves is cancelled)
+                    procurement_obj.check(cr, uid, [x.id for x in line.procurement_ids if x.state not in ['cancel', 'done']])
+                    line.refresh()
+                    #run again procurement that are in exception in order to trigger another move
+                    proc_ids += [x.id for x in line.procurement_ids if x.state in ('exception', 'cancel')]
+                    procurement_obj.reset_to_confirmed(cr, uid, proc_ids, context=context)
+                elif sale_line_obj.need_procurement(cr, uid, [line.id], context=context):
+                    if (line.state == 'done') or not line.product_id:
+                        continue
+                    vals = self._prepare_order_line_procurement(cr, uid, order, line, group_id=order.procurement_group_id.id, context=context)
+                    proc_id = procurement_obj.create(cr, uid, vals, context=context)
+                    proc_ids.append(proc_id)
+
+                elif order.order_line:
+                    for each in order.order_line:
+#                        for line in self.pool.get('sale.order.line').browse(cr, uid, each.id, context=context):
+                        for sub_line in line.sub_components:
+                            result = sub_component_obj.need_procurement(cr, uid, [sub_line.id], context=context)
+                            if result:
+                                print"sub_line",sub_line.id
+                                if not sub_line.product_id:
+                                    continue
+                                vals = self._prepare_order_line_procurement(cr, uid, order, line, sub_line, group_id=order.procurement_group_id.id,  context=context)
+                                proc_id = procurement_obj.create(cr, uid, vals, context=context)
+                                proc_ids.append(proc_id)
+            #Confirm procurement order such that rules will be applied on it
+            #note that the workflow normally ensure proc_ids isn't an empty list
+            procurement_obj.run(cr, uid, proc_ids, context=context)
+
+            #if shipping was in exception and the user choose to recreate the delivery order, write the new status of SO
+            if order.state == 'shipping_except':
+                val = {'state': 'progress', 'shipped': False}
+
+                if (order.order_policy == 'manual'):
+                    for line in order.order_line:
+                        if (not line.invoiced) and (line.state not in ('cancel', 'draft')):
+                            val['state'] = 'manual'
+                            break
+                order.write(val)
+        return True
+
+    def procurement_needed(self, cr, uid, ids, context=None):
+        #when sale is installed only, there is no need to create procurements, that's only
+        #further installed modules (sale_service, sale_stock) that will change this.
+        sale_line_obj = self.pool.get('sale.order.line')
+        sub_prod_obj = self.pool.get('sub.components')
+        res = []
+
+        for order in self.browse(cr, uid, ids, context=context):
+
+            res.append(sale_line_obj.need_procurement(cr, uid, [line.id for line in order.order_line], context=context))
+            print"res",res
+            if not any(res):
+                for each in order.order_line:
+                    for line in self.pool.get('sale.order.line').browse(cr, uid, each.id, context=context):
+                        res.append(sub_prod_obj.need_procurement(cr, uid, [line.id for line in line.sub_components], context=context))
+        return any(res)
+
     def welcome_email_offer(self,cr,uid,sale_id_brw,data,context):
         if sale_id_brw:
             cr.execute("select name_template from product_product where id in (select product_id from sale_order_line where order_id=%d)"%(sale_id_brw.id))
