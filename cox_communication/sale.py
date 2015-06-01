@@ -863,7 +863,7 @@ class sale_order(osv.osv):
         }
         
     #Function Is inheited to do change location_id for Retail Store Orders
-    def _prepare_order_line_procurement(self, cr, uid, order, line, group_id=False, context=None):
+    def _prepare_order_line_procurement(self, cr, uid, order, line, sub_comp = False, group_id=False, context=None):
         date_planned = self._get_date_planned(cr, uid, order, line, order.date_order, context=context)
         #Extra code
         rule_id= False
@@ -884,30 +884,56 @@ class sale_order(osv.osv):
         print"partner_dest_id",partner_dest_id
 #        print"rule_id",rule_id
         #Ends here
-        return {
-            'name': line.name,
-            'origin': order.name,
-            'date_planned': date_planned,
-            'product_id': line.product_id.id,
-            'product_qty': line.product_uom_qty,
-            'product_uom': line.product_uom.id,
-            'product_uos_qty': (line.product_uos and line.product_uos_qty)\
-                    or line.product_uom_qty,
-            'product_uos': (line.product_uos and line.product_uos.id)\
-                    or line.product_uom.id,
-            #'location_id': order.shop_id.warehouse_id.lot_stock_id.id,
-            
-            'group_id': group_id,
-            'location_id': output_id,
-#            'procure_method': line.type,
-#            'move_id': move_id,
-            'company_id': order.company_id.id,
-            'invoice_state': (order.order_policy == 'picking') and '2binvoiced' or 'none',
-            'sale_line_id': line.id,
-            'rule_id':rule_id,
-            'partner_dest_id':partner_dest_id,
-#            'note': line.notes
-        }
+        if not sub_comp:
+            return {
+                'name': line.name,
+                'origin': order.name,
+                'date_planned': date_planned,
+                'product_id': line.product_id.id,
+                'product_qty': line.product_uom_qty,
+                'product_uom': line.product_uom.id,
+                'product_uos_qty': (line.product_uos and line.product_uos_qty)\
+                        or line.product_uom_qty,
+                'product_uos': (line.product_uos and line.product_uos.id)\
+                        or line.product_uom.id,
+                #'location_id': order.shop_id.warehouse_id.lot_stock_id.id,
+
+                'group_id': group_id,
+                'location_id': output_id,
+    #            'procure_method': line.type,
+    #            'move_id': move_id,
+                'company_id': order.company_id.id,
+                'invoice_state': (order.order_policy == 'picking') and '2binvoiced' or 'none',
+                'sale_line_id': line.id,
+                'rule_id':rule_id,
+                'partner_dest_id':partner_dest_id,
+    #            'note': line.notes
+            }
+        else:
+            return {
+                'name': line.name,
+                'origin': order.name,
+                'date_planned': date_planned,
+                'product_id': sub_comp.product_id.id,
+                'product_qty': sub_comp.qty_uom,
+                'product_uom': sub_comp.uom_id.id,
+                'product_uos_qty': (sub_comp.qty_uom)\
+                        ,
+                'product_uos': (sub_comp.uom_id and sub_comp.uom_id.id)\
+                        or sub_comp.uom_id.id,
+                #'location_id': order.shop_id.warehouse_id.lot_stock_id.id,
+
+                'group_id': group_id,
+                'location_id': output_id,
+    #            'procure_method': line.type,
+    #            'move_id': move_id,
+                'company_id': order.company_id.id,
+                'invoice_state': (order.order_policy == 'picking') and '2binvoiced' or 'none',
+                'sale_line_id': line.id,
+                'rule_id':rule_id,
+                'partner_dest_id':partner_dest_id,
+    #            'note': line.notes
+            }
     #Function Is inheited to do change location_id for Retail Store Orders
     def _prepare_order_line_move(self, cr, uid, order, line, picking_id, date_planned, context=None):
         #Extra Code
