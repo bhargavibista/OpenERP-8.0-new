@@ -496,7 +496,7 @@ class sale_order(osv.osv):
                                 print"sub_line",sub_line.id
                                 if not sub_line.product_id:
                                     continue
-                                vals = self._prepare_order_line_procurement(cr, uid, order, line, sub_line, group_id=order.procurement_group_id.id,  context=context) 
+                                vals = self._prepare_order_line_procurement(cr, uid, order, line, sub_line, group_id=order.procurement_group_id.id,  context=context)
                                 proc_id = procurement_obj.create(cr, uid, vals, context=context)
                                 proc_ids.append(proc_id)
             #Confirm procurement order such that rules will be applied on it
@@ -514,7 +514,7 @@ class sale_order(osv.osv):
                             break
                 order.write(val)
         return True
-    
+
     def procurement_needed(self, cr, uid, ids, context=None):
         #when sale is installed only, there is no need to create procurements, that's only
         #further installed modules (sale_service, sale_stock) that will change this.
@@ -530,6 +530,7 @@ class sale_order(osv.osv):
                     for line in self.pool.get('sale.order.line').browse(cr, uid, each.id, context=context):
                         res.append(sub_prod_obj.need_procurement(cr, uid, [line.id for line in line.sub_components], context=context))
         return any(res)
+
     def welcome_email_offer(self,cr,uid,sale_id_brw,data,context):
         if sale_id_brw:
             cr.execute("select name_template from product_product where id in (select product_id from sale_order_line where order_id=%d)"%(sale_id_brw.id))
@@ -905,7 +906,6 @@ class sale_order(osv.osv):
                 #'location_id': order.shop_id.warehouse_id.lot_stock_id.id,
 
                 'group_id': group_id,
-#                'location_id': output_id,
                 'location_id': location_id,
     #            'procure_method': line.type,
     #            'move_id': move_id,
@@ -913,13 +913,10 @@ class sale_order(osv.osv):
                 'invoice_state': (order.order_policy == 'picking') and '2binvoiced' or 'none',
                 'sale_line_id': line.id,
                 'rule_id':rule_id,
-#                'partner_dest_id':partner_dest_id,
-                
-                
-    #            'note': line.notes
             }
         else:
             vals =  {
+
                 'name': line.name,
                 'origin': order.name,
                 'date_planned': date_planned,
@@ -933,7 +930,6 @@ class sale_order(osv.osv):
                 #'location_id': order.shop_id.warehouse_id.lot_stock_id.id,
 
                 'group_id': group_id,
-#                'location_id': output_id,
                 'location_id': location_id,
     #            'procure_method': line.type,
     #            'move_id': move_id,
@@ -941,9 +937,6 @@ class sale_order(osv.osv):
                 'invoice_state': (order.order_policy == 'picking') and '2binvoiced' or 'none',
                 'sale_line_id': line.id,
                 'rule_id':rule_id,
-#                'child_so_line_id':line.id,
-#                'partner_dest_id':partner_dest_id,
-    #            'note': line.notes
             }
         routes = line.route_id and [(4, line.route_id.id)] or []
         vals['route_ids'] = routes
@@ -2235,7 +2228,6 @@ class sub_components(osv.osv):
         'recurring_price':fields.float('Recurring Price'),
         'no_recurring':fields.boolean('No Recurring'),
      }
-     
     def need_procurement(self, cr, uid, ids, context=None):
         #when sale is installed only, there is no need to create procurements, that's only
         #further installed modules (sale_service, sale_stock) that will change this.
