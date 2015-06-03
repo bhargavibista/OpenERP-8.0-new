@@ -23,12 +23,18 @@ class picking_scanning(osv.osv_memory):
 	       if picking_id_obj.state == 'done' or picking_id_obj.shipping_process == 'wait':
                     continue	
                if context.get('trigger') == 'retail_store':
-                   if context.get('so_line_ids'):
-                        so_line_id = context.get('so_line_ids')
-                        if so_line_id:
-#                            cr.execute("select product_id from stock_move where sale_line_id in %s and state not in ('done','cancel')", (tuple(so_line_id),))
-                            cr.execute("select product_id from stock_move where  state not in ('done','cancel') and procurement_id in (select id from procurement_order where sale_line_id in %s)", (tuple(so_line_id),)) ##cox gen2
-                            product_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
+                   if context.get('procurement_id'):
+                        procurement_id = [context.get('procurement_id')]
+                        print"procurement_id",type(procurement_id),procurement_id[0]
+                        cr.execute("select product_id from stock_move where state not in ('done','cancel') and procurement_id =%s"%(procurement_id[0]))        ##cox gen2
+                        product_ids.append(filter(None, map(lambda x:x[0], cr.fetchall())))
+#                   if context.get('so_line_ids'):
+#                        so_line_id = [context.get('so_line_ids')]
+#                        if so_line_id:
+#                            for each_so in so_line_id:
+##                            cr.execute("select product_id from stock_move where sale_line_id in %s and state not in ('done','cancel')", (tuple(so_line_id),))
+#                                cr.execute("select product_id from stock_move where  state not in ('done','cancel') and procurement_id in (select id from procurement_order where sale_line_id in %s)", (tuple(so_line_id),)) ##cox gen2
+#                                product_ids.append(filter(None, map(lambda x:x[0], cr.fetchall())))
                else:
                    for moveline in picking_id_obj.move_lines:
 #                       if moveline.sale_line_id:
@@ -36,8 +42,9 @@ class picking_scanning(osv.osv_memory):
 			   if moveline.state != 'cancel' and (not moveline.parent_stock_mv_id):	
                                 product_ids.append(moveline.product_id.id)
            if product_ids:
+               print"product_ids",product_ids
                product_obj = self.pool.get('product.product')
-               [move_prod_id.append((each_prod.id,each_prod.name))for each_prod in product_obj.browse(cr,uid,product_ids)]
+               [move_prod_id.append((each_prod.id,each_prod.name))for each_prod in product_obj.browse(cr,uid,product_ids[0])]
         return list(set(move_prod_id))
     
     #Function is inherited to show only main product in the Packing Lines
@@ -87,14 +94,25 @@ class picking_scanning(osv.osv_memory):
         res.update({'line_ids':scanning_line})
         res.update({'start_range':1})
         ##Code to view selected Picking lines for Retail Store
+        move_ids=[]
         if context.get('trigger'):
-            if context.get('so_line_ids'):
-                so_line_id = context.get('so_line_ids')
-#                cr.execute("select id from stock_move where sale_line_id in %s and state not in ('done','cancel')", (tuple(so_line_id),))
-                cr.execute("select id from stock_move where state not in ('done','cancel') and procurement_id in (select id from procurement_order where sale_line_id in %s) ",(tuple(so_line_id),)) ##cox gen2
-                move_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
+            ######cox gen2
+#             if context.get('so_line_ids'):
+#                 so_line_id = [context.get('so_line_ids')]
+#                 
+#                 for each_so in so_line_id:
+# #                   cr.execute("select id from stock_move where sale_line_id in %s and state not in ('done','cancel')", (tuple(so_line_id),))
+#                     cr.execute("select id from stock_move where state not in ('done','cancel') and procurement_id in (select id from procurement_order where sale_line_id = '%s')"%(int(each_so)))        ##cox gen2
+#                     move_ids.append(filter(None, map(lambda x:x[0], cr.fetchall())))
+#                print"move_ids",move_ids
+            ########end
+            if context.get('procurement_id'):
+                procurement_id = [context.get('procurement_id')]
+                print"procurement_id",type(procurement_id),procurement_id[0]
+                cr.execute("select id from stock_move where state not in ('done','cancel') and procurement_id =%s"%(procurement_id[0]))        ##cox gen2
+                move_ids.append(filter(None, map(lambda x:x[0], cr.fetchall())))
                 if move_ids:
-                    res.update({'line_ids':move_ids})
+                    res.update({'line_ids':move_ids[0]})
                 res.update({'active_model':'sale.order'})
         if context.get('pick_up_location',''):
             res.update({'pick_up_location':context.get('pick_up_location')})
@@ -201,7 +219,7 @@ class picking_scanning(osv.osv_memory):
                 if res_id:
 #                    cox gen2
                     do_partial = self.pool.get("stock.transfer_details").do_detailed_transfer(cr,uid,[res_id],context=context)
-            
+#                   
             if context.get('trigger') == 'retail_store' and context.get('sale_id'):
                 return {
                     'view_type': 'form',
