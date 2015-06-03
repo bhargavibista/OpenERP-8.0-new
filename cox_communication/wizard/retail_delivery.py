@@ -25,8 +25,9 @@ class retail_delivery(osv.osv_memory):
             if isinstance(sale_id,list):
                 sale_id =  sale_id[0]
             sale_id_obj = so_obj.browse(cr,uid,sale_id)
-            pick_id = self.pool.get('stock.picking').search(cr,uid,[('sale_id','=',sale_id),('state','not in',('done','cancel'))])
-            
+            origin = sale_id_obj.name
+#            pick_id = self.pool.get('stock.picking').search(cr,uid,[('sale_id','=',sale_id),('state','not in',('done','cancel'))])
+            pick_id = self.pool.get('stock.picking').search(cr,uid,[('origin','=',origin),('state','not in',('done','cancel'))])
             if pick_id:
                 ##cox gen2
 #                cr.execute("select id from sale_order_line where id in (select sale_line_id from stock_move where picking_id=%d)"%(pick_id[0]))
@@ -43,8 +44,15 @@ class retail_delivery(osv.osv_memory):
                 procurement_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
                 sale_line_ids = self.pool.get('procurement.order').browse(cr,uid,procurement_ids).sale_line_id.id
                 print"sale_line_ids",sale_line_ids
+                cr.execute("select id from sale_order_line where parent_so_line_id='%s' and product_id in (select id from product_product where product_tmpl_id in (select id from product_template where type !='service'))"%(sale_line_ids))
+                child_so_line_id = filter(None, map(lambda x:x[0], cr.fetchall()))
+#                child_so_line_id =
+                if child_so_line_id:
+                    sale_line_ids =  child_so_line_id
                 for each_line in so_line_obj.browse(cr,uid,sale_line_ids):
+                    print"each_line.product_id",each_line.product_id
                     product_id = each_line.product_id.product_tmpl_id.id
+                    print"product_id",product_id
 #                    _get_products
 #                    available_qty = location_id._product_get(cr, uid, sale_id_obj.location_id.id, [product_id], context={})[product_id]
                     available_qty = self.pool.get('product.template')._product_available(cr, uid,[product_id],'','')
@@ -61,9 +69,10 @@ class retail_delivery(osv.osv_memory):
                 result.update({'stock_available':False})
             else:
                 result.update({'stock_available':True})
+            print"sol_ids_available",sol_ids_available
             if sol_ids_available:
                 sol_ids_available = ','.join(sol_ids_available)
-                result.update({'so_line_ids':sol_ids_available,'procurement_ids':procurement_ids})
+                result.update({'so_line_ids':sol_ids_available,'procurement_ids':procurement_ids[0]})
         return result
     
     def delivery_later(self,cr,uid,ids,context={}):
@@ -80,13 +89,14 @@ class retail_delivery(osv.osv_memory):
         if isinstance(sale_id,list):
             sale_id =  sale_id[0]
         if sale_id:
-            name = self.pool.get('sale.order').browse(cr,uid,[sale_id]).origin
+            name = self.pool.get('sale.order').browse(cr,uid,sale_id).name
         pick_id = self.pool.get('stock.picking').search(cr,uid,[('origin','=',name),('state','not in',('done','cancel'))])
         
         if pick_id:
-                so_line_ids = str(self.browse(cr,uid,ids[0]).so_line_ids).split(',')
-                procurement_id = str(self.browse(cr,uid,ids[0]).procurement_ids).split(',')
+                so_line_ids = self.browse(cr,uid,ids[0]).so_line_ids
+                procurement_id = self.browse(cr,uid,ids[0]).procurement_ids
                 context = dict(context, active_ids=pick_id, active_model='stock.picking',procurement_id=procurement_id,so_line_ids=so_line_ids,trigger='retail_store',sale_id=sale_id)
+                print"context",context
                 return {
                             'name':_("Bar Code Scanning"),
                             'view_mode': 'form',
