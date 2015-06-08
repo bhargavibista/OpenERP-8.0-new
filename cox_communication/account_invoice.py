@@ -123,9 +123,12 @@ class account_invoice(models.Model):
             else:
                 res[invoice.id] = False
         return res'''
+                
+                
     @api.one
     @api.depends('invoice_line')
     def _avatax_calc(self):
+        print"avatax function "
         res = {}
         avatax_config_obj = self.env['account.salestax.avatax']
         avatax_config = avatax_config_obj._get_avatax_config_company()
@@ -180,7 +183,8 @@ class account_invoice(models.Model):
         account_tax_obj = self.pool.get('account.tax')
 #        partner_obj = self.pool.get('res.partner')
         for invoice in self.browse(cr, uid, ids, context=context):
-            if invoice._avatax_calc():
+            print"invoice.avatax_calc",invoice.avatax_calc
+            if invoice.avatax_calc:
                 avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid)
                 print"avatax_config",avatax_config
                 sign = invoice.type == 'out_invoice' and 1 or -1
@@ -198,7 +202,7 @@ class account_invoice(models.Model):
                                                        invoice.origin,context=context)
                     except Exception, e:
                         self.pool.get('account.invoice').write(cr,uid,invoice.id,{'comment':str(e)})
-                        #print "error in avatax",str(e)
+                        print "error in avatax",str(e)
         return True
     
     def charge_customer_recurring_or_etf(self,cr,uid,ids,context={}):
@@ -398,7 +402,7 @@ account_tax()
 class account_invoice_line(osv.osv):
     _inherit = "account.invoice.line"
     def move_line_get(self, cr, uid, invoice_id, context=None):
-        print"context",context
+        print"move line get context",context
         if context==None:
             context = {}
         res,cox_sales_channels = [],''
@@ -424,6 +428,7 @@ class account_invoice_line(osv.osv):
                 else:
                     cr.execute("select id from sale_order_line where parent_so_line_id in (select order_line_id from sale_order_line_invoice_rel where invoice_id = %s)"%(line.id))
                     child_so_line_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
+                    print"child_so_line_ids",child_so_line_ids
             elif inv_type == 'out_refund':
                 return_ref = (inv.return_ref.split("/") if inv.return_ref else  False)
                 if return_ref:
@@ -438,6 +443,8 @@ class account_invoice_line(osv.osv):
                             if date_invoice > '2014-04-03':
                                 cr.execute("select id from sale_order_line where parent_so_line_id in (select sale_line_id from return_order_line where id in (select order_line_id from return_order_line_invoice_rel where invoice_id = %s))"%(line.id))
                                 child_so_line_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
+            print"child_so_line_ids",child_so_line_ids,context
+#            fjkdhgjf
             if child_so_line_ids:
                 for each_so_line in child_so_line_ids:
                     context={'so_line_id':each_so_line}  ##cox gen2
@@ -448,6 +455,7 @@ class account_invoice_line(osv.osv):
             else:
             #Endes here
 #                context.update({'so_line_id' : False})  cox gen2
+                context={}
                 mres = self.move_line_get_item(cr, uid, line, context)
                 if not mres:
                     continue
@@ -531,7 +539,7 @@ class account_invoice_tax(models.Model):
             state_obj = self.pool.get('res.country.state')
 #            invoice = invoice_obj.browse(cr, uid, invoice_id, context=context)
             tax_grouped = {}
-            if invoice.avatax_calc:
+            if invoice._avatax_calc():
 #                print"invoice111111111111"
                 cur = invoice.currency_id
                 company_currency = invoice.company_id.currency_id.id
