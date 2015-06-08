@@ -11,6 +11,7 @@ class retail_delivery(osv.osv_memory):
     'procurement_ids':fields.text('procurement.order')  ##cox gen2
     }
     def default_get(self, cr, uid, fields, context={}):
+        print "inside default getttttttttttttttttttttttttttt"
         if context is None: context = {}
         location_id = self.pool.get('stock.location')
         so_obj = self.pool.get('sale.order')
@@ -48,7 +49,7 @@ class retail_delivery(osv.osv_memory):
 #                    _get_products
 #                    available_qty = location_id._product_get(cr, uid, sale_id_obj.location_id.id, [product_id], context={})[product_id]
                     available_qty = self.pool.get('product.template')._product_available(cr, uid,[product_id],'','')
-                    print"available_qty",available_qty
+                    print"available_qtyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",available_qty
                     if available_qty:
                        available_qty = available_qty[product_id]['qty_available']
 #                    print "available_qty",available_qty[product_id]['qty_available']
@@ -70,7 +71,7 @@ class retail_delivery(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
     
     def barcode_scanning(self,cr,uid,ids,context):
-        
+        print "asdasdasddddddddddddddddddddddddddddddddddddddddddddddd"
         sale_id = False
         if context and context.get('active_model') == 'sale.order':
             if context.get('active_id'):
@@ -82,22 +83,22 @@ class retail_delivery(osv.osv_memory):
         if sale_id:
             name = self.pool.get('sale.order').browse(cr,uid,[sale_id]).origin
         pick_id = self.pool.get('stock.picking').search(cr,uid,[('origin','=',name),('state','not in',('done','cancel'))])
-        
+        print "sale and pick idsssssssssssssssss",pick_id,sale_id
         if pick_id:
-                so_line_ids = str(self.browse(cr,uid,ids[0]).so_line_ids).split(',')
-                procurement_id = str(self.browse(cr,uid,ids[0]).procurement_ids).split(',')
-                context = dict(context, active_ids=pick_id, active_model='stock.picking',procurement_id=procurement_id,so_line_ids=so_line_ids,trigger='retail_store',sale_id=sale_id)
-                return {
-                            'name':_("Bar Code Scanning"),
-                            'view_mode': 'form',
-                            'view_type': 'form',
-                            'res_model': 'pre.picking.scanning',
-                            'type': 'ir.actions.act_window',
-                            'nodestroy': True,
-                            'target': 'new',
-                            'domain': '[]',
-                            'context': context,
-                        }
+            so_line_ids = str(self.browse(cr,uid,ids[0]).so_line_ids).split(',')
+            procurement_id = str(self.browse(cr,uid,ids[0]).procurement_ids).split(',')
+            context = dict(context, active_ids=pick_id, active_model='stock.picking',procurement_id=procurement_id,so_line_ids=so_line_ids,trigger='retail_store',sale_id=sale_id)
+            return {
+                        'name':_("Bar Code Scanning"),
+                        'view_mode': 'form',
+                        'view_type': 'form',
+                        'res_model': 'pre.picking.scanning',
+                        'type': 'ir.actions.act_window',
+                        'nodestroy': True,
+                        'target': 'new',
+                        'domain': '[]',
+                        'context': context,
+                    }
 
     def reject_agreement(self,cr,uid,ids,context):
          return {'type': 'ir.actions.act_window_close'}
