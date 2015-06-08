@@ -97,27 +97,20 @@ class retail_delivery(osv.osv_memory):
         pick_id = self.pool.get('stock.picking').search(cr,uid,[('origin','=',name),('state','not in',('done','cancel'))])
         print "sale and pick idsssssssssssssssss",pick_id,sale_id
         if pick_id:
-                so_line_ids = self.browse(cr,uid,ids[0]).so_line_ids
-                cr.execute("select procurement_id from stock_move where picking_id = %d and parent_stock_mv_id is null"%(pick_id[0]))
-                procurement_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
-                print"procurement_ids",procurement_ids
-#                procurement_id = self.browse(cr,uid,ids[0]).procurement_ids
-                print"procurement_ids",procurement_ids,type(procurement_ids)
-                context = dict(context, active_ids=pick_id, active_model='stock.picking',so_line_ids=so_line_ids,trigger='retail_store',sale_id=sale_id,procurement_id=procurement_ids)
-                print"context retail",type(context.get('procurement_id'))
-                return {
-                            'name':_("Bar Code Scanning"),
-                            'view_mode': 'form',
-                            'view_type': 'form',
-                            'res_model': 'pre.picking.scanning',
-                            'type': 'ir.actions.act_window',
-                            'nodestroy': True,
-                            'target': 'new',
-                            'domain': '[]',
-                            'context': context,
-                        }
 
-    def reject_agreement(self,cr,uid,ids,context):
-         return {'type': 'ir.actions.act_window_close'}
+            so_line_ids = self.browse(cr,uid,ids[0]).so_line_ids
+            procurement_id = self.browse(cr,uid,ids[0]).procurement_ids
+            context = dict(context, active_ids=pick_id, active_model='stock.picking',procurement_id=procurement_id,so_line_ids=so_line_ids,trigger='retail_store',sale_id=sale_id)
+            print"context",context
+            return {
+                        'name':_("Bar Code Scanning"),
+                        'view_mode': 'form',
+                        'view_type': 'form',
+                        'res_model': 'pre.picking.scanning',
+                        'type': 'ir.actions.act_window',
+                        'nodestroy': True,
+                        'target': 'new',
+                        'domain': '[]',
+                        'context': context,
+                    }
 
-retail_delivery()
