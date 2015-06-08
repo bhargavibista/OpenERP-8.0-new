@@ -11,6 +11,7 @@ class retail_delivery(osv.osv_memory):
     'procurement_ids':fields.char('procurement.order')  ##cox gen2
     }
     def default_get(self, cr, uid, fields, context={}):
+        print "inside default getttttttttttttttttttttttttttt"
         if context is None: context = {}
         location_id = self.pool.get('stock.location')
         so_obj = self.pool.get('sale.order')
@@ -57,7 +58,7 @@ class retail_delivery(osv.osv_memory):
 #                    _get_products
 #                    available_qty = location_id._product_get(cr, uid, sale_id_obj.location_id.id, [product_id], context={})[product_id]
                     available_qty = self.pool.get('product.template')._product_available(cr, uid,[product_id],'','')
-                    print"available_qty",available_qty
+                    print"available_qtyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",available_qty
                     if available_qty:
                        available_qty = available_qty[product_id]['qty_available']
 #                    print "available_qty",available_qty[product_id]['qty_available']
@@ -94,7 +95,7 @@ class retail_delivery(osv.osv_memory):
         if sale_id:
             name = self.pool.get('sale.order').browse(cr,uid,sale_id).name
         pick_id = self.pool.get('stock.picking').search(cr,uid,[('origin','=',name),('state','not in',('done','cancel'))])
-        
+        print "sale and pick idsssssssssssssssss",pick_id,sale_id
         if pick_id:
                 so_line_ids = self.browse(cr,uid,ids[0]).so_line_ids
                 cr.execute("select procurement_id from stock_move where picking_id = %d and parent_stock_mv_id is null"%(pick_id[0]))
