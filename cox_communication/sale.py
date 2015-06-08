@@ -195,7 +195,7 @@ class sale_order_line(osv.osv):
     def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
             uom=False, qty_uos=0, uos=False, name='', partner_id=False, 
             all_lines=False,lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False, context=None):
-        print"idsidsidsidsidsidsidsids",partner_id,all_lines,date_order
+        if isinstance(fiscal_position,bool):fiscal_position=[]#vijay
         res = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product,qty,uom,qty_uos,uos,name,partner_id,lang,update_tax,date_order,packaging,fiscal_position,flag, context)
         
         product_category_obj = self.pool.get('product.category') #vijay
