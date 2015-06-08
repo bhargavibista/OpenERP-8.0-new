@@ -226,6 +226,33 @@
               </xpath>-->
             </field>
         </record>
+        
+        
+        <!--changes done for serial no assignment-->
+           <record id="view_production_lot_form_cox" model="ir.ui.view">
+            <field name="name">view.production.lot.form.cox</field>
+            <field name="model">stock.production.lot</field>
+            <field name="inherit_id" ref="stock.view_production_lot_form"/>
+            <field name="arch" type="xml">
+
+                
+<!--		<xpath expr="/form/notebook/page[@string='Stock Moves']" position="replace">
+                    <page string="Stock Moves">
+                        <field name="move_prod_lot_ids"/>
+                    </page>
+                </xpath>-->
+		<xpath expr="/form/notebook" position="inside">
+                    <page string="Stock Moves">
+                        <field name="move_prod_lot_ids"/>
+                    </page>
+                </xpath>
+                <field name="ref" position="after">
+                    <field name="qty_avail"/>
+                    <field name="location_id"/> 
+                </field>
+		</field>
+        </record>
+        
         <record model="ir.ui.view" id="view_move_tree_cox">
             <field name="name">view.move.tree.cox</field>
             <field name="model">stock.move</field>

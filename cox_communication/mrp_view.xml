@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record id="inherit_mrp_production_form_view" model="ir.ui.view">
+            <field name="name">mrp.production.form</field>
+            <field name="model">mrp.production</field>
+            <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+            <field name="arch" type="xml">
+<!--                <xpath expr = "//page[@string='Finished Products']" position = "after">
+
+                        <page string = "Assign Finished Product Serial Number">
+                            <field name = "created_serials_random"  >
+                                <tree string = "Serial Numbers" editable='bottom'>
+                                    <field name = "name" on_change="onchange_serial_num(name,parent.product_id)"/>
+                                    <field name = "product_id"/>
+                                </tree>
+                            </field>
+                        </page>
+                </xpath>-->
+                <xpath expr="/form/sheet/notebook/page[@string='Finished Products']/group/group[2]/field[@name='move_created_ids2']/tree/field[@name='restrict_lot_id']" position="replace">
+                        
+                </xpath>
+            </field>
+        </record>
+     </data>
+</openerp>

@@ -490,7 +490,7 @@ class sale_order(osv.osv):
                 elif order.order_line:
                     for each in order.order_line:
 #                        for line in self.pool.get('sale.order.line').browse(cr, uid, each.id, context=context):
-                        for sub_line in line.sub_components:
+                        for sub_line in each.sub_components:
                             result = sub_component_obj.need_procurement(cr, uid, [sub_line.id], context=context)
                             if result:
                                 print"sub_line",sub_line.id

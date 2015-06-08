@@ -30,7 +30,7 @@ This module is built to handle requirements of Cox Communication.
 #    'magentoerpconnect','bista_ecommerce',
     'author': 'BistaSolutions',
     'depends': ['base','account_voucher','bista_authorize_net','crm_helpdesk','sale_bundle_product','bista_order_returns','barcode_scanning','sub_product_combination','bista_shipping','account_salestax_avatax',
-    'sale_negotiated_shipping','sale_stock','survey'],#bista_ecommerce is inherited to hide emailid field
+    'sale_negotiated_shipping','sale_stock','survey','mrp'],#bista_ecommerce is inherited to hide emailid field
     'data': [],
     'data': [
 	'wizard/shipping_order_view.xml',
@@ -109,9 +109,10 @@ This module is built to handle requirements of Cox Communication.
 	'wizard/scan_label_devices.xml',
         'wizard/shipping_send_mail_view.xml',
 	'wizard/export_customer_history_view.xml',
+	'wizard/procurement_wizard_view.xml',
 	
-	
-	'sale_import_view.xml'
+	'sale_import_view.xml',
+        'mrp_view.xml',
     ],
     'demo_xml': [],
     'js':['static/src/js/*.js'],

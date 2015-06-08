@@ -8,7 +8,7 @@ class retail_delivery(osv.osv_memory):
     _columns={
     'stock_available':fields.boolean('Stock Available'),
     'so_line_ids': fields.text('Product_ids'),
-    'procurement_ids':fields.text('procurement.order')  ##cox gen2
+    'procurement_ids':fields.char('procurement.order')  ##cox gen2
     }
     def default_get(self, cr, uid, fields, context={}):
         if context is None: context = {}
@@ -42,7 +42,8 @@ class retail_delivery(osv.osv_memory):
                 ###
                 cr.execute("select procurement_id from stock_move where picking_id = %d and parent_stock_mv_id is null"%(pick_id[0]))
                 procurement_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
-                sale_line_ids = self.pool.get('procurement.order').browse(cr,uid,procurement_ids).sale_line_id.id
+                print"procurement_ids",procurement_ids
+                sale_line_ids = self.pool.get('procurement.order').browse(cr,uid,procurement_ids[0]).sale_line_id.id
                 print"sale_line_ids",sale_line_ids
                 cr.execute("select id from sale_order_line where parent_so_line_id='%s' and product_id in (select id from product_product where product_tmpl_id in (select id from product_template where type !='service'))"%(sale_line_ids))
                 child_so_line_id = filter(None, map(lambda x:x[0], cr.fetchall()))
@@ -72,14 +73,16 @@ class retail_delivery(osv.osv_memory):
             print"sol_ids_available",sol_ids_available
             if sol_ids_available:
                 sol_ids_available = ','.join(sol_ids_available)
-                result.update({'so_line_ids':sol_ids_available,'procurement_ids':procurement_ids[0]})
+                result.update({'so_line_ids':sol_ids_available,'procurement_ids':procurement_ids})
+                print"procurement_idsssssssss",type(procurement_ids)
+                context={'procurement_id':procurement_ids}
         return result
     
     def delivery_later(self,cr,uid,ids,context={}):
         return {'type': 'ir.actions.act_window_close'}
     
     def barcode_scanning(self,cr,uid,ids,context):
-        
+        print"context barcode scanning",context
         sale_id = False
         if context and context.get('active_model') == 'sale.order':
             if context.get('active_id'):
@@ -94,9 +97,13 @@ class retail_delivery(osv.osv_memory):
         
         if pick_id:
                 so_line_ids = self.browse(cr,uid,ids[0]).so_line_ids
-                procurement_id = self.browse(cr,uid,ids[0]).procurement_ids
-                context = dict(context, active_ids=pick_id, active_model='stock.picking',procurement_id=procurement_id,so_line_ids=so_line_ids,trigger='retail_store',sale_id=sale_id)
-                print"context",context
+                cr.execute("select procurement_id from stock_move where picking_id = %d and parent_stock_mv_id is null"%(pick_id[0]))
+                procurement_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
+                print"procurement_ids",procurement_ids
+#                procurement_id = self.browse(cr,uid,ids[0]).procurement_ids
+                print"procurement_ids",procurement_ids,type(procurement_ids)
+                context = dict(context, active_ids=pick_id, active_model='stock.picking',so_line_ids=so_line_ids,trigger='retail_store',sale_id=sale_id,procurement_id=procurement_ids)
+                print"context retail",type(context.get('procurement_id'))
                 return {
                             'name':_("Bar Code Scanning"),
                             'view_mode': 'form',

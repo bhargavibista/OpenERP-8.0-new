@@ -630,13 +630,46 @@ class stock_move(osv.osv):
             if child_ids:
                 cr.execute("delete from stock_move where id in %s",(tuple(child_ids),))
         return super(stock_move, self).unlink(cr, uid, ids, context=ctx)
+    
+    def _check_tracking_stock_prod_lots(self, cr, uid, ids, context=None):
+        """ Checks if serial number is assigned to stock move or not.
+        @return: True or False
+        """
+        for move in self.browse(cr, uid, ids, context=context):
+            if not move.stock_prod_lots and \
+               (move.state == 'done' and \
+               ( \
+                   (move.product_id.track_production and move.location_id.usage == 'production') or \
+                   (move.product_id.track_production and move.location_dest_id.usage == 'production') or \
+                   (move.product_id.track_incoming and move.location_id.usage == 'supplier') or \
+                   (move.product_id.track_outgoing and move.location_dest_id.usage == 'customer') or \
+                   (move.product_id.track_incoming and move.location_id.usage == 'inventory') \
+               )):
+                return False
+        return True
+
+    def _check_tracking(self, cr, uid, ids, context=None):
+        """ Checks if serial number is assigned to stock move or not.
+        @return: True or False
+        """
+        return True
+    
+    
     _columns = {
     'location_id': fields.many2one('stock.location', 'Source Location',select=True,states={'done': [('readonly', True)]}, help="Sets a location if you produce at a fixed location. This can be a partner location if you subcontract the manufacturing operations."),
     'location_dest_id': fields.many2one('stock.location', 'Destination Location',states={'done': [('readonly', True)]}, select=True, help="Location where the system will stock the finished products."),
 #    'item_id':fields.related('sale_line_id', 'order_item_id', type="char",size=64,string="Item ID",store=True),
     'return_move_id': fields.integer('Return Move Id'),
     'parent_stock_mv_id': fields.function(get_parent_stock_mv_id, type='many2one', relation='stock.move', string='Parent Stock Move Id',store=True),
-    } 	
+    } 
+    
+    _constraints = [
+        (_check_tracking,
+            'You must assign a serial number for this product.',
+            ['prodlot_id']),
+        (_check_tracking_stock_prod_lots,
+            'You must assign a serial number for this product.',
+            ['stock_prod_lots'])]
 stock_move()
 
 

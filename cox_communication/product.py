@@ -86,10 +86,14 @@ class product_template(osv.osv):
 #                                               "Expressed in the default unit of measure of the product.",
 #                                          groups="base.group_user", string="Cost Price",store=True),
     'standard_price':fields.float('Cost Price',help="Cost price of the product template used for standard stock valuation in accounting and used as a base price on purchase orders. "
-                                               "Expressed in the default unit of measure of the product.",)
+                                               "Expressed in the default unit of measure of the product.",),
+    'product_type':fields.selection([('product', 'Product'),
+                                            ('service', 'Service'),
+                                            ('offer', 'Offer'),
+                                            ],'Catalog Type'),
     }
     _defaults={
-    'recurring_service':False,
+    'recurring_service':True,
     }
 product_template()
 
