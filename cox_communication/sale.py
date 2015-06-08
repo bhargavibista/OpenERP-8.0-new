@@ -452,7 +452,8 @@ sale_order_line()
 
 class sale_order(osv.osv):
     _inherit='sale.order'
-
+    
+    
     def action_ship_create(self, cr, uid, ids, context=None):
         """Create the required procurements to supply sales order lines, also connecting
         the procurements to appropriate stock moves in order to bring the goods to the
@@ -485,7 +486,7 @@ class sale_order(osv.osv):
                     vals = self._prepare_order_line_procurement(cr, uid, order, line, group_id=order.procurement_group_id.id, context=context)
                     proc_id = procurement_obj.create(cr, uid, vals, context=context)
                     proc_ids.append(proc_id)
-
+             
                 elif order.order_line:
                     for each in order.order_line:
 #                        for line in self.pool.get('sale.order.line').browse(cr, uid, each.id, context=context):
@@ -520,11 +521,10 @@ class sale_order(osv.osv):
         sale_line_obj = self.pool.get('sale.order.line')
         sub_prod_obj = self.pool.get('sub.components')
         res = []
-
+        
         for order in self.browse(cr, uid, ids, context=context):
-
+            
             res.append(sale_line_obj.need_procurement(cr, uid, [line.id for line in order.order_line], context=context))
-            print"res",res
             if not any(res):
                 for each in order.order_line:
                     for line in self.pool.get('sale.order.line').browse(cr, uid, each.id, context=context):
@@ -865,27 +865,34 @@ class sale_order(osv.osv):
     #Function Is inheited to do change location_id for Retail Store Orders
     def _prepare_order_line_procurement(self, cr, uid, order, line, sub_comp = False, group_id=False, context=None):
         date_planned = self._get_date_planned(cr, uid, order, line, order.date_order, context=context)
+#        cr.execute("select id from sale_order_line where parent_so_line_id='%s' and product_id in (select id from product_product where product_tmpl_id in (select id from product_template where type !='service'))"%(line.id))
+#        sale_line_id = filter(None, map(lambda x:x[0], cr.fetchall()))
+#        print"sale_line_id",sale_line_id
+#        sale_line_id = self.pool.get('sale.order.line').search(cr,uid,[('parent_so_line_id','=',line.id)])
         #Extra code
-        rule_id= False
-        location_id = self.pool.get('stock.location').search(cr,uid,[('name','ilike','stock')])
-        if location_id:
-            location_id = location_id[0]
-        if order.order_type:
-            location_id = (order.location_id.id if order.location_id else location_id)
-        else:
-            location_id = (order.warehouse_id.wh_output_stock_loc_id.id if order.warehouse_id else location_id)
+#        rule_id= False
+#        location_id = self.pool.get('stock.location').search(cr,uid,[('name','ilike','stock')])
+#        if location_id:
+#            location_id = location_id[0]
+#        if order.order_type:
+#            location_id = (order.location_id.id if order.location_id else location_id)
+#        else:
+#            location_id = (order.warehouse_id.wh_output_stock_loc_id.id if order.warehouse_id else location_id)
         rule_id= self.pool.get('procurement.rule').search(cr,uid,[('location_src_id','=',order.location_id.id),('warehouse_id','=',order.warehouse_id.id)])
         if rule_id:
             rule_id = rule_id[0]
-        print"rule_idrule_idrule_idrule_id",rule_id
-        output_id = order.warehouse_id.wh_output_stock_loc_id.id
-        print"output_idoutput_id",output_id
-        partner_dest_id = order.partner_id.id
-        print"partner_dest_id",partner_dest_id
+#        print"rule_idrule_idrule_idrule_id",rule_id
+#        output_id = order.warehouse_id.wh_output_stock_loc_id.id
+#        print"output_idoutput_id",output_id
+#        partner_dest_id = order.partner_id.id
+#        print"partner_dest_id",partner_dest_id
+        #########end
+        location_id = order.partner_shipping_id.property_stock_customer.id
+#        vals['location_id'] = location_id
 #        print"rule_id",rule_id
         #Ends here
         if not sub_comp:
-            return {
+            vals= {
                 'name': line.name,
                 'origin': order.name,
                 'date_planned': date_planned,
@@ -899,18 +906,17 @@ class sale_order(osv.osv):
                 #'location_id': order.shop_id.warehouse_id.lot_stock_id.id,
 
                 'group_id': group_id,
-                'location_id': output_id,
+                'location_id': location_id,
     #            'procure_method': line.type,
     #            'move_id': move_id,
                 'company_id': order.company_id.id,
                 'invoice_state': (order.order_policy == 'picking') and '2binvoiced' or 'none',
                 'sale_line_id': line.id,
                 'rule_id':rule_id,
-                'partner_dest_id':partner_dest_id,
-    #            'note': line.notes
             }
         else:
-            return {
+            vals =  {
+
                 'name': line.name,
                 'origin': order.name,
                 'date_planned': date_planned,
@@ -924,16 +930,20 @@ class sale_order(osv.osv):
                 #'location_id': order.shop_id.warehouse_id.lot_stock_id.id,
 
                 'group_id': group_id,
-                'location_id': output_id,
+                'location_id': location_id,
     #            'procure_method': line.type,
     #            'move_id': move_id,
                 'company_id': order.company_id.id,
                 'invoice_state': (order.order_policy == 'picking') and '2binvoiced' or 'none',
                 'sale_line_id': line.id,
                 'rule_id':rule_id,
-                'partner_dest_id':partner_dest_id,
-    #            'note': line.notes
             }
+        routes = line.route_id and [(4, line.route_id.id)] or []
+        vals['route_ids'] = routes
+        vals['warehouse_id'] = order.warehouse_id and order.warehouse_id.id or False
+        vals['partner_dest_id'] = order.partner_shipping_id.id
+        vals['location_id'] = location_id
+        return vals
     #Function Is inheited to do change location_id for Retail Store Orders
     def _prepare_order_line_move(self, cr, uid, order, line, picking_id, date_planned, context=None):
         #Extra Code
@@ -1783,8 +1793,9 @@ class sale_order(osv.osv):
 
         return vals
     #Function is inherited because want to set order is complete on the magento site
-    def action_ship_end(self, cr, uid, ids, context=None):
-        res = super(sale_order, self).action_ship_end(cr, uid, ids,context)
+#    def action_ship_end(self, cr, uid, ids, context=None):
+#        print "def action_ship_enddddddddddddd"
+#        res = super(sale_order, self).action_ship_end(cr, uid, ids,context)
         ##cox gen2 this code was for magento update
 #        sale_id_obj = self.browse(cr,uid,ids[0])
 #        if sale_id_obj.magento_incrementid:
