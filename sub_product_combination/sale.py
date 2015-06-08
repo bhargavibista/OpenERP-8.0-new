@@ -51,8 +51,11 @@ class sale_order_line(osv.osv):
     def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
             uom=False, qty_uos=0, uos=False, name='', partner_id=False,
             lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False, context=None):
+
+        if context is None: context = {}
+        print"contextttttttttttttttttttttttttt",type(context)
         res = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product,qty,uom,qty_uos,uos,name,partner_id,lang,update_tax,date_order,packaging,fiscal_position,flag, context)
-        print"context",context
+        print"contextttttttttttttttttttttttttt",context
         extra_prod_config = self.pool.get('extra.prod.config')
         product_obj = self.pool.get('product.product')
         if product:
@@ -73,7 +76,7 @@ class sale_order_line(osv.osv):
                     com_qty = (each_comp_obj.qty) * qty
                     comp_price = each_comp_obj.price
 		    comps.append((0,0,{'product_type': each_comp_obj.comp_product_id.type,'qty_uom':com_qty,'name':each_comp_obj.name,'product_id':each_comp_obj.comp_product_id.id,'uom_id':(each_comp_obj.product_id.uom_id.id if each_comp_obj.product_id.uom_id else False),
-                    'price':comp_price,'recurring_price':each_comp_obj.recurring_price}))
+                    'price':comp_price,'no_recurring':each_comp_obj.no_recurring}))
             if context.get('bundle_configuration',False):
                 product_obj = self.pool.get('product.product')
                 for comp in context.get('bundle_configuration',False):  ##cox gen2
@@ -174,6 +177,8 @@ class sale_order(osv.osv):
                                 'name': prod_id_brw.name,
                                 'so_id':id,
                                 'product_uom_qty':qty,
+                                # 'discount_amt':discount_amt, #Preeti for product configuration
+                                # 'actual_price':actual_price, #Preeti for product configuration
                                 'state':'draft',
                                 'order_id':False,
 #                                'type':prod_id_brw.procure_method,
