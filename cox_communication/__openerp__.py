@@ -109,7 +109,7 @@ This module is built to handle requirements of Cox Communication.
 	'wizard/scan_label_devices.xml',
         'wizard/shipping_send_mail_view.xml',
 	'wizard/export_customer_history_view.xml',
-	'wizard/procurement_wizard_view.xml',
+#	'wizard/procurement_wizard_view.xml',
 	
 	'sale_import_view.xml',
         'mrp_view.xml',
