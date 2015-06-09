@@ -135,7 +135,7 @@
                 <xpath expr="/form/sheet/group/group[4]" position="after">
                     <group string="Serial Number">
                     <!--<field name="stock_prod_lots" string="Assigned Serial Numbers"/>-->
-                    <field name="lot_ids" string="Assigned Serial Numbers"/>
+                    <field name="stock_prod_lots" string="Assigned Serial Numbers"/>
                     </group>
                 </xpath>
                 
