@@ -2,23 +2,23 @@
 <openerp>
     <data>
 
-<!--        <record id="view_picking_form_prod_lot" model="ir.ui.view">
-            <field name="name">view.picking.form.prod.lot</field>
-            <field name="model">stock.picking</field>
+        <record id="view_move_picking_form_prod_lot" model="ir.ui.view">
+            <field name="name">view.move.picking.form.prod.lot</field>
+            <field name="model">stock.move</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="stock.view_move_picking_form" />
             <field name="arch" type="xml">
-                <xpath expr="/form/group/group[4]" position="after">
-                    <field name="scan_uid"/>
+                <xpath expr="/form/group/group[4]" position="inside">
+<!--                    <field name="scan_uid"/>
                     <field name="scan_date"/>
-                    <field name="skip_barcode"/>
-                    <field name="lot_ids" string="Assigned Serial Numbers"/>
+                    <field name="skip_barcode"/>-->
+                    <field name="stock_prod_lots" string="Assigned Serial Numbers"/>
                 </xpath>
                 <xpath expr="/form/group/group[1]/field[@name='product_packaging']" position="after">
                     <field name="received_qty"/>
                 </xpath>
             </field>
-        </record>-->
+        </record>
 
         <!-- changed sequence of delivery order-->
 <!--        <record id="stock.seq_picking_out" model="ir.sequence">
