@@ -23,8 +23,17 @@ class picking_scanning(osv.osv_memory):
 	       if picking_id_obj.state == 'done' or picking_id_obj.shipping_process == 'wait':
                     continue	
                if context.get('trigger') == 'retail_store':
+		   procurement_ids=[]
                    if context.get('procurement_id'):
-                        procurement_ids = context.get('procurement_id')
+                        #procurement_ids = context.get('procurement_id'
+			procurement_id = context.get('procurement_id').replace('[','').replace(']','')
+			if ',' in procurement_id:
+        			procurement = procurement_id.split(',')
+        			print"procuementprocuement",procurement
+        			procurement_ids = procurement
+			else:
+        			procurement_ids = [procurement_id]
+			print"idddddddd procuement",procurement_ids
                         for each in procurement_ids:
 #                            print"procurement_id",type(procurement_id),procurement_id[0]
                             cr.execute("select product_id from stock_move where state not in ('done','cancel') and procurement_id =%s"%(each))        ##cox gen2
@@ -109,6 +118,7 @@ class picking_scanning(osv.osv_memory):
 #                     move_ids.append(filter(None, map(lambda x:x[0], cr.fetchall())))
 #                print"move_ids",move_ids
             ########end
+	    procurement_ids=[]
             if context.get('procurement_id'):
                 print"context.get('procurement_id')",context.get('procurement_id')
 #                if not isinstance(context.get('procurement_id'), list):
@@ -116,9 +126,17 @@ class picking_scanning(osv.osv_memory):
 #                    procurement_id = [context.get('procurement_id')]
 #                else:
 #                    procurement_id = procurement_id
-                procurement_id = context.get('procurement_id')
-                print"procurement_idddddddddddd",procurement_id,type(procurement_id)
-                for each in procurement_id:
+                procurements = context.get('procurement_id')
+		print"context.get('procurement_id').replace('[','').replace(']','')",context.get('procurement_id').replace('[','').replace(']','')
+		procurement_id = context.get('procurement_id').replace('[','').replace(']','')
+		if ',' in procurement_id:
+			procurement = procurement_id.split(',')
+			print"procuementprocuement",procurement
+			procurement_ids = procurement
+		else:
+			procurement_ids = [procurement_id]
+		print"idddddddd procuement",procurement_ids
+                for each in procurement_ids:
                     print"each",each
                     cr.execute("select id from stock_move where state not in ('done','cancel') and procurement_id =%s"%(each))        ##cox gen2
                     move_id = filter(None, map(lambda x:x[0], cr.fetchall()))
