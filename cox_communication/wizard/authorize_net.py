@@ -14,6 +14,7 @@ import datetime
 from dateutil.relativedelta import relativedelta
 from openerp.addons.base_external_referentials.external_osv import ExternalSession
 import time
+import ast
 
 class profile_transaction(osv.osv_memory):
     _inherit = "profile.transaction"
@@ -123,7 +124,8 @@ class charge_customer(osv.osv_memory):
                 if False in account_id:
                     raise osv.except_osv(_('Error !'),_("No Income Account is defined for Products.Please check"))
 		response =self.pool.get('authorize.net.config').check_authorize_net(cr,uid,'sale.order',active_id,context)
-		if not response:
+#		if not response:
+                if not response and not context.has_key('tru') and not context.has_key('wallet_purchase'):
 	                result = super(charge_customer, self).charge_customer(cr, uid, ids, context=context)
                 invoice_id,flag = False,False
                 sale_object=so_obj.browse(cr,uid,active_id)
@@ -135,6 +137,7 @@ class charge_customer(osv.osv_memory):
                     if sale_object.cox_sales_channels in ('retail','ecommerce'):
                         cr.execute('select invoice_id from sale_order_invoice_rel where order_id=%s'%(active_id))
                         invoice_id=cr.fetchone()
+                        print"invoice_id",invoice_id
                         if invoice_id:
                             wf_service.trg_validate(uid, 'account.invoice', invoice_id[0], 'invoice_open', cr)
                             returnval = invoice_obj.make_payment_of_invoice(cr, uid, invoice_id, context=context)
@@ -193,7 +196,7 @@ class charge_customer(osv.osv_memory):
 #                        print "error string",e
                     if not flag and sale_object.cox_sales_channels == 'retail':
 #                        cr.execute("update res_partner set magento_pwd='ZmwyNDc2' where id=%d"%(sale_object.partner_id.id))
-#                        self.pool.get('res.partner').write(cr,uid,sale_object.partner_id.id,{'magento_pwd':'ZmwyNDc2'})
+                        self.pool.get('res.partner').write(cr,uid,sale_object.partner_id.id,{'magento_pwd':'ZmwyNDc2'})
                         so_obj.email_to_customer(cr,uid,sale_object.partner_id,'res.partner','welcome_email',sale_object.partner_id.emailid,context)
         ##Query To delete all records in charge_customer
             cr.execute('delete from charge_customer')
@@ -220,7 +223,7 @@ class customer_profile_payment(osv.osv_memory):
             return 'profileTransAuthCapture'
         if active_id:
             sale_id_obj = self.pool.get('sale.order').browse(cr,uid,context.get('active_id'))
-            if sale_id_obj.cox_sales_channels and sale_id_obj.cox_sales_channels in ('retail','ecommerce'):
+            if sale_id_obj.cox_sales_channels and sale_id_obj.cox_sales_channels in ('retail','ecommerce','tru','playjam'):
                 return 'profileTransAuthCapture'
             else:
                 return 'profileTransAuthOnly'
@@ -292,11 +295,11 @@ class customer_profile_payment(osv.osv_memory):
                     return_data.update({'res_model': 'partner.payment.error'})
             else:
                 account_id = so_obj.search_income_account(cr,uid,[active_id],context)
-                if False in account_id:
-                    raise osv.except_osv(_('Error !'),_("No Income Account is defined for Products.Please check Accounting Configuration of Product"))
-#		response =self.pool.get('authorize.net.config').check_authorize_net(cr,uid,'sale.order',active_id,context)
-#		if not response:
-	        result = super(customer_profile_payment, self).charge_customer(cr, uid, ids, context=context)
+		response =self.pool.get('authorize.net.config').check_authorize_net(cr,uid,'sale.order',active_id,context)
+		if not response and not context.has_key('tru') and not context.has_key('wallet_purchase'):
+		    print "context1324526364747586869970",context
+                    result = super(customer_profile_payment, self).charge_customer(cr, uid, ids, context=context)
+		    print "result///////////7676768779///////////////////",result
                 invoice_id,flag = False,False
                 sale_object = so_obj.browse(cr,uid,active_id)
                 if (sale_object.auth_transaction_id) or context.get('call_from','') != 'wizard':
@@ -304,7 +307,7 @@ class customer_profile_payment(osv.osv_memory):
                     tax_obj = self.pool.get('account.tax')
                     wf_service.trg_validate(uid, 'sale.order', active_id, 'order_confirm', cr)
                     email_to = sale_object.partner_id.emailid
-                    if sale_object.cox_sales_channels in ('retail','ecommerce'):
+                    if sale_object.cox_sales_channels in ('retail','ecommerce','tru','playjam'):
                         cr.execute('select invoice_id from sale_order_invoice_rel where order_id=%s'%(active_id))
                         invoice_id=cr.fetchone()
                         if invoice_id:
