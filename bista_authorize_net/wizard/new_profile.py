@@ -7,7 +7,10 @@
 ##############################################################################
 
 from openerp.osv import fields, osv
+from urllib2 import Request, urlopen, URLError
 from openerp.tools.translate import _
+import datetime
+from urllib2 import Request, urlopen, URLError
 import openerp.netsvc
 
 class customer_profile_payment(osv.osv_memory):
@@ -48,14 +51,59 @@ class customer_profile_payment(osv.osv_memory):
                 if customer_id:
                     result['partner_id'] = customer_id.id
         return result
+#    maxmind api call to check for restricting prpeaid cards by bhargavi
+    def maxmind_call(self,cr,uid,ccn,partner_id):
+        context={}
+        today=datetime.date.today()
+        prepaid_obj=self.pool.get('prepaid.cards.rejected')
+        cc_first_6=ccn[:6]
+        cc_last_4=ccn[-4:]
+        maxmind_config=self.pool.get('maxmind.cred.details')
+        maxmind_config_ids=maxmind_config.search(cr,uid,[])
+        if maxmind_config_ids:
+            max_config_obj = maxmind_config.browse(cr,uid,maxmind_config_ids[0])
+            server_url=max_config_obj.server_url
+            licensekey=max_config_obj.licensekey
+            url=Request('%s?l=%s&bin=%s'%(server_url,licensekey,cc_first_6))
+            response = urlopen(url)
+            resp_val = response.read()
+            print "resp_valresp_valresp_val",resp_val
+            prepaid=resp_val.split(';')
+            if 'err=' not in prepaid:
+                error=resp_val.split('=')[1]
+                print "errorrrrrrrrrrrrrr23456rrr in maxmind////////////",error
+                raise osv.except_osv(_('Error!'), _('%s')%(error))
+            else:
+                if 'prepaid=Yes' in prepaid:
+                    print "it is a prepiad card....................."
+                    context['prepaid']=True
+                    print "context............",context
+                    prepaid_id_search=prepaid_obj.search(cr,uid,[('card_no','=',cc_last_4),('partner_id','=',partner_id)])
+                    if not prepaid_id_search:
+                        prepaid_id=prepaid_obj.create(cr,uid,{'card_no':cc_last_4,'date':today,'partner_id':partner_id})
+                        print "prepaid_idprepaid_id",prepaid_id
+    #                raise osv.except_osv('Warning!', 'Order declined as this is a prepaid card!')
+                    print "kittens........................",resp_val,prepaid
+                return True,context
+        else:
+            raise osv.except_osv('Warning!', 'Maxmind Configuration not defined')
 
     def charge_customer(self,cr,uid,ids,context={}):
+        prepaid,cc_first_6='',''
         if context is None:
             context = {}
         active_id = context.get('sale_id',False)
         authorize_net_config = self.pool.get('authorize.net.config')
-        wizard_obj = self.browse(cr, uid, ids[0])
-        transaction_type = wizard_obj.transaction_type
+        prepaid_obj=self.pool.get('prepaid.cards.rejected')
+        payment_obj=self.pool.get('custmer.payment.profile')
+        if context.has_key('tru') or context.has_key('magento_orderid'):
+            transaction_type='profileTransAuthCapture'
+            ccv=context.get('ccv')
+        else:
+            wizard_obj = self.browse(cr, uid, ids[0])
+            transaction_type = wizard_obj.transaction_type
+            print "transaction_typetransaction_type",transaction_type
+            ccv=wizard_obj.ccv
         obj_all,transaction_details = False,''
         act_model = context.get('active_model',False)
         if act_model == 'sale.order':
@@ -74,15 +122,23 @@ class customer_profile_payment(osv.osv_memory):
 #                        raise osv.except_osv(_('Warning!'), _('This record has already been authorize !'))
         if active_id:
                 id_obj = obj_all.browse(cr,uid,active_id[0])
+                res,cc_number_filter = {},''
                 if id_obj:
                     customer_id = obj_all.browse(cr,uid,active_id[0]).partner_id
                     email = customer_id.emailid
                     cust_profile_Id,numberstring=False,False
-                    current_obj = self.browse(cr,uid,ids[0])
-                    ccn = current_obj.auth_cc_number
-                    ccv = current_obj.auth_ccv_number ##ccv
-                    exp_date = current_obj.auth_cc_expiration_date
-        #            exp_date = exp_date[:4] + '-' + exp_date[4:]
+                    if context.has_key('magento_orderid') or context.has_key('tru'):
+                        ccn=context.get('cc_number')
+                    else:
+                        print "wizard_objwizard_objwizard_obj",wizard_obj
+                        ccn = wizard_obj.auth_cc_number
+                    maxmind_response,context_maxmind=self.maxmind_call(cr,uid,ccn,customer_id.id)
+                    if maxmind_response:
+                        if context.has_key('magento_orderid') or context.has_key('tru'):
+    #                        exp_date='122050'
+                            exp_date=context.get('exp_date')
+                        else:
+                            exp_date = wizard_obj.auth_cc_expiration_date
                     exp_date = exp_date[-4:] + '-' + exp_date[:2]
                     config_ids =authorize_net_config.search(cr,uid,[])
                     if config_ids:
@@ -135,25 +191,37 @@ class customer_profile_payment(osv.osv_memory):
                                 response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',active_id[0],False,False,False,cust_profile_Id,ccn,exp_date,act_model)
                                 numberstring = response.get('customerPaymentProfileId',False)
                         if cust_profile_Id and numberstring:
-                            payment_profile_val = {ccn[-4:]: numberstring}
-                            self.pool.get('res.partner').cust_profile_payment(cr,uid,customer_id.id,cust_profile_Id,payment_profile_val,context) ##ccv changes
-                            amount =  obj_all.browse(cr,uid,active_id[0]).amount_total
-                            print "amount at authorize side.............",amount
-                            if amount>0.0:
-                                transaction_res = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',active_id[0],transaction_type,amount,cust_profile_Id,numberstring,'',act_model,'',context)  ##ccv
-                                if context.get('recurring_billing'):
-                                    transaction_details = transaction_details.get('response','')
-                                else:
-                                    transaction_details = transaction_res
-                                if transaction_res:
-                                    if obj_all._name=='sale.order':
-                                        obj_all.api_response(cr,uid,active_id[0],transaction_details,cust_profile_Id,numberstring,transaction_type,'XXXX'+ccn[-4:],context)
-                                    elif obj_all._name=='account.invoice':
-                                        context['cc_number'] ='XXXX'+ccn[-4:]
-                                        context['customer_profile_id'] = cust_profile_Id
-                                        obj_all.api_response(cr,uid,active_id[0],transaction_details,numberstring,transaction_type,context)
-                                        if context.get('recurring_billing'):
-                                            return transaction_res
+                                prepaid_id_search=prepaid_obj.search(cr,uid,[('card_no','=',ccn[-4:]),('partner_id','=',customer_id.id)])
+                                payment_profile_val = {ccn[-4:]: numberstring}
+                                self.pool.get('res.partner').cust_profile_payment(cr,uid,customer_id.id,cust_profile_Id,payment_profile_val,context) ##ccv changes
+                                amount =  obj_all.browse(cr,uid,active_id[0]).amount_total
+                                print "amount at authorize side.............",amount
+                                if amount>0.0:
+                                    transaction_res = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',active_id[0],transaction_type,amount,cust_profile_Id,numberstring,'',act_model,'',context)  ##ccv
+                                    if context.get('recurring_billing') or context.get('captured_api'):
+                                        transaction_details = transaction_details.get('response','')
+                                    else:
+                                        transaction_details = transaction_res
+                                    split = transaction_details.split(',')
+                                    transaction_id = split[6]
+                                    print "transaction_id//////////////////",transaction_id,prepaid_id_search
+                                    if context_maxmind and context_maxmind.get('prepaid'):
+                                        payment_id=payment_obj.search(cr,uid,[('credit_card_no','=',ccn[-4:])])
+                                        print "payment_idpayment_idpayment_id",payment_id
+                                        if payment_id:
+                                            for each in payment_id:
+                                                payment_obj.write(cr,uid,each,{'prepaid':True})
+                                    if prepaid_id_search:
+                                        prepaid_obj.write(cr,uid,prepaid_id_search[0],{'transaction_id':transaction_id})
+                                    if transaction_res:
+                                        if obj_all._name=='sale.order':
+                                            obj_all.api_response(cr,uid,active_id[0],transaction_details,cust_profile_Id,numberstring,transaction_type,'XXXX'+ccn[-4:],context)
+                                        elif obj_all._name=='account.invoice':
+                                            context['cc_number'] ='XXXX'+ccn[-4:]
+                                            context['customer_profile_id'] = cust_profile_Id
+                                            obj_all.api_response(cr,uid,active_id[0],transaction_details,numberstring,transaction_type,context)
+                                            if context.get('recurring_billing'):
+                                                return transaction_res
 #                                if transaction_res and obj_all._name=='sale.order':
 #                                    wf_service = netsvc.LocalService("workflow")
 #                                    wf_service.trg_validate(uid, 'sale.order', active_id[0], 'order_confirm', cr)

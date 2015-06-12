@@ -77,20 +77,31 @@ class charge_customer(osv.osv_memory):
 #                        raise osv.except_osv(_('Warning!'), _('This record has already been authorize !'))
 #            if not obj_all.auth_transaction_id:
             config_ids = authorize_net_config.search(cr,uid,[])
+            print "config ids .................................",config_ids,customer_profile_id,context
             if config_ids and customer_profile_id:
                 config_obj = authorize_net_config.browse(cr,uid,config_ids[0])
-                cust_payment_profile_id = current_obj.cust_payment_profile_id
-#                ccv = current_obj.ccv
-                transaction_type = current_obj.transaction_type
+#                online purchase order
+                if context.has_key('tru') or context.has_key('magento_orderid'):
+                    cust_payment_profile_id = context.get('cust_payment_profile_id')
+                    print "cust_payment_profil456576764448e_id",cust_payment_profile_id
+                    transaction_type = 'profileTransAuthCapture'
+                else:
+                    cust_payment_profile_id = current_obj.cust_payment_profile_id
+    #                ccv = current_obj.ccv
+                    transaction_type = current_obj.transaction_type
+#                online purchase order
+                ccv=''
+                config_obj = authorize_net_config.browse(cr,uid,config_ids[0])
                 if obj_all.auth_transaction_id:
                     transaction_id = obj_all.auth_transaction_id
 		if amount>0.0:
                     transaction_details =authorize_net_config.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',active_id,transaction_type,amount,customer_profile_id,cust_payment_profile_id,transaction_id,act_model,'',context) 
+                    
                     cr.execute("select credit_card_no from custmer_payment_profile where profile_id='%s'"%(cust_payment_profile_id))
                     cc_number = filter(None, map(lambda x:x[0], cr.fetchall()))
                     if cc_number:
                     	cc_number = cc_number[0]
-                    if context.get('recurring_billing'):
+                    if context.get('recurring_billing') or context.get('captured_api'):
                      	transaction_response = transaction_details.get('response','')
                     else:
                     	transaction_response = transaction_details
