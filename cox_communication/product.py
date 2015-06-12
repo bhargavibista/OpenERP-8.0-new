@@ -112,6 +112,7 @@ class product_category(osv.osv):
     }
 product_category()
 
+
 #code done by yogita
 class extra_prod_config(osv.osv):
     _inherit = 'extra.prod.config'

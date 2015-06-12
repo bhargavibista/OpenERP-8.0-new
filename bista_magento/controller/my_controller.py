@@ -285,8 +285,13 @@ class Magento(http.Controller):
 #            registry = openerp.modules.registry.Registry(str(db_name))
 #            with registry.cursor() as cr:
 #                result=user.create_update_profile(cr,1,dict_req,{})
-            obj=request.registry['res.partner']
-            result=obj.create_update_profile(request.cr,1,dict_req,{})
+#            obj=request.registry['res.partner']
+#            result=obj.create_update_profile(request.cr,1,dict_req,{})
+
+            registry = RegistryManager.get('test_odoo8_1')
+            with registry.cursor() as cr:
+                u = registry['res.partner']
+                result = u.create_update_profile(dict_req)
             print 'result---------------',result
     #        user = osv_pool.get('res.users')
             print "user--------------------",user
@@ -326,7 +331,7 @@ class Magento(http.Controller):
                 dict_req = ast.literal_eval(str(string_con))
 
             except Exception ,e:
-                return req.make_response(str({"body":{'result':-1537}}), [('Content-Type', 'application/json; charset=UTF-8')])
+                return str({"body":{'result':-1537}})
             
             print "request---------",dict_req,type(dict_req)
             api_id=dict_req.get('ApiId')
@@ -343,8 +348,13 @@ class Magento(http.Controller):
 #                result=user.update_billing_info(cr,1,dict_req,{})
 
 
-            obj=request.registry['res.partner']
-            result=obj.update_billing_info(request.cr,1,dict_req,{})
+#            obj=request.registry['res.partner']
+#            result=obj.update_billing_info(request.cr,1,dict_req,{})
+
+            registry = RegistryManager.get('test_odoo8_1')
+            with registry.cursor() as cr:
+                u = registry['res.partner']
+                result = u.update_billing_info(dict_req)
             print 'result---------------',result
     #        user = osv_pool.get('res.users')
             print "user--------------------",user
@@ -446,15 +456,15 @@ class Magento(http.Controller):
                 dict_req = ast.literal_eval(str(string_con))
 
             except Exception ,e:
-                return req.make_response(str({"body":{'result':-1537}}), [('Content-Type', 'application/json; charset=UTF-8')])
+                return str({"body":{'result':-1537}})
             
             print "request---------",dict_req,type(dict_req)
             api_id=dict_req.get('ApiId')
             db_name=dict_req.get('DBName')
             pwd=dict_req.get('Password')
             u_name=dict_req.get('UserName')
-            osv_pool = pooler.get_pool(str(db_name))
-            user = osv_pool.get('res.partner')
+#            osv_pool = pooler.get_pool(str(db_name))
+#            user = osv_pool.get('res.partner')
             if not api_id=='123':
                 return str({"body":{"result":"Authentication Error!!"}})
             ##odoo8 changes
@@ -462,11 +472,13 @@ class Magento(http.Controller):
 #            with registry.cursor() as cr:
 #                result=user.update_subscription(cr,1,dict_req,{})
             ###
-            obj=request.registry['res.partner']
-            result=obj.update_subscription(request.cr,1,dict_req,{})
+            registry = RegistryManager.get('test_odoo8_1')
+            with registry.cursor() as cr:
+                u = registry['res.partner']
+                result = u.update_subscription(dict_req)
             print 'resulttttt---------------',result
     #        user = osv_pool.get('res.users')
-            print "user--------------------",user
+#            print "user--------------------",user
     #        ero
             return str(result)
         return str({"body":{"result":"SERVER ERROR INVALID SYNTAX"}})
@@ -514,8 +526,13 @@ class Magento(http.Controller):
 #            registry = openerp.modules.registry.Registry(str(db_name))
 #            with registry.cursor() as cr:
 #                result=user.get_transactions_magento(cr,1,dict_req,{})
-            obj=request.registry['res.partner']
-            result=obj.get_transactions_magento(request.cr,1,dict_req,{})
+#            obj=request.registry['res.partner']
+#            result=obj.get_transactions_magento(request.cr,1,dict_req,{})
+
+            registry = RegistryManager.get('test_odoo8_1')
+            with registry.cursor() as cr:
+                u = registry['res.partner']
+                result = u.get_transactions_magento(dict_req)
             print 'result---------------',result
     #        user = osv_pool.get('res.users')
             print "user--------------------",user

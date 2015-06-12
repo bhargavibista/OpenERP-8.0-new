@@ -161,7 +161,7 @@
             </field>
         </record>-->
         <!-- To Hide Sales Team from form view-->
-        <record id="view_hide_sales_team_form" model="ir.ui.view">
+<!--        <record id="view_hide_sales_team_form" model="ir.ui.view">
             <field name="name">view.hide.sales.team.form</field>
             <field name="model">res.partner</field>
             <field name="type">form</field>
@@ -170,7 +170,7 @@
                 <xpath expr="//field[@name='section_id']" position="replace">
                 </xpath>
             </field>
-        </record>
+        </record>-->
         <!-- To Hide Sales Team from tree view-->
         <!--<record id="view_hide_sales_team_form" model="ir.ui.view">
             <field name="name">view.hide.sales.team.tree</field>

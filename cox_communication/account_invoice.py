@@ -128,7 +128,7 @@ class account_invoice(models.Model):
     @api.one
     @api.depends('invoice_line')
     def _avatax_calc(self):
-        print"avatax function "
+#        print"avatax function "
         res = {}
         avatax_config_obj = self.env['account.salestax.avatax']
         avatax_config = avatax_config_obj._get_avatax_config_company()
@@ -194,6 +194,7 @@ class account_invoice(models.Model):
 #                   address = partner_obj.address_get(cr, uid, [invoice.company_id.partner_id.id], ['default'])
                     address = invoice.location_address_id.id #Extra Line of code
                     try:
+                        
                         account_tax_obj._check_compute_tax(cr, uid, avatax_config, invoice.date_invoice,
                                                        invoice.internal_number, refund_or_not,
                                                        invoice.partner_id, address,
@@ -402,7 +403,7 @@ account_tax()
 class account_invoice_line(osv.osv):
     _inherit = "account.invoice.line"
     def move_line_get(self, cr, uid, invoice_id, context=None):
-        print"move line get context",context
+#        print"move line get context",context
         if context==None:
             context = {}
         res,cox_sales_channels = [],''

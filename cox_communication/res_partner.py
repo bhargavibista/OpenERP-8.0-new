@@ -1019,7 +1019,7 @@ class res_partner_policy(osv.osv):
     'last_amount_charged':fields.float('Last Amount Charged'),
     'return_cancel_reason': fields.text('Return/Cancellation Reason'),
     'do_not_show': fields.boolean('Active Service',select=True),
-#    'recurring_price':fields.float('Recurring Price'),
+    'recurring_price':fields.float('Recurring Price'),
     'no_recurring':fields.boolean('No Recurring'),
     'recurring_reminder':fields.boolean('Recurring Reminder'),
     }

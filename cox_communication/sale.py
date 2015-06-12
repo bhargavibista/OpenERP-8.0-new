@@ -1225,6 +1225,7 @@ class sale_order(osv.osv):
 	#Extra Code
         for o in self.browse(cr, uid, ids):
             date_confirm = self.date_order_confirm(cr,uid,context)
+            print"date_confirm",date_confirm
             self.write(cr, uid, [o.id], {'date_confirm': date_confirm})
         self.write_selected_agreement(cr,uid,ids,context=context)
         return True

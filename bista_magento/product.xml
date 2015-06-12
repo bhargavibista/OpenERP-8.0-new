@@ -2,16 +2,16 @@
     <data>
         <record id="product_product_form_view_cox" model="ir.ui.view">
             <field name="name">product.normal.form.cox.bista.magento</field>
-            <field name="model">product.template</field>
+            <field name="model">product.product</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="product.product_template_form_view" />
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <xpath expr="/form/sheet/div/div/div/field[@name='sale_ok']" position="before">
+                <xpath expr="/form/sheet/div/div[2]/div/field[@name='sale_ok']" position="before">
                        <group>
 		       <field name="exported"/>
                        </group>
-                </xpath>
+                   </xpath>
             </field>
             </record>
     </data>

@@ -27,7 +27,7 @@
                                 <field name="gender"/>
                                 <field name="dob"/>
                                 <field name="age_rating"/>
-                                <field name="player_tag"/>
+                                <!--<field name="player_tag"/>-->
                                 <field name="game_profile_name"/>
                                 <field name="account_pin"/>
                                 <field name="use_wallet"/>

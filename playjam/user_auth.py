@@ -5,6 +5,9 @@ import hashlib
 import json
 import ast
 from openerp.http import request
+import urllib
+import requests
+#from django.http import HttpRequest
 
 
 
@@ -278,4 +281,94 @@ class user_auth(models.Model):
                     duration=voucher_obj.expiration
                     app_id=123 #get the product id
                     self.rental_playjam(user_id,app_id,duration,context)
-        return result
+            return result
+            #r_string=dict_res2['body']['result']
+            json.dumps({'body':{ "code":False, "message":"Profile Call Failed."}})
+
+            app_id,sale_id,duration=False,False,False
+            print "product_id-------",product_id,order_no
+            if product_id and order_no:
+                print "product_id-------",product_id,order_no
+                product_obj=self.pool.get('product.product').browse(cr,uid,int(product_id[0]))
+                for each in product_obj.ext_prod_config:
+                   if each.comp_product_id.product_type=='service':
+                       app_id=each.comp_product_id.app_id
+                       
+                cr.execute('select id from sale_order where name = %s', (str(order_no),))
+                order_id = filter(None, map(lambda x:x[0], cr.fetchall()))
+                sale_id=order_id[0]
+                free_days=prod_obj.free_trail_days
+                free_days=100
+                if free_days:
+                    print "enter free trialdats---------",free_days
+                    mon_rel = relativedelta(months=free_days)
+                    today = datetime.date.today()
+                    end_free_trial=today + mon_rel
+                    end_date=end_free_trial.strftime('%Y/%m/%d')
+                    duration=time.mktime(datetime.datetime.strptime(end_date, "%Y/%m/%d").timetuple())
+            else:
+                cr.execute('select id from res_partner_policy where active_service = False and agmnt_partner = %s', (str(partner_id),))
+                plociy_line_id = filter(None, map(lambda x:x[0], cr.fetchall()))
+                if len(plociy_line_id)>1:
+                    print "11111111111111111111"
+                    return json.dumps({'body':{ "code":False, "message":"Multiple Inactive Service."}})
+                elif plociy_line_id==[]:
+                    if True:
+			auth_user_obj.write({'is_activated':True})
+                        return json.dumps({"body":{ "code":True, "message":"Success"}})
+                    print "222222222222222222"
+                    return json.dumps({'body':{ "code":False, "message":"No Service to Activate."}})
+                policy_obj=self.pool.get('res.partner.policy').browse(cr,uid,plociy_line_id[0])
+                app_id=policy_obj.product_id.app_id
+                sale_id=policy_obj.sale_id
+                #sale_id=25
+                #app_id=20
+                free_days=100
+                #free_days=policy_obj.free_trail_days
+                #if free_days==0:
+                    #free_days=1
+                if free_days:
+                    mon_rel = relativedelta(months=free_days)
+                    todays_date = datetime.date.today()
+                    #today=todays_date.date()
+                    end_free_trial=todays_date + mon_rel
+                    end_date=end_free_trial.strftime('%Y/%m/%d')
+                    duration=time.mktime(datetime.datetime.strptime(end_date, "%Y/%m/%d").timetuple())
+
+            print "Appid---------$$$$44444",app_id
+            print "sale_id--------------123",sale_id
+            print "duration!!!!!!!!!!!!!!!!!----------",duration
+            if app_id and sale_id and duration and not used:
+                rental_resp=self.rental_playjam(cr,uid,partner_id,app_id,duration)
+                rental_res=ast.literal_eval(rental_resp)
+                print "rentalres---------------------",rental_res
+                if rental_res.has_key('body') and (rental_res.get('body')).has_key('result'):
+                    if rental_res['body']['result']==4113:
+                    #if rental_res['body']['result']==-4230:
+                        policy_active=self.pool.get('sale.order').write_selected_agreement(cr,uid,[sale_id],{'update':True})
+                        policy_active=True
+                        if policy_active:
+                            if tru_location:
+                                serial_obj.write({'used':True})
+			    auth_user_obj.write({'is_activated':True})
+                            return json.dumps({"body":{ "code":True, "message":"Success"}})
+
+        return json.dumps({'body':{ "code":False, "message":"Playjam Server Issue."}})
+        
+    def wallet_playjam(self, user_id, quantity, context=None):
+        url = "http://54.172.158.69/api/rest/flare/wallet/view.json"
+        headers = {'content-type': 'application/x-www-form-urlencoded'}
+
+        payload = {
+                        "uid": user_id,
+                        "quantity":float(quantity),
+                    }
+
+
+        data=json.dumps(payload)
+	print "data---------------------------",data
+        requ=urllib.quote(data.encode('utf-8'))
+        response = requests.post(
+                    url, data="request="+requ, headers=headers)
+        print"response.content",response.content
+        return response.content

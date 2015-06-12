@@ -21,7 +21,7 @@
         </record>-->
            
         <record id="product_product_form_view_cox" model="ir.ui.view">
-            <field name="name">product.normal.form_cox</field>
+            <field name="name">product.normal.form_cox_comm</field>
             <field name="model">product.template</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="product.product_template_form_view" />

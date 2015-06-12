@@ -275,7 +275,7 @@ class res_partner(osv.osv):
 
 		        return True
 	return False
-    def update_subscription(self,cr,uid,subscription_data,context=None):
+    '''def update_subscription(self,cr,uid,subscription_data,context=None):
 	print "subscription data",subscription_data
         if subscription_data and subscription_data.get('CustomerId',''):
             customer_id = subscription_data.get('CustomerId','')
@@ -440,7 +440,7 @@ class res_partner(osv.osv):
                 }
                 return result
 
-	return False
+	return False'''
 
 res_partner()
 

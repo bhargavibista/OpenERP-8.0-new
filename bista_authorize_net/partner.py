@@ -28,7 +28,7 @@ class custmer_payment_profile(osv.osv):
                     if not profile_info.get('payment_profile'):
                       response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',False,partner_id,billing_address,shipping_address,profile_id,cc_number,exp_date,'return.order')
                       print"response CreateCustomerPaymentProfile bista authorize .net",response
-                      hfdjfhg
+                      
                       numberstring = response.get('customerPaymentProfileId',False)
                     else:
                         profile_info = profile_info.get('payment_profile')
@@ -46,6 +46,7 @@ class custmer_payment_profile(osv.osv):
         'customer_profile_id' : fields.char('Customer Profile ID',size=64),
         'credit_card_no' : fields.char('Credit Card No.',size=64),
         'active_payment_profile': fields.boolean('Active Payment Profile'),
+        'exp_date':fields.char('Expiration Date'),
     }
 custmer_payment_profile()
 
