@@ -14,3 +14,4 @@ class user_profile(models.Model):
     age_rating = fields.Char()
     pc_params = fields.Char()
     playjam_exported = fields.Boolean()
+    player_tag = fields.Char(string='Player Tag',size=100)

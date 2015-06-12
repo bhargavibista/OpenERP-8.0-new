@@ -4,6 +4,9 @@ from random import randint
 import hashlib
 import json
 from openerp.http import request
+import urllib
+import requests
+#from django.http import HttpRequest
 
 
 
@@ -417,4 +420,23 @@ class user_auth(models.Model):
                             return json.dumps({"body":{ "code":True, "message":"Success"}})
 
         return json.dumps({'body':{ "code":False, "message":"Playjam Server Issue."}})
+    
+    
+    def wallet_playjam(self, user_id, quantity, context=None):
+        url = "http://54.172.158.69/api/rest/flare/wallet/view.json"
+        headers = {'content-type': 'application/x-www-form-urlencoded'}
+
+        payload = {
+                        "uid": user_id,
+                        "quantity":float(quantity),
+                    }
+
+
+        data=json.dumps(payload)
+	print "data---------------------------",data
+        requ=urllib.quote(data.encode('utf-8'))
+        response = requests.post(
+                    url, data="request="+requ, headers=headers)
+        print"response.content",response.content
+        return response.content
 
