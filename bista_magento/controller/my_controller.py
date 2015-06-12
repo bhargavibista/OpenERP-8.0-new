@@ -1,17 +1,11 @@
-
-#import web.http as http
-##from http import request
-#import openerp.pooler as pooler
-#        {'params': {'a': 65765, 'b': 213}} calling data format  su openerp -c 'python openerp-server --db-filter=odoo_demo'
+# -*- coding: utf-8 -*-
+import json
 from openerp import http
 from openerp.http import request
-from openerp.addons.web.controllers.main import module_boot, login_redirect
 import openerp.pooler as pooler
 import ast
 import urllib
 from openerp.modules.registry import RegistryManager
-from openerp import SUPERUSER_ID
-
 
 
 class Magento(http.Controller):
@@ -34,6 +28,44 @@ class Magento(http.Controller):
 #        request.uid = request.session.uid
 #        request.disable_db = False
 #        return self.session_info()
+
+    @http.route('/flare/magento/LinkAccount', type='http', auth="none")
+    def LinkAccount(self, **kw):
+        result={}
+        t='true'
+        f='false'
+        print "aaaaaaaaaa------",kw
+#        want_code=False
+        if 'request' in kw:
+            request=kw.get('request')
+            string_con=str(request)
+            if '%' in string_con:
+                if '+' in string_con:
+                    string_con=string_con.replace('+','')
+                    string_con=urllib.unquote(string_con).decode('utf8')
+            if "true" in string_con:
+                string_con=string_con.replace('true', "True")
+                print "string--------------",string_con
+            if "false" in string_con:
+                string_con=string_con.replace('false', "False")
+            print "str(request)------",string_con,type(string_con),request
+            try:
+                dict_req = ast.literal_eval(str(string_con))
+            except Exception, e:
+                return str(json.dumps({"body":{'result':-1537}}))
+            print "request---------",dict_req,type(dict_req)
+            api_id=dict_req.get('ApiId')
+            db_name=dict_req.get('DBName')
+            pwd=dict_req.get('Password')
+            if api_id!= '123':
+                return str(json.dumps({"body":{"result":"Authentication Error!!"}}))
+            registry = RegistryManager.get(db_name)
+            with registry.cursor() as cr:
+                u = registry['user.auth']
+                result= u.link_account(dict_req)
+            print 'result---------------',result
+            return str(result)
+        return str({"body":{"result":"SERVER ERROR INVALID SYNTAX"}})
 
     @http.route('/flare/magento/ValidateActivationCode', type='http', auth="none")
     def ValidateActivationCode(self,s_action=None,**kw):
@@ -438,63 +470,7 @@ class Magento(http.Controller):
     #        ero
             return str(result)
         return str({"body":{"result":"SERVER ERROR INVALID SYNTAX"}})
-    
-    
-    @http.route('/flare/magento/LinkAccount', type='http', auth="none")
-    def LinkAccount(self,s_action=None,**kw):
-        result={}
-	t='true'
-        f='false'
-        print "aaaaaaaaaa------",self,kw
-#        want_code=False
 
-
-        if kw.has_key('request'):
-            requ=kw.get('request')
-            string_con=str(requ)
-            if '%' in string_con:
-                if '+' in string_con:
-                    string_con=string_con.replace('+','')
-                    string_con=urllib.unquote(string_con).decode('utf8')
-
-            if "true" in string_con:
-                string_con=string_con.replace('true', "True")
-                print "string--------------",string_con
-
-            if "false" in string_con:
-                string_con=string_con.replace('false', "False")
-
-
-            print "str(request)------",string_con,type(string_con),requ
-
-            try:
-                dict_req = ast.literal_eval(str(string_con))
-
-            except Exception ,e:
-                return req.make_response(str({"body":{'result':-1537}}), [('Content-Type', 'application/json; charset=UTF-8')])
-            
-            print "request---------",dict_req,type(dict_req)
-            api_id=dict_req.get('ApiId')
-            db_name=dict_req.get('DBName')
-            pwd=dict_req.get('Password')
-#            u_name=dict_req.get('UserName')
-            osv_pool = pooler.get_pool(str(db_name))
-            user = osv_pool.get('user.auth')
-            if not api_id=='123':
-                return str({"body":{"result":"Authentication Error!!"}})
-            #########odoo8 changes
-#            registry = openerp.modules.registry.Registry(str(db_name))
-#            with registry.cursor() as cr:
-#                result=user.link_account(cr,1,dict_req,{})
-            obj=request.registry['user.auth']
-            result=obj.link_account(dict_req,{})
-            print 'result---------------',result
-    #        user = osv_pool.get('res.users')
-            print "user--------------------",user
-    #        ero
-            return str(result)
-        return str({"body":{"result":"SERVER ERROR INVALID SYNTAX"}})
-    
     @http.route('/flare/magento/GetPaymentHistory', type='http', auth="none")
     def GetPaymentHistory(self,s_action=None,**kw):
         result={}
@@ -712,7 +688,7 @@ class Magento(http.Controller):
     def RedeemGiftCard(self,s_action=None,**kw):
         result={}
         print "aaaaaaaaaa------",self,kw
-        if kw.has_key('request'):
+        if 'request' in kw:
             requ=kw.get('request')
             string_con=str(requ)
             if '%' in string_con:
@@ -738,17 +714,14 @@ class Magento(http.Controller):
             print "request---------",dict_req,type(dict_req)
             api_id=dict_req.get('ApiId')
             db_name=dict_req.get('DBName')
-            osv_pool = pooler.get_pool(str(db_name))
-            user = osv_pool.get('res.partner')
-            if not api_id=='123':
+            registry = RegistryManager.get(db_name)
+            if api_id !='123':
                 return str({"body":{"result":"Authentication Error!!"}})
-#            registry = openerp.modules.registry.Registry(str(db_name))
-#            with registry.cursor() as cr:
-#                result=user.redeem_gift_card(cr ,1,dict_req,{})
-            obj=request.registry['res.partner']
-            result=obj.redeem_gift_card(request.cr ,1,dict_req,{})
-            print 'result---------------',result
-            print "user--------------------",user
+            with registry.cursor() as cr:
+                res_partner = registry['res.partner']
+                result = res_partner.redeem_gift_card(dict_req)
+
+            print 'result---------------',result            
             return str(result)
         return str({"body":{"result":"SERVER ERROR INVALID SYNTAX"}})
     
