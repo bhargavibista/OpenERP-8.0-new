@@ -16,8 +16,6 @@ class Playjam(http.Controller):
         t='true'
         f='false'
         want_code=False
-        osv_pool = pooler.get_pool('test_odoo8_1')
-        # user = osv_pool.get('user.auth')
 
         if kw.has_key('request'):
             requ=kw.get('request')
@@ -50,20 +48,93 @@ class Playjam(http.Controller):
             print "a-----",wc,dev_id
             print "wc-------",type(wc)
             if wc==u'True':
-                want_code=True
-            # registry = openerp.modules.registry.Registry('playjam_test')
-            # with registry.cursor() as cr:
-            #     result=user.get_key_code(cr,1,str(a),wc,dev_id,{})
-#            obj=self.env['user.auth']
-            registry = RegistryManager.get('test_odoo8_1')
+                want_code=True            
+            registry = RegistryManager.get('odoo_8_test_db')
             with registry.cursor() as cr:
                 u = registry['user.auth']
                 result = u.get_key_code(dev_id, wc)
-#            print"request.registry.get('user.auth')",obj
-#            result=obj.get_key_code(request.cr,dev_id,wc)
 
-            print 'result---------------',result
-            #        user = osv_pool.get('res.users')
-            #        ero
+            print 'result---------------',result            
             return str(result)
         return str({"body":{'result':-1537}})
+
+    @http.route('/flare/playjam/login', type='http', auth="public")
+    def login(self,**kw):
+        result={}
+        t='true'
+        f='false'
+        print "aaaaaaaaaa------",self,kw
+        want_code=False        
+
+        if 'request' in kw:
+            request=kw.get('request')
+            string_con=str(request)
+
+            if '%' in string_con:
+                #string_con=urllib.unquote(string_con).decode('utf8')
+                if '+' in string_con:
+                    string_con=string_con.replace('+','')
+                    string_con=urllib.unquote(string_con).decode('utf8')
+
+            print "str(request)------",string_con,type(string_con)
+
+            try:
+                dict_req = ast.literal_eval(str(string_con))
+
+            except Exception ,e:
+                return (str({"body":{'result':-1537}}))
+
+            print "request---------",dict_req,type(dict_req)
+            device_id=dict_req.get('deviceId')
+            auth_reply=dict_req.get('authReply')
+#            if auth_reply==None:
+#                auth_reply=""
+            print "a-----",device_id
+            print "wc-------",type(auth_reply),auth_reply
+            registry = RegistryManager.get('odoo_8_test_db')
+            with registry.cursor() as cr:
+                u = registry['user.auth']
+                result = u.user_login(dict_req)
+                            
+            print 'result---------------',result            
+            return (str(result))
+        return str({"body":{'result':1537}})
+
+    @http.route('/flare/playjam/topup', type='http', auth="public")
+    def topup(self,**kw):
+        result={}
+        t='true'
+        f='false'
+        print "aaaaaaaaaa------",self,kw,req
+        want_code=False
+        osv_pool = pooler.get_pool('playjam_test')
+        user = osv_pool.get('user.auth')
+
+        if 'request' in kw:
+            request=kw.get('request')
+            string_con=str(request)
+
+            if '%' in string_con:
+                #string_con=urllib.unquote(string_con).decode('utf8')
+                if '+' in string_con:
+                    string_con=string_con.replace('+','')
+                    string_con=urllib.unquote(string_con).decode('utf8')
+
+            print "str(request)------",string_con,type(string_con)
+            try:
+                dict_req = ast.literal_eval(str(string_con))
+
+            except Exception ,e:
+                return (str({"body":{'result':-1537}}))
+
+
+            print "request---------",dict_req,type(dict_req)
+            session_token=dict_req.get('deviceId')
+            auth_reply=dict_req.get('authReply')
+            registry = RegistryManager.get('odoo_8_test_db')
+            with registry.cursor() as cr:
+                u = registry['user.auth']
+                result = u.wallet_top_up(dict_req)            
+            print 'result---------------',result            
+            return (str(result))
+        return str({"body":{'result':1537}})
