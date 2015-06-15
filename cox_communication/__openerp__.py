@@ -54,7 +54,7 @@ This module is built to handle requirements of Cox Communication.
         'partner_policy_view.xml',
         'invoice_view.xml',
         'res_partner_view.xml',
-        'product_view.xml',
+        # 'product_view.xml',
         'crm_helpdesk.xml',
         'reasons_view.xml',
         'returns_view.xml',
