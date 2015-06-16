@@ -32,6 +32,7 @@ class customer_profile_payment_profile(osv.osv_memory):
             shipping_address = current_obj.shipping_addr
             email = partner_id_obj.emailid
             ccn = current_obj.auth_cc_number
+            ccv=current_obj.ccv
             exp_date = current_obj.auth_cc_expiration_date
 #            exp_date = exp_date[:4] + '-' + exp_date[4:]
             exp_date = exp_date[-4:] + '-' + exp_date[:2]
@@ -49,17 +50,17 @@ class customer_profile_payment_profile(osv.osv_memory):
                                 profile_info = authorize_net_config.call(cr,uid,config_obj,'GetCustomerProfile',cust_profile_Id)
                                 print "profile_info",profile_info
                                 if not profile_info.get('payment_profile'):
-                                  response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',active_id[0],False,False,False,cust_profile_Id,ccn,exp_date,act_model)
+                                  response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',active_id[0],False,False,False,cust_profile_Id,ccn,exp_date,ccv,act_model)
                                   numberstring = response.get('customerPaymentProfileId',False)
                                 else:
                                     profile_info = profile_info.get('payment_profile')
                                     if ccn[-4:] in profile_info.keys():
                                         numberstring =  profile_info[ccn[-4:]]
                                     else:
-                                        response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',False,partner_id[0],billing_address,shipping_address,cust_profile_Id,ccn,exp_date,'res.partner')
+                                        response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',False,partner_id[0],billing_address,shipping_address,cust_profile_Id,ccn,exp_date,ccv,'res.partner')
                                         numberstring = response.get('customerPaymentProfileId',False)
                             else:
-                                response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',False,partner_id[0],billing_address,shipping_address,cust_profile_Id,ccn,exp_date,'res.partner')
+                                response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',False,partner_id[0],billing_address,shipping_address,cust_profile_Id,ccn,exp_date,ccv,'res.partner')
                                 print"response",response
                                 numberstring = response.get('customerPaymentProfileId',False)
                 else:
@@ -72,19 +73,19 @@ class customer_profile_payment_profile(osv.osv_memory):
                             profile_info = authorize_net_config.call(cr,uid,config_obj,'GetCustomerProfile',cust_profile_Id)
                             print "profile_info",profile_info
                             if not profile_info.get('payment_profile'):
-                              response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',False,partner_id[0],billing_address,shipping_address,cust_profile_Id,ccn,exp_date,'res.partner')
+                              response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',False,partner_id[0],billing_address,shipping_address,cust_profile_Id,ccn,exp_date,ccv,'res.partner')
                               numberstring = response.get('customerPaymentProfileId',False)
                             else:
                                 profile_info = profile_info.get('payment_profile')
                                 if ccn[-4:] in profile_info.keys():
                                     numberstring =  profile_info[ccn[-4:]]
                                 else:
-                                    response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',False,partner_id[0],billing_address,shipping_address,cust_profile_Id,ccn,exp_date,'res.partner')
+                                    response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',False,partner_id[0],billing_address,shipping_address,cust_profile_Id,ccn,exp_date,ccv,'res.partner')
                                     numberstring = response.get('customerPaymentProfileId',False)
                 
                 if numberstring:
                         payment_profile = {ccn[-4:]: numberstring}
-                        self.pool.get('res.partner').cust_profile_payment(cr,uid,partner_id[0],cust_profile_Id,payment_profile,context)
+                        self.pool.get('res.partner').cust_profile_payment(cr,uid,partner_id[0],cust_profile_Id,payment_profile,exp_date,context)
             else:
                 raise osv.except_osv('Define Authorize.Net Configuration!', 'Warning:Define Authorize.Net Configuration!')
         return {'type': 'ir.actions.act_window_close'}
