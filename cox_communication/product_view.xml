@@ -34,6 +34,7 @@
                             <field name="free_trail_days" attrs="{'invisible':[('type','&lt;&gt;','service')]}"/>
                             <field name="product_type" required="1"/>
                             <field name="recurring_service" attrs="{'invisible':[('type','&lt;&gt;','service')]}"/>
+                            <field name="app_id" attrs="{'invisible':[('type','&lt;&gt;','service')],'required':[('type','=','service')]}"/>
                             <!--<label for="recurring_service"/>-->
 <!--		       <field name="start_date"/>-->
                         </group>
