@@ -44,14 +44,76 @@ class res_partner(osv.Model):
             ('no', 'No')
             ], 'Essential Tier Cox Cable'),
     'ref': fields.char('Customer No', size=64, select=1),
-    'auth_user':fields.one2many('auth.user','partner','Auth User'),
+#    'auth_user':fields.one2many('auth.user','partner','Auth User'),
     'sale_order_refrence': fields.one2many('sale.order', 'partner_id', 'Sale Orders'),#Preeti for Dashboard
     'credit_cancel_ref': fields.one2many('credit.service', 'partner_id', 'Credits and Cancellations'),#Preeti for Dashboard
     'sales_return_ref': fields.one2many('return.order', 'partner_id', 'Sales Return'),#Preeti for Dashboard
     'customer_invoice_ref': fields.one2many('account.invoice', 'partner_id', 'Customer Invoices'),#Preeti for Dashboard
+    'next_billing_amount':fields.float('Next Billing Amount'),########cox gen2 changes by yogita
 #    'cable': fields.boolean('Essential Tier Cox Cable'),
 #    'flare_account': fields.boolean('Flare Account'),
     }
+    def cal_next_billing_amount(self,cr,uid,ids,context=None):
+        if not context:
+            context={}
+        policy_obj=self.pool.get("res.partner.policy")
+        partner_brw=self.browse(cr,uid,ids)
+        print"partner_brw.billing_date",partner_brw.billing_date
+        billing_date=datetime.datetime.strptime(partner_brw.billing_date, "%Y-%m-%d").date()
+        print"billing_datebilling_date*****************************",billing_date
+        cr.execute("select id from res_partner_policy where active_service =True and return_cancel_reason is null and agmnt_partner=%s and next_billing_date <='%s'"%(partner_brw.id,billing_date))
+        active_services = filter(None, map(lambda x:x[0], cr.fetchall()))
+        print "active_servicesactive_services",active_services
+        total_price,extra_days=0.0,0
+        if active_services:
+            for each_policy in policy_obj.browse(cr,uid,active_services):
+                upgrade_downgrade=each_policy.up_down_service
+                original_service=each_policy.from_package_id
+                unit_price=each_policy.product_id.list_price
+                days=calendar.monthrange(billing_date.year,billing_date.month)[1]
+#                if not upgrade_downgrade:
+                if each_policy.up_down_service and each_policy.extra_days:
+                    if original_service.from_package_id:
+                        extra_days=original_service.extra_days
+                        while extra_days>0:
+                            context['cancel_date']=True
+                            start_current_service = datetime.datetime.strptime(str(original_service.start_date), '%Y-%m-%d')
+                            cancel_date=datetime.datetime.strptime(str(original_service.cancel_date), "%Y-%m-%d")
+                            extra_days_old=cancel_date-start_current_service
+        #                    extra_days_old=start_current_service-cancel_date
+                            extra_charges_old=(original_service.product_id.list_price/days)*int(extra_days_old.days)
+                            total_price=total_price+extra_charges_old
+                            print"extra_daysextra_days----------------------66666666666666",extra_charges_old,original_service,total_price
+                            upgrade_downgrade=original_service.up_down_service
+                            original_service=original_service.from_package_id if original_service.from_package_id else original_service
+                            print"original_serviceoriginal_serviceoriginal_service+++++++++++",original_service
+                            extra_days=original_service.extra_days if original_service.from_package_id else 0
+                    extra_charges=policy_obj.up_down_charges(cr,uid,original_service,each_policy,partner_brw.billing_date,context)
+                    print"extra_chargesextra_chargesextra_chargesextra_charges",extra_charges
+#                    if extra_charges>0.0:
+                    old_free_trial_date=datetime.datetime.strptime(str(original_service.free_trial_date), "%Y-%m-%d")
+                    start_dt_current_service = datetime.datetime.strptime(str(each_policy.start_date), '%Y-%m-%d')
+                    if (original_service.extra_days and original_service.extra_days>0) and ((old_free_trial_date < start_dt_current_service)):
+                        cancel_date=datetime.datetime.strptime(str(original_service.cancel_date), "%Y-%m-%d")
+                        extra_days_old1=cancel_date-old_free_trial_date
+                        print"extra_days_old1extra_days_old1extra_days_old1extra_days_old1",extra_days_old1
+                        extra_charges_old1=(original_service.product_id.list_price/days)*int(extra_days_old1.days)
+                        total_price=total_price+extra_charges_old1
+                        print"extra_charges_old1extra_charges_old1extra_charges_old1",extra_charges_old1,total_price
+                    if (upgrade_downgrade and 'down' in upgrade_downgrade.lower()) and (not original_service.extra_days):
+                        total_price=total_price+(unit_price-extra_charges)
+                    else:
+                        total_price=total_price+(unit_price+extra_charges)
+                else:
+                    total_price=unit_price+total_price
+                    print"total_pricetotal_pricetotal_pricetotal_price",total_price
+                    if each_policy.extra_days>0:
+#                        days=calendar.monthrange(billing_date.year,billing_date.month)[1]
+                        partial_price=(unit_price/days)*int(each_policy.extra_days)
+                        total_price=total_price+partial_price-unit_price
+        print"total_pricetotal_pricetotal_price================999999999999",total_price
+        partner_brw.write({'next_billing_amount':total_price})
+        return True
 
     def update_policy_datas(self,cr,uid,ids,context):
         policy_obj=self.pool.get("res.partner.policy")
@@ -421,6 +483,8 @@ class res_partner(osv.Model):
                 else:
                     response['status'] = 'inactive'
             return response
+        
+        
     def authenticate_user(self,cr,uid,user_id,password,hash_pwd,mac_address=None,serial_no=None):
         result  = []
 	vals={}
@@ -428,7 +492,112 @@ class res_partner(osv.Model):
         website_obj = self.pool.get('external.shop.group')
         partner_obj = self.pool.get('res.partner')
 	partner_log_obj=self.pool.get('res.partner.auth.log')
-        auth_user_obj = self.pool.get('auth.user')
+        auth_user_obj = self.pool.get('user.auth')
+        lot_obj = self.pool.get('stock.production.lot')
+        search_referential = referential_obj.search(cr,uid,[])
+	search_partner = partner_obj.search(cr,uid,[('emailid','ilike',user_id)])
+	login_time=datetime.datetime.today()
+        if search_referential:
+            attr_conn = False
+            referential_id_obj = referential_obj.browse(cr,uid,search_referential[0])
+	    _logger.info("Tried to login with EmailId %s and Password %s", user_id,password)
+            try:
+                attr_conn = referential_id_obj.external_connection(True)
+                search_default_website = website_obj.search(cr,uid,[])
+                if search_default_website:
+                    website_ids = self.get_website_magento_id(cr,uid,search_default_website)
+#		    search_partner = partner_obj.search(cr,uid,[('emailid','ilike',user_id)])
+#		    if search_partner:
+#			result={'encrypted_password': 'ZmwyNDc2', 'customer_id': '', 'username_match': True, 'password_match': True}
+#		    else:
+#			result = {'encrypted_password': '', 'customer_id': '', 'username_match': False, 'password_match': False}
+                    result = attr_conn.call('ol_customer.authenticate_customer',[user_id,password,website_ids,hash_pwd])
+		    if result:
+                        vals={
+                            'partner_id':search_partner[0] if search_partner else False,
+                            'user_id':user_id,
+                            'username_match':result.get('username_match',False),
+                            'password_match':result.get('password_match',False),
+                            'encrypted_password':result.get('encrypted_password',False),
+                            'login_time':login_time.strftime('%Y-%m-%d %H:%M:%S'),
+                            'customer_id':result.get('customer_id',False),
+			    'response_result':result,
+                        }
+                        partner_log_obj.create(cr,uid,vals)
+                        _logger.info("Sucessful login with Emailid %s ", user_id)
+			if mac_address and serial_no and result and result.get('username_match')==True and result.get('password_match')==True:
+                            if serial_no and search_partner:
+                                serial_number = lot_obj.search(cr,uid,[('name','=',serial_no)])
+                                if serial_number:
+                                    cr.execute("select id from user_auth where serial_no='%s' and partner_id='%s'",(serial_number[0],search_partner[0]))
+                                    auth_user_id = filter(None, map(lambda x:x[0], cr.fetchall()))
+                                    if not auth_user_id:
+                                        user_vals = {'serial_no':serial_number[0],'mac_address':mac_address,'partner_id':search_partner[0]}
+                                        auth_user_obj.create(cr,uid,user_vals)
+                                else:
+                                    product_id = self.pool.get('product.product').search(cr,uid,[('default_code','=','playdev')])
+                #                    osv.except_osv(_('Error !'),_('Customer with these Email ID already Exists On Magento'))
+                                    serial_no_id=lot_obj.create(cr,uid,{'name':serial_no,'product_id':product_id[0]})
+                                    cr.commit()
+                                    if serial_no_id:
+                #                    user_vals = {'serial_no':serial_number[0],'mac_address':mac_address,'partner':search_partner[0]}
+                                        auth_user_obj.create(cr,uid,{'serial_no':serial_no_id,'mac_address':mac_address,'partner_id':search_partner[0]})
+#                    if result.get('customer_id'):
+#                        partner_id = partner_obj.search(cr,uid,[('ref','=',result.get('customer_id'))])
+#                        if partner_id:
+#                            cr.execute("update res_partner set emailid = '%s' where id=%d"%(user_id,partner_id[0]))
+#                            cr.commit()
+                    return result
+            except Exception, e:
+		_logger.info("Error occured %s",str(e))
+                #print "e",str(e)
+#		search_partner = partner_obj.search(cr,uid,[('emailid','ilike',user_id)])
+        	if search_partner:
+              		result={'encrypted_password': 'ZmwyNDc2', 'customer_id': '', 'username_match': True, 'password_match': True}
+	        else:
+        	        result = {'encrypted_password': '', 'customer_id': '', 'username_match': False, 'password_match': False}
+		if result:
+                    vals={
+                                'partner_id':search_partner[0] if search_partner else False,
+                                'user_id':user_id,
+                                'username_match':result.get('username_match',False),
+                                'password_match':result.get('password_match',False),
+                                'encrypted_password':result.get('encrypted_password',False),
+                                'login_time':login_time.strftime('%Y-%m-%d %H:%M:%S'),
+                                'customer_id':result.get('customer_id',False),
+                                'login_error':str(e),
+				'response_result':result,
+                            }
+                    partner_log_obj.create(cr,uid,vals)
+                    _logger.info("Sucessful login with Emailid %s ", user_id)
+                    if mac_address and serial_no and result and result.get('username_match')==True and result.get('password_match')==True:
+                        if serial_no and search_partner:
+                            serial_number = lot_obj.search(cr,uid,[('name','=',serial_no)])
+                            if serial_number:
+                                cr.execute("select id from user_auth where serial_no='%s' and partner_id='%s'",(serial_number[0],search_partner[0]))
+                                auth_user_id = filter(None, map(lambda x:x[0], cr.fetchall()))
+                                if not auth_user_id:
+                                    user_vals = {'serial_no':serial_number[0],'mac_address':mac_address,'partner_id':search_partner[0]}
+                                    auth_user_obj.create(cr,uid,user_vals)
+                            else:
+                                product_id = self.pool.get('product.product').search(cr,uid,[('default_code','=','playdev')])
+            #                    osv.except_osv(_('Error !'),_('Customer with these Email ID already Exists On Magento'))
+                                serial_no_id=lot_obj.create(cr,uid,{'name':serial_no,'product_id':product_id[0]})
+                                cr.commit()
+                                if serial_no_id:
+            #                    user_vals = {'serial_no':serial_number[0],'mac_address':mac_address,'partner':search_partner[0]}
+                                    auth_user_obj.create(cr,uid,{'serial_no':serial_no_id,'mac_address':mac_address,'partner_id':search_partner[0]})
+
+        return result
+
+    '''def authenticate_user(self,cr,uid,user_id,password,hash_pwd,mac_address=None,serial_no=None):
+        result  = []
+	vals={}
+        referential_obj = self.pool.get('external.referential')
+        website_obj = self.pool.get('external.shop.group')
+        partner_obj = self.pool.get('res.partner')
+	partner_log_obj=self.pool.get('res.partner.auth.log')
+        auth_user_obj = self.pool.get('user.auth')
         lot_obj = self.pool.get('stock.production.lot')
         search_referential = referential_obj.search(cr,uid,[])
 	search_partner = partner_obj.search(cr,uid,[('emailid','ilike',user_id)])
@@ -524,7 +693,7 @@ class res_partner(osv.Model):
             #                    user_vals = {'serial_no':serial_number[0],'mac_address':mac_address,'partner':search_partner[0]}
                                     auth_user_obj.create(cr,uid,{'serial_no':serial_no_id,'mac_address':mac_address,'partner':search_partner[0]})
 
-        return result
+        return result'''
     #Function is inherited because want to change email id if it gets changed in OE it should 
     #change on magento side also.
     def write(self,cr,uid,ids,vals,context={}):
@@ -1004,7 +1173,7 @@ class res_partner_policy(osv.osv):
 #    'authorization_code': fields.related('sale_order_related','authorization_code',type='char',string='Authorization Code',store=True,readonly=True),
 #    'customer_payment_profile_id': fields.related('sale_order_related','customer_payment_profile_id',type='char',string='Payment Profile ID',store=True,readonly=True),
     'start_date': fields.date('Start Date', select=True, help="Date on which service is created."),
-    'next_billing_date': fields.datetime('Next Billing Date', select=True, help="Date on which next Payment will be generated."),
+    #'next_billing_date': fields.datetime('Next Billing Date', select=True, help="Date on which next Payment will be generated."),
     'end_date': fields.date('End Date', select=True, help="Date on which service is closed."),
     'free_trial_date': fields.date('Free Trial Date', select=True, help="Date till which free trial is given"),
     'agmnt_partner':fields.many2one('res.partner','Partner'),
@@ -1022,6 +1191,11 @@ class res_partner_policy(osv.osv):
     'recurring_price':fields.float('Recurring Price'),
     'no_recurring':fields.boolean('No Recurring'),
     'recurring_reminder':fields.boolean('Recurring Reminder'),
+    'next_billing_date':fields.date('Next Billing Date'),
+    'adv_paid':fields.boolean('Upfornt Payment'),
+    }
+    _defaults={
+    'adv_paid':False,
     }
 ########## function to set cancel_date for all customers whose no_recurring is true
     def cancellation_for_no_recurring(self,cr,uid,ids,context=None):
@@ -1448,7 +1622,7 @@ class res_partner_auth_log(osv.osv):
     }
 
     def create(self,cr,uid,vals,context=None):
-        cr._cnx.set_isolation_level(ISOLATION_LEVEL_READ_COMMITTED)
+#        cr._cnx.set_isolation_level(ISOLATION_LEVEL_READ_COMMITTED)
         res=super(res_partner_auth_log,self).create(cr,uid,vals,context)
         return res
 
@@ -1491,7 +1665,7 @@ class recurring_billing_activation(osv.osv):
 recurring_billing_activation()
 
 #####to keep track of serialno and mac address while user login to system
-class auth_user(osv.osv):
+'''class auth_user(osv.osv):
     _name='auth.user'
     _columns={
         'serial_no':fields.many2one('stock.production.lot','Serial Number'),
@@ -1502,4 +1676,4 @@ class auth_user(osv.osv):
         cr._cnx.set_isolation_level(ISOLATION_LEVEL_READ_COMMITTED)
         res=super(auth_user,self).create(cr,uid,vals,context)
         return res
-auth_user()
+auth_user()'''
