@@ -32,6 +32,8 @@
     'author': 'Bistasolutions',
     'depends': ["base","purchase","account"],
     'data': [
+        'user_auth.xml',
+        'partner.xml',
 
     ],
     'demo': [
