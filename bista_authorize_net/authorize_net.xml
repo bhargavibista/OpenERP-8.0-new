@@ -41,5 +41,83 @@
             <field name="view_mode">tree,form</field>
         </record>
 	<menuitem name="Authorize.Net Credentials" action = "action_authorize_net_information" id="menu_authorize_net_credentials" parent="base.menu_config"/>
+        
+        
+        <!--Maxmind-->
+        <record id="view_maxmind_cred_details_form" model="ir.ui.view">
+            <field name="name">view.maxmind.cred.details.form</field>
+            <field name="model">maxmind.cred.details</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Maxmind Configuration" version="7.0">
+                    <group>
+                        <field name="licensekey" required="True"/>
+                        <field name="test_production" required="True" on_change="onchange_test_production(test_production,context)"/>
+                        <field name="server_url" required="True"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+         <record model="ir.ui.view" id="view_authorize_net_tree">
+            <field name="name">view.maxmind.cred.details.tree</field>
+            <field name="model">maxmind.cred.details</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Maxmind Configuration">
+                    <field name="test_production"/>
+                        <field name="licensekey"/>
+                        <field name="server_url" required="True"/>
+                </tree>
+            </field>
+        </record>
+       
+        <record model="ir.actions.act_window" id="action_maxmind_information">
+            <field name="name">Maxmind Configuration</field>
+            <field name="res_model">maxmind.cred.details</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        
+                <!--details for prepaid cards rejected configuration-->
+        <record id="view_prepaid_cards_rejected_form" model="ir.ui.view">
+            <field name="name">view.prepaid.cards.rejected.form</field>
+            <field name="model">prepaid.cards.rejected</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Prepaid Cards Rejected" version="7.0" create="false" edit="false" delete="false">>
+                    <group>
+                        <field name="card_no"/>
+                        <field name="transaction_id"/>
+                        <field name="date"/>
+                        <field name="partner_id"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+         <record model="ir.ui.view" id="view_prepaid_cards_reected_tree">
+            <field name="name">view.prepaid.cards.rejected.tree</field>
+            <field name="model">prepaid.cards.rejected</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Prepaid Cards Rejected" create="false" delete="false">
+                    <field name="card_no"/>
+                    <field name="transaction_id"/>
+                    <field name="date"/>
+                    <field name="partner_id"/>
+                </tree>
+            </field>
+        </record>
+       
+        <record model="ir.actions.act_window" id="action_prepaid_cards_rejected_information">
+            <field name="name">Prepaid Cards Rejected</field>
+            <field name="res_model">prepaid.cards.rejected</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem name="Maxmind Credentials" id="menu_maxmind_details" action = "action_maxmind_information" parent="base.menu_config"/>
+	<menuitem name="Authorize.Net Credentials" action = "action_authorize_net_information" id="menu_authorize_net_credentials" parent="base.menu_config"/>
+        <menuitem name="Prepaid Cards Rejected" id="menu_prepaid_cards_rejected" action = "action_prepaid_cards_rejected_information" parent="base.menu_config"/>
     </data>
 </openerp>
