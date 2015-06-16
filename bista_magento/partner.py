@@ -607,161 +607,161 @@ class res_partner(models.Model):
             if value is '':
                 result={"body":{ 'code':False, 'message':"('%s Not found')"%(key)}}
                 return json.dumps(result)
-#        try:
-        today=datetime.date.today()
-        print"today",today
-        partner_obj=self.pool.get('res.partner')
-        sale_obj=self.pool.get("sale.order")
-        billing_info=dict_exist.get('billing_info')
-        total=dict.get('Total')
-#            sale_shop=self.pool.get("sale.shop")
-        customer_id=partner_obj.search(request.cr,SUPERUSER_ID,[('id','=',int(dict_exist.get('partner_id')))])
-        print "customer_idcustomer_id",customer_id
-        if not customer_id:
-            result={"body":{ 'code':False, 'message':"Customer not found!!!!"}}
-            return json.dumps(result)
-        warehouse_id=warehouse_obj.search(request.cr,SUPERUSER_ID,[('name','ilike','company')])
-        warehouse_brw = warehouse_obj.browse(request.cr, SUPERUSER_ID, warehouse_id[0])
-        if warehouse_brw and warehouse_brw.lot_stock_id:
-            location_id= warehouse_brw.lot_stock_id.id
-            print "location_idlocation_id",location_id
-        partner_brw=partner_obj.browse(request.cr,SUPERUSER_ID,int(dict_exist.get('partner_id')))
-        pricelist = partner_brw.property_product_pricelist.id or False
-        shipping_add=dict_exist.get('shipping_add')
-        inv_add=dict_exist.get('billing_info').get('BillingAddress')
-        if inv_add.get('Street1') and inv_add.get('Street2'):
-            street1_inv=inv_add.get('Street1')
-            street2_inv=inv_add.get('Street2')
-        else:
-            street1_inv=inv_add.get('Street1')
-        if shipping_add.get('Street1') and shipping_add.get('Street2'):
-            street1=shipping_add.get('Street1')
-            street2=shipping_add.get('Street2')
-        else:
-            street1=shipping_add.get('Street1')
-        city=shipping_add.get('City')
-        state=shipping_add.get('State')
-        city_inv=inv_add.get('City')
-        state_inv=inv_add.get('State')
-        state_id=self.pool.get('res.country.state').search(request.cr,SUPERUSER_ID,[('code','=',state)])
-        state_id_inv=self.pool.get('res.country.state').search(request.cr,SUPERUSER_ID,[('code','=',state_inv)])
-        country_id=self.pool.get('res.country.state').browse(request.cr, SUPERUSER_ID, state_id[0], context).country_id.id
-        country_id_inv=self.pool.get('res.country.state').browse(request.cr, SUPERUSER_ID, state_id_inv[0], context).country_id.id
-        zip=shipping_add.get('Zip')
-        zip_inv=inv_add.get('Zip')
-        print state_id,state_id_inv,country_id,country_id_inv,zip,zip_inv
-        if state_id and country_id:
-            print street1,street2,zip
-            ship_add=partner_obj.search(request.cr,SUPERUSER_ID,[('id','=',int(dict_exist.get('partner_id'))),('street','ilike',street1),('street2','ilike',street2),('city','=',city),('zip','=',zip),('state_id','=',state_id[0]),('country_id','=',country_id)])
-            if not ship_add:
-                vals1 = {'parent_id': int(dict_exist.get('partner_id')),'name':partner_brw.name,'address_type': 'delivery','city':city,'phone': partner_brw.phone,'street':street1,'street2': street2 or '', 'state_id':state_id[0],'country_id':country_id,'zip':zip}
-                ship_add=partner_obj.create(request.cr, SUPERUSER_ID, vals1, context=context)
-                print "ship addd--------------------",ship_add
-            else:
-                ship_add=ship_add[0]
-                print "else ship add-----------------",ship_add
-        if state_id_inv and country_id_inv:
-            print street1_inv,street2_inv,city_inv,state_id_inv,country_id_inv
-            invoice_add=partner_obj.search(request.cr,SUPERUSER_ID,[('id','=',int(dict_exist.get('partner_id'))),('street','ilike',street1_inv),('street2','ilike',street2_inv),('city','=',city_inv),('zip','=',zip_inv),('state_id','=',state_id_inv[0]),('country_id','=',country_id_inv)])
-            if not invoice_add:
-                print "no invoice address found.................."
-                vals2 = {'city':city_inv,'street':street1_inv,'street2': street2_inv or '', 'state_id':state_id_inv[0],'country_id':country_id_inv,'zip':zip_inv}
-                print "vals22------------------",vals2,int(dict_exist.get('partner_id'))
-                new_inv_add=partner_obj.write(request.cr,SUPERUSER_ID,int(dict_exist.get('partner_id')), vals2)
-                print "new_inv_addnew_inv_add",new_inv_add
-                invoice_add=int(dict_exist.get('partner_id'))
-            else:
-                invoice_add=invoice_add[0]
-            print "invoice_addinvoice_addfound----------",invoice_add
-        if 'PaymentProfileId' in dict_exist.get('billing_info'):
-            payment_profile_id=billing_info.get('PaymentProfileId')
-        if dict.get('tru'):
-            sales_channel='tru'
-        elif dict.get('wallet_purchase'):
-            sales_channel='playjam'
-        else:
-            sales_channel='ecommerce'
-        fpos = partner_brw.property_account_position and  partner_brw.property_account_position.id or False
-#        print"fpos",fpos
-        so_data = {'partner_id':int(dict_exist.get('partner_id')),'amount_total':total,'magento_so_id':dict_exist.get('magento_orderid'),'pricelist_id': pricelist,'cox_sales_channels':sales_channel,'partner_invoice_id': invoice_add,'partner_shipping_id': ship_add,'location_id':location_id,'date_order': today, 'fiscal_position':fpos}
-        print"so_data",so_data
-        new_id = sale_obj.create(request.cr,SUPERUSER_ID, so_data, context=context)
-        print"new_id",new_id
-        sale_brw=sale_obj.browse(request.cr,SUPERUSER_ID,new_id)
-        print "dict_exist.get('lines')---------------------",dict_exist.get('lines')
-        for each in dict_exist.get('lines'):
-            print "each!!!!!!!!!!!!!!!!!!!!!!!---------------------!!!!!!!!!!!!!!1",each
-            each_param=dict_exist.get('lines').get(each)
-#                price=each_param.get('Price')
-            productid=each_param.get('ProductId')
-            product_id=product_obj.search(request.cr,SUPERUSER_ID,[('id','=',productid)])
-            print"product_id",product_id
-            if product_id:
-                price=product_obj.browse(request.cr,SUPERUSER_ID,productid).list_price
-                prdct_name=str(product_obj.browse(request.cr,SUPERUSER_ID,productid).name)
-                request.cr.execute("select product_id from res_partner_policy where active_service =True and agmnt_partner = %s"%(int(dict_exist.get('partner_id'))))
-                active_services = filter(None, map(lambda x:x[0], request.cr.fetchall()))
-                print "active_services",active_services
-#                    sub_components = self.pool.get('extra.prod.config').search(cr,uid,[('product_id','=',product_id)])
-                quantity=each_param.get('Qty')
-                print "quantityquantityquantity",quantity
-                context.update({'active_model': 'sale.order','magento_orderid': dict_exist.get('magento_orderid'),'active_id':new_id})
-                line_data = {'order_id': new_id,'name':prdct_name,'price_unit': price,'product_uom_qty': quantity or 1.0,'product_uos_qty': quantity or 1.0,'product_id': product_id[0] or False,'actual_price':0.0}
-                print "line data........................................",line_data
-                sale_line_id=self.pool.get("sale.order.line").create(request.cr, SUPERUSER_ID, line_data, context=context)
-                print "sale line id...............................",sale_line_id
-                sub_components = product_obj.browse(request.cr,SUPERUSER_ID,product_id[0]).ext_prod_config
-                print "sub_componentssub_components",sub_components,product_id
-                if sub_components:
-                    for each_sub_comp in sub_components:
-                        comp_prod_id=each_sub_comp.comp_product_id.id
-                        price=each_sub_comp.price
-                        print "pricepricepricepriceof each subcomponent.................",price
-                        print "comp_prod_idcomp_prod_id",comp_prod_id
-                        product_type=product_obj.browse(request.cr,SUPERUSER_ID,comp_prod_id).type
-                        print "product_typeproduct_type",product_type
-                        if product_type=='service':
-                            if comp_prod_id in active_services:
-                                result={"body":{ 'code':'False', 'message':"Subscription is already active for requested service"}}
-                                return json.dumps(result)
-                        sub_comp_data=({'name':each_sub_comp.comp_product_id.name,'qty_uom':float(quantity) or 1.0,'product_id':comp_prod_id,'price':price,'so_line_id':sale_line_id,'product_type':product_type,'uom_id':each_sub_comp.product_id.uom_id.id or 1})
-                        sub_comp_id=self.pool.get('sub.components').create(request.cr,SUPERUSER_ID,sub_comp_data,context=context)
-            else:
-                result={"body":{ 'code':False, 'message':"Product Not Found!!!!"}}
+        try:
+            today=datetime.date.today()
+            print"today",today
+            partner_obj=self.pool.get('res.partner')
+            sale_obj=self.pool.get("sale.order")
+            billing_info=dict_exist.get('billing_info')
+            total=dict.get('Total')
+    #            sale_shop=self.pool.get("sale.shop")
+            customer_id=partner_obj.search(request.cr,SUPERUSER_ID,[('id','=',int(dict_exist.get('partner_id')))])
+            print "customer_idcustomer_id",customer_id
+            if not customer_id:
+                result={"body":{ 'code':False, 'message':"Customer not found!!!!"}}
                 return json.dumps(result)
-        so_name=sale_brw.name
-#        call at Authorize end for an existing profile
-        if payment_profile_id:
-            print"payment_profile_id",payment_profile_id
-            context.update({'cust_payment_profile_id':payment_profile_id,'captured_api':True})
-            exis_pay_profile=self.pool.get('charge.customer').charge_customer(request.cr,SUPERUSER_ID,[new_id],context)
-            print"exis_pay_profile",exis_pay_profile
-            result={"body":{ 'code':True, 'message':"Success",'OrderNo':so_name}}
-        elif dict.has_key('tru') or dict.has_key('wallet_purchase'):
-            new_pay_prfl=self.pool.get('customer.profile.payment').charge_customer(request.cr,SUPERUSER_ID,[new_id],context)
-            print "new pay profile.......................",new_pay_prfl
-            if dict.has_key('wallet_purchase'):
-                amount_deduct=float(new_pay_prfl.get('context').get('default_amount'))
-                exist_wallet_quantity=float(partner_brw.wal_bal)
-                if amount_deduct:
-                    if exist_wallet_quantity:
-                        amnt_after_deduction=exist_wallet_quantity-amount_deduct
-                    else:
-                        amnt_after_deduction=amount_deduct
-                    partner_obj.write(request.cr,request.uid,int(dict_exist.get('partner_id')),{'wal_bal':amnt_after_deduction})
-            result={"body":{ 'code':True, 'message':"Success",'OrderNo':so_name}}
-#        call at Authorize for a new profile creation
-        elif billing_info.get('CreditCard'):
-            credit_card=billing_info.get('CreditCard')
-            if not (credit_card.get('CCV') or credit_card.get('CCNumber') or credit_card.get('ExpDate')):
-                result={"body":{ 'code':'False', 'message':"CC Number or CCv or Expiration Date missing for credit card"}}
-                return json.dumps(result)
+            warehouse_id=warehouse_obj.search(request.cr,SUPERUSER_ID,[('name','ilike','company')])
+            warehouse_brw = warehouse_obj.browse(request.cr, SUPERUSER_ID, warehouse_id[0])
+            if warehouse_brw and warehouse_brw.lot_stock_id:
+                location_id= warehouse_brw.lot_stock_id.id
+                print "location_idlocation_id",location_id
+            partner_brw=partner_obj.browse(request.cr,SUPERUSER_ID,int(dict_exist.get('partner_id')))
+            pricelist = partner_brw.property_product_pricelist.id or False
+            shipping_add=dict_exist.get('shipping_add')
+            inv_add=dict_exist.get('billing_info').get('BillingAddress')
+            if inv_add.get('Street1') and inv_add.get('Street2'):
+                street1_inv=inv_add.get('Street1')
+                street2_inv=inv_add.get('Street2')
             else:
-                context.update({'ccv': credit_card.get('CCV'),'exp_date': credit_card.get('ExpDate'),'action_to_do':'new_customer_profile','magento_orderid': dict_exist.get('magento_orderid'),'sale_id':[new_id],'cc_number':credit_card.get('CCNumber')})
-                new_pay_prfl=self.pool.get('customer.profile.payment').charge_customer(request.cr,SUPERUSER_ID,[new_id],context)
+                street1_inv=inv_add.get('Street1')
+            if shipping_add.get('Street1') and shipping_add.get('Street2'):
+                street1=shipping_add.get('Street1')
+                street2=shipping_add.get('Street2')
+            else:
+                street1=shipping_add.get('Street1')
+            city=shipping_add.get('City')
+            state=shipping_add.get('State')
+            city_inv=inv_add.get('City')
+            state_inv=inv_add.get('State')
+            state_id=self.pool.get('res.country.state').search(request.cr,SUPERUSER_ID,[('code','=',state)])
+            state_id_inv=self.pool.get('res.country.state').search(request.cr,SUPERUSER_ID,[('code','=',state_inv)])
+            country_id=self.pool.get('res.country.state').browse(request.cr, SUPERUSER_ID, state_id[0], context).country_id.id
+            country_id_inv=self.pool.get('res.country.state').browse(request.cr, SUPERUSER_ID, state_id_inv[0], context).country_id.id
+            zip=shipping_add.get('Zip')
+            zip_inv=inv_add.get('Zip')
+            print state_id,state_id_inv,country_id,country_id_inv,zip,zip_inv
+            if state_id and country_id:
+                print street1,street2,zip
+                ship_add=partner_obj.search(request.cr,SUPERUSER_ID,[('id','=',int(dict_exist.get('partner_id'))),('street','ilike',street1),('street2','ilike',street2),('city','=',city),('zip','=',zip),('state_id','=',state_id[0]),('country_id','=',country_id)])
+                if not ship_add:
+                    vals1 = {'parent_id': int(dict_exist.get('partner_id')),'name':partner_brw.name,'address_type': 'delivery','city':city,'phone': partner_brw.phone,'street':street1,'street2': street2 or '', 'state_id':state_id[0],'country_id':country_id,'zip':zip}
+                    ship_add=partner_obj.create(request.cr, SUPERUSER_ID, vals1, context=context)
+                    print "ship addd--------------------",ship_add
+                else:
+                    ship_add=ship_add[0]
+                    print "else ship add-----------------",ship_add
+            if state_id_inv and country_id_inv:
+                print street1_inv,street2_inv,city_inv,state_id_inv,country_id_inv
+                invoice_add=partner_obj.search(request.cr,SUPERUSER_ID,[('id','=',int(dict_exist.get('partner_id'))),('street','ilike',street1_inv),('street2','ilike',street2_inv),('city','=',city_inv),('zip','=',zip_inv),('state_id','=',state_id_inv[0]),('country_id','=',country_id_inv)])
+                if not invoice_add:
+                    print "no invoice address found.................."
+                    vals2 = {'city':city_inv,'street':street1_inv,'street2': street2_inv or '', 'state_id':state_id_inv[0],'country_id':country_id_inv,'zip':zip_inv}
+                    print "vals22------------------",vals2,int(dict_exist.get('partner_id'))
+                    new_inv_add=partner_obj.write(request.cr,SUPERUSER_ID,int(dict_exist.get('partner_id')), vals2)
+                    print "new_inv_addnew_inv_add",new_inv_add
+                    invoice_add=int(dict_exist.get('partner_id'))
+                else:
+                    invoice_add=invoice_add[0]
+                print "invoice_addinvoice_addfound----------",invoice_add
+            if 'PaymentProfileId' in dict_exist.get('billing_info'):
+                payment_profile_id=billing_info.get('PaymentProfileId')
+            if dict.get('tru'):
+                sales_channel='tru'
+            elif dict.get('wallet_purchase'):
+                sales_channel='playjam'
+            else:
+                sales_channel='ecommerce'
+            fpos = partner_brw.property_account_position and  partner_brw.property_account_position.id or False
+    #        print"fpos",fpos
+            so_data = {'partner_id':int(dict_exist.get('partner_id')),'amount_total':total,'magento_so_id':dict_exist.get('magento_orderid'),'pricelist_id': pricelist,'cox_sales_channels':sales_channel,'partner_invoice_id': invoice_add,'partner_shipping_id': ship_add,'location_id':location_id,'date_order': today, 'fiscal_position':fpos}
+            print"so_data",so_data
+            new_id = sale_obj.create(request.cr,SUPERUSER_ID, so_data, context=context)
+            print"new_id",new_id
+            sale_brw=sale_obj.browse(request.cr,SUPERUSER_ID,new_id)
+            print "dict_exist.get('lines')---------------------",dict_exist.get('lines')
+            for each in dict_exist.get('lines'):
+                print "each!!!!!!!!!!!!!!!!!!!!!!!---------------------!!!!!!!!!!!!!!1",each
+                each_param=dict_exist.get('lines').get(each)
+    #                price=each_param.get('Price')
+                productid=each_param.get('ProductId')
+                product_id=product_obj.search(request.cr,SUPERUSER_ID,[('id','=',productid)])
+                print"product_id",product_id
+                if product_id:
+                    price=product_obj.browse(request.cr,SUPERUSER_ID,productid).list_price
+                    prdct_name=str(product_obj.browse(request.cr,SUPERUSER_ID,productid).name)
+                    request.cr.execute("select product_id from res_partner_policy where active_service =True and agmnt_partner = %s"%(int(dict_exist.get('partner_id'))))
+                    active_services = filter(None, map(lambda x:x[0], request.cr.fetchall()))
+                    print "active_services",active_services
+    #                    sub_components = self.pool.get('extra.prod.config').search(cr,uid,[('product_id','=',product_id)])
+                    quantity=each_param.get('Qty')
+                    print "quantityquantityquantity",quantity
+                    context.update({'active_model': 'sale.order','magento_orderid': dict_exist.get('magento_orderid'),'active_id':new_id})
+                    line_data = {'order_id': new_id,'name':prdct_name,'price_unit': price,'product_uom_qty': quantity or 1.0,'product_uos_qty': quantity or 1.0,'product_id': product_id[0] or False,'actual_price':0.0}
+                    print "line data........................................",line_data
+                    sale_line_id=self.pool.get("sale.order.line").create(request.cr, SUPERUSER_ID, line_data, context=context)
+                    print "sale line id...............................",sale_line_id
+                    sub_components = product_obj.browse(request.cr,SUPERUSER_ID,product_id[0]).ext_prod_config
+                    print "sub_componentssub_components",sub_components,product_id
+                    if sub_components:
+                        for each_sub_comp in sub_components:
+                            comp_prod_id=each_sub_comp.comp_product_id.id
+                            price=each_sub_comp.price
+                            print "pricepricepricepriceof each subcomponent.................",price
+                            print "comp_prod_idcomp_prod_id",comp_prod_id
+                            product_type=product_obj.browse(request.cr,SUPERUSER_ID,comp_prod_id).type
+                            print "product_typeproduct_type",product_type
+                            if product_type=='service':
+                                if comp_prod_id in active_services:
+                                    result={"body":{ 'code':'False', 'message':"Subscription is already active for requested service"}}
+                                    return json.dumps(result)
+                            sub_comp_data=({'name':each_sub_comp.comp_product_id.name,'qty_uom':float(quantity) or 1.0,'product_id':comp_prod_id,'price':price,'so_line_id':sale_line_id,'product_type':product_type,'uom_id':each_sub_comp.product_id.uom_id.id or 1})
+                            sub_comp_id=self.pool.get('sub.components').create(request.cr,SUPERUSER_ID,sub_comp_data,context=context)
+                else:
+                    result={"body":{ 'code':False, 'message':"Product Not Found!!!!"}}
+                    return json.dumps(result)
+            so_name=sale_brw.name
+    #        call at Authorize end for an existing profile
+            if payment_profile_id:
+                print"payment_profile_id",payment_profile_id
+                context.update({'cust_payment_profile_id':payment_profile_id,'captured_api':True})
+                exis_pay_profile=self.pool.get('charge.customer').charge_customer(request.cr,SUPERUSER_ID,[new_id],context)
+                print"exis_pay_profile",exis_pay_profile
                 result={"body":{ 'code':True, 'message':"Success",'OrderNo':so_name}}
-#        except Exception, e:
-#           result={"body":{'code':False,'message':'Failed to create order because %s'%(e)}}
+            elif dict.has_key('tru') or dict.has_key('wallet_purchase'):
+                new_pay_prfl=self.pool.get('customer.profile.payment').charge_customer(request.cr,SUPERUSER_ID,[new_id],context)
+                print "new pay profile.......................",new_pay_prfl
+                if dict.has_key('wallet_purchase'):
+                    amount_deduct=float(new_pay_prfl.get('context').get('default_amount'))
+                    exist_wallet_quantity=float(partner_brw.wal_bal)
+                    if amount_deduct:
+                        if exist_wallet_quantity:
+                            amnt_after_deduction=exist_wallet_quantity-amount_deduct
+                        else:
+                            amnt_after_deduction=amount_deduct
+                        partner_obj.write(request.cr,request.uid,int(dict_exist.get('partner_id')),{'wal_bal':amnt_after_deduction})
+                result={"body":{ 'code':True, 'message':"Success",'OrderNo':so_name}}
+    #        call at Authorize for a new profile creation
+            elif billing_info.get('CreditCard'):
+                credit_card=billing_info.get('CreditCard')
+                if not (credit_card.get('CCV') or credit_card.get('CCNumber') or credit_card.get('ExpDate')):
+                    result={"body":{ 'code':'False', 'message':"CC Number or CCv or Expiration Date missing for credit card"}}
+                    return json.dumps(result)
+                else:
+                    context.update({'ccv': credit_card.get('CCV'),'exp_date': credit_card.get('ExpDate'),'action_to_do':'new_customer_profile','magento_orderid': dict_exist.get('magento_orderid'),'sale_id':[new_id],'cc_number':credit_card.get('CCNumber')})
+                    new_pay_prfl=self.pool.get('customer.profile.payment').charge_customer(request.cr,SUPERUSER_ID,[new_id],context)
+                    result={"body":{ 'code':True, 'message':"Success",'OrderNo':so_name}}
+        except Exception, e:
+           result={"body":{'code':False,'message':'Failed to create order because %s'%(e)}}
         return json.dumps(result)
     
 ######## Update Subscription API to upgrade/downgrade service by yogita
