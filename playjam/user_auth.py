@@ -7,6 +7,7 @@ import ast
 from openerp.http import request
 import urllib
 import requests
+from psycopg2.extensions import ISOLATION_LEVEL_READ_COMMITTED
 #from django.http import HttpRequest
 
 
@@ -30,6 +31,10 @@ class user_auth(models.Model):
     token_exp_time = fields.Datetime(required=False, )
     serial_no = fields.Many2one(comodel_name="stock.production.lot", required=False, )
     mac_address = fields.Char(required=False, )
+    device_history_ids = fields.One2many('device.history','user_auth_id',string='History')
+    is_tru = fields.Boolean(string='Tru')
+    is_activated = fields.Boolean(string='Registered')
+    is_attached = fields.Boolean(string='Attached')
 
     
     def get_key_code(self,device_id, want_code, context=None):
@@ -372,3 +377,68 @@ class user_auth(models.Model):
                     url, data="request="+requ, headers=headers)
         print"response.content",response.content
         return response.content
+    
+    def device_playjam(self, dict, context=None):
+        url = "http://54.172.158.69/api/rest/flare/device/view.json"
+        headers = {'content-type': 'application/x-www-form-urlencoded'}
+
+
+        data=json.dumps(dict)
+        request=urllib.quote(data.encode('utf-8'))
+        response = requests.post(
+                    url, data="request="+request, headers=headers)
+
+        print "response.text----------",response.content
+
+        return response.content
+    
+    
+    def rental_playjam(self, user_id, appId, expiration, context=None):
+        url = "http://54.172.158.69/api/rest/flare/rental/view.json"
+        headers = {'content-type': 'application/x-www-form-urlencoded'}
+        print "appid------------",appId
+	expiration=int(expiration)
+        print "expiration-------",expiration
+        payload = {
+            "uid":long(user_id),
+            "appId":long(appId),
+            "expiration":(expiration)*1000,
+	    "charge":0.0
+            }
+	print"payloaddddddddddddddddddddddddddddddddddddddddddddd",payload
+#	payload = {
+#           "uid":"FLARE1093",
+#           "appId": 128,
+#           "expiration": 0
+#            }
+
+        data=json.dumps(payload)
+        request=urllib.quote(data.encode('utf-8'))
+        response = requests.post(
+                    url, data="request="+request, headers=headers)
+
+        return response.content
+    
+    
+class device_history(models.Model):
+    '''Voucher related details'''
+    _name = 'device.history'
+    
+    partner_id = fields.Many2one(comodel='res.partner',string='User Name')
+    device_id = fields.Char()
+    key = fields.Char()
+    code = fields.Char()
+    user_auth_id = fields.Many2one(comodel='user.auth',string='User Auth')
+
+    
+    def write(self,ids,vals,context=None):
+        cr._cnx.set_isolation_level(ISOLATION_LEVEL_READ_COMMITTED)
+        res=super(device_history,self).write(cr,uid,ids,vals,context)
+        return res
+
+    
+    def create(self,vals,context=None):
+        cr._cnx.set_isolation_level(ISOLATION_LEVEL_READ_COMMITTED)
+        res=super(device_history,self).create(cr,uid,vals,context)
+        return res
+device_history()
