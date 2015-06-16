@@ -173,13 +173,15 @@ class CreateCustomerProfileTransaction:
                             info[cNode.nodeName] = gcNode.childNodes[0].data
        return info
 
-    def Get(self,cr,uid,sale_order_id,transaction_type,amount,profile_id,payment_profile_id,approval_code,active_model,cc_number,context):
-        lineitem,tax,approval_code_str = '','',''
+    def Get(self,cr,uid,sale_order_id,transaction_type,amount,profile_id,payment_profile_id,approval_code,ccv,active_model,cc_number,context):
+        lineitem,tax,approval_code_str,cardCode = '','','',''
 #       if condition to allow 0.0 amount order transaction to be created with 0.01 amount and authorize only
-        #if amount==0.0:
-            #amount=0.01
+        if ccv:
+            cardCode = """<cardCode>""" + ccv + """</cardCode> """
             #transaction_type='profileTransAuthOnly'
         tax_obj = pooler.get_pool(cr.dbname).get('account.tax')
+        if (context.get('recurring_billing',False)):
+            recurring_billing = """<recurringBilling>true</recurringBilling>"""
         if (active_model=='sale.order') or (active_model=='return.order') or (active_model=='credit.service'):
             obj1 = pooler.get_pool(cr.dbname).get(active_model).browse(cr,uid,sale_order_id)
             desc =obj1.note
@@ -199,9 +201,8 @@ class CreateCustomerProfileTransaction:
                 taxable = 'false'
                 product_id = each_line.product_id
                 default_code = product_id.default_code or product_id.name
-                product_name = (str(product_id.name.encode('UTF-8'))[:31].replace('&','&amp;') if product_id.name else '')
-                print"each_line.name",each_line.name
-                description = (str(each_line.name.encode('UTF-8'))[:255].replace('&','&amp;') if each_line.name else '')
+                product_name = (str(product_id.name)[:31].replace('&','&amp;') if product_id.name else '')
+                description = (str(each_line.name)[:255].replace('&','&amp;') if each_line.name else '')
                 
                 quantity = (each_line.product_uom_qty if each_line.product_uom_qty else 0.0)
                 unit_price  =  (each_line.price_unit if each_line.price_unit else 0.0)
@@ -287,6 +288,7 @@ class CreateCustomerProfileTransaction:
     <customerPaymentProfileId>"""+str(payment_profile_id)+"""</customerPaymentProfileId>
     """ + cc_number.encode('utf-8') + """
     """ + order_details.encode('utf-8') + """
+    """ + cardCode.encode('utf-8') + """
     """ + approval_code_str.encode('utf-8') + """
      </""" + transaction_type.encode('utf-8') + """>
     </transaction>
@@ -526,7 +528,11 @@ class CreateCustomerPaymentProfile:
                             info[cNode.nodeName] = gcNode.childNodes[0].data
        return info
 
-    def Get(self,cr,uid,sale_order_id,part_id,billing_addr,shipping_addr,cust_profile_id,cc,ext_date,active_model=False):
+    def Get(self,cr,uid,sale_order_id,part_id,billing_addr,shipping_addr,cust_profile_id,cc,ext_date,ccv,active_model=False):
+        cardCode=''
+        print "ccv for pyemt profile creation............",ccv
+        if ccv:
+            cardCode = """<cardCode>""" + ccv + """</cardCode> """
         str_billto,str_shipto,address,mode = '','','',''
         print"active_model",active_model,sale_order_id
         if sale_order_id:
@@ -658,6 +664,7 @@ class CreateCustomerPaymentProfile:
     <creditCard>
     <cardNumber>%(cc)s</cardNumber>
     <expirationDate>%(ext_date)s</expirationDate>
+    """ + cardCode.encode('utf-8') + """
     </creditCard>
     </payment>
     </paymentProfile>
@@ -836,6 +843,139 @@ class VoidTransaction:
         responseDOM.unlink()
         return response
 
+#    code to update customer profile for email change request
+class updateCustomerProfileRequest:
+    Session = Session()
+    def __init__(self, api_login_id, transaction_key, ServerURL):
+        self.Session.Initialize(api_login_id, transaction_key, ServerURL)
+    def get_response(self,nodelist):
+       info = {}
+       for node in nodelist:
+           for cNode in node.childNodes:
+               if cNode.nodeName == 'resultCode':
+                   if cNode.childNodes:
+                        info[cNode.nodeName] = cNode.childNodes[0].data
+               elif cNode.nodeName == 'message':
+                   for gcNode in cNode.childNodes:
+                        if gcNode.nodeName == 'text':
+                            info[cNode.nodeName] = gcNode.childNodes[0].data
+       return info
+   
+    def Get(self,emailid,profile_id):
+        print "emailidemailidemailidemailid",emailid,profile_id
+        api = Call()
+        api.Session = self.Session
+        api.RequestData ="""<?xml version='1.0' encoding='utf-8'?>
+                            <updateCustomerProfileRequest xmlns="AnetApi/xml/v1/schema/AnetApiSchema.xsd">
+                            <merchantAuthentication>
+                            <name>%s</name>
+                            <transactionKey>%s</transactionKey>
+                            </merchantAuthentication>
+                            <profile>
+                            <email>%s</email>
+                            <customerProfileId>%s</customerProfileId>
+                            </profile>
+                            </updateCustomerProfileRequest>"""% (self.Session.api_login_id,self.Session.transaction_key,emailid,profile_id)
+        print" api.RequestData", api.RequestData
+        responseDOM = api.MakeCall()
+        print "responseDOMresponseDOMresponseDOM",responseDOM
+        response_ok = self.get_response(responseDOM.getElementsByTagName('messages'))
+        print "response_okresponse_okresponse_ok",response_ok
+        if response_ok.get('resultCode',False) == 'Ok':
+            return True
+        else:
+            text = response_ok.get('message',False)
+            if text:
+                raise osv.except_osv(_('Error!'), _('%s')%(text))
+#        print"xml########",responseDOM.toprettyxml()
+        responseDOM.unlink()
+        
+class GetCustomerProfileExistence:
+    Session = Session()
+    def __init__(self, api_login_id, transaction_key, ServerURL):
+        self.Session.Initialize(api_login_id, transaction_key, ServerURL)
+    def get_response(self,nodelist):
+       info = {}
+       for node in nodelist:
+           for cNode in node.childNodes:
+               if cNode.nodeName == 'resultCode':
+                   if cNode.childNodes:
+                        info[cNode.nodeName] = cNode.childNodes[0].data
+               elif cNode.nodeName == 'message':
+                   for gcNode in cNode.childNodes:
+                        if gcNode.nodeName == 'text':
+                            info[gcNode.nodeName] = gcNode.childNodes[0].data
+                        elif gcNode.nodeName == 'code':
+                            info[gcNode.nodeName] = gcNode.childNodes[0].data
+       return info
+
+    def Get(self,email_id):
+#        print "emsil id ........................",email_id
+        api = Call()
+        api.Session = self.Session
+        api.RequestData = """<?xml version='1.0' encoding='utf-8'?>
+    <createCustomerProfileRequest xmlns='AnetApi/xml/v1/schema/AnetApiSchema.xsd'>
+    <merchantAuthentication>
+    <name>%s</name>
+    <transactionKey>%s</transactionKey>
+    </merchantAuthentication>
+    <profile>
+    <email>%s</email>
+    </profile></createCustomerProfileRequest>"""% (self.Session.api_login_id,self.Session.transaction_key,email_id)
+#        print" api.RequestData", api.RequestData
+        responseDOM = api.MakeCall()
+#        print "responseDOM",responseDOM.toprettyxml()
+        custmer_profile_data = {}
+        response_ok = self.get_response(responseDOM.getElementsByTagName('messages'))
+#        print "response_ok",response_ok
+        if response_ok.get('resultCode',False) == 'Ok':
+#            print "response_okresponse_ok",response_ok
+            cust_profile_id = responseDOM.getElementsByTagName('customerProfileId')[0].childNodes[0].data
+            custmer_profile_data['cust_profile_id'] = cust_profile_id
+            custmer_profile_data['success'] = True
+        else:
+            custmer_profile_data = response_ok
+        responseDOM.unlink()
+        return custmer_profile_data
+class deleteCustomerProfileRequest:
+    Session = Session()
+    def __init__(self, api_login_id, transaction_key, ServerURL):
+        self.Session.Initialize(api_login_id, transaction_key, ServerURL)
+    def get_response(self,nodelist):
+       info = {}
+       for node in nodelist:
+           for cNode in node.childNodes:
+               if cNode.nodeName == 'resultCode':
+                   if cNode.childNodes:
+                        info[cNode.nodeName] = cNode.childNodes[0].data
+               elif cNode.nodeName == 'message':
+                   for gcNode in cNode.childNodes:
+                        if gcNode.nodeName == 'text':
+                            info[gcNode.nodeName] = gcNode.childNodes[0].data
+                        elif gcNode.nodeName == 'code':
+                            info[gcNode.nodeName] = gcNode.childNodes[0].data
+       return info
+    def Get(self,profile_id):
+        api = Call()
+        api.Session = self.Session
+        api.RequestData = """<?xml version='1.0' encoding='utf-8'?>
+                            <deleteCustomerProfileRequest xmlns='AnetApi/xml/v1/schema/AnetApiSchema.xsd'>
+                            <merchantAuthentication>
+                            <name>%s</name>
+                            <transactionKey>%s</transactionKey>
+                            </merchantAuthentication>
+                            <customerProfileId>%s</customerProfileId>
+                            </deleteCustomerProfileRequest>"""% (self.Session.api_login_id,self.Session.transaction_key,profile_id)
+
+        responseDOM = api.MakeCall()
+        custmer_del_profile_data = {}
+        response_ok = self.get_response(responseDOM.getElementsByTagName('messages'))
+        if response_ok.get('resultCode',False) == 'Ok':
+            custmer_del_profile_data= True
+        else:
+            custmer_del_profile_data = {}
+        responseDOM.unlink()
+        return custmer_del_profile_data
 class CreateCustomerProfileOnly:
     Session = Session()
     def __init__(self, api_login_id, transaction_key, ServerURL):
@@ -900,10 +1040,12 @@ class getUnsettledTransactionListRequest:
            invoice_number = node.getElementsByTagName('invoiceNumber')
            if invoice_number:
                 invoice_number= invoice_number[0].childNodes[0].data
-                transid = node.getElementsByTagName('transId')[0].childNodes[0].data
-                amount = node.getElementsByTagName('settleAmount')[0].childNodes[0].data
-                cc_number = node.getElementsByTagName('accountNumber')[0].childNodes[0].data
-                info[invoice_number] = {'transid':transid,'amount':amount,'cc_number':cc_number}
+		trans_status = node.getElementsByTagName('transactionStatus')[0].childNodes[0].data
+		if trans_status not in  ('voided','declined','generalError','expired'):
+			transid = node.getElementsByTagName('transId')[0].childNodes[0].data
+			amount = node.getElementsByTagName('settleAmount')[0].childNodes[0].data
+			cc_number = node.getElementsByTagName('accountNumber')[0].childNodes[0].data
+			info[invoice_number] = {'transid':transid,'amount':amount,'cc_number':cc_number}
        return info
 
     def Get(self):
@@ -939,7 +1081,7 @@ class authorize_osv(osv.osv):
 #            print"result",result
         elif method == 'CreateCustomerProfileTransaction':
             gcpt = CreateCustomerProfileTransaction(obj.api_username, obj.transaction_key,obj.server_url)
-            result = gcpt.Get(cr,uid,arguments[0],arguments[1],arguments[2],arguments[3],arguments[4],arguments[5],arguments[6],arguments[7],arguments[8])
+            result = gcpt.Get(cr,uid,arguments[0],arguments[1],arguments[2],arguments[3],arguments[4],arguments[5],arguments[6],arguments[7],arguments[8],arguments[9])
             return result
 #            print"result",result
         elif method == 'CreateCustomerProfile':
@@ -953,7 +1095,7 @@ class authorize_osv(osv.osv):
             return result
         elif method == 'CreateCustomerPaymentProfile':
             ccpp = CreateCustomerPaymentProfile(obj.api_username, obj.transaction_key,obj.server_url)
-            result = ccpp.Get(cr,uid,arguments[0],arguments[1],arguments[2],arguments[3],arguments[4],arguments[5],arguments[6],arguments[7])
+            result = ccpp.Get(cr,uid,arguments[0],arguments[1],arguments[2],arguments[3],arguments[4],arguments[5],arguments[6],arguments[7],arguments[8])
 #            print"result",result
             return result
         elif method == 'ValidateCustomerPaymentProfile':
@@ -975,6 +1117,25 @@ class authorize_osv(osv.osv):
             vcpp = CreateCustomerProfileOnly(obj.api_username, obj.transaction_key,obj.server_url)
             result = vcpp.Get(arguments[0])
 #            print"result",result
+            return result
+        elif method == 'updateCustomerProfileRequest':
+            vcpp = updateCustomerProfileRequest(obj.api_username, obj.transaction_key,obj.server_url)
+            result = vcpp.Get(arguments[0],arguments[1])
+#            print"result",result
+            return result
+        elif method == 'GetCustomerProfileExistence':
+            vcpp = GetCustomerProfileExistence(obj.api_username, obj.transaction_key,obj.server_url)
+            result = vcpp.Get(arguments[0])
+#            print"result",result
+            return result
+        elif method == 'updateCustomerProfileRequest':
+            vcpp = updateCustomerProfileRequest(obj.api_username, obj.transaction_key,obj.server_url)
+            result = vcpp.Get(arguments[0],arguments[1])
+           # print"result",result
+            return result
+        elif method == 'deleteCustomerProfileRequest':
+            vcpp = deleteCustomerProfileRequest(obj.api_username, obj.transaction_key,obj.server_url)
+            result = vcpp.Get(arguments[0])
             return result
 	elif method == 'getUnsettledTransactionListRequest':
             vcpp = getUnsettledTransactionListRequest(obj.api_username, obj.transaction_key,obj.server_url)
