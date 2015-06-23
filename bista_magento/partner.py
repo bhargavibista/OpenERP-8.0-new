@@ -173,7 +173,7 @@ class res_partner(models.Model):
                 result={"body":{ 'code':False, 'message':"('%s Not found')"%(key)}}
                 return json.dumps(result)
         customer_id=partner_obj.search(request.cr,SUPERUSER_ID,[('id','=',int(dict_wallet.get('partner_id')))])
-        print "customer_idcustomer_id",customer_id
+        print "customer_idcustome343546r_id",customer_id
         if not customer_id:
             result={"body":{ 'code':False, 'message':"Customer not found!!!!"}}
             return json.dumps(result)
