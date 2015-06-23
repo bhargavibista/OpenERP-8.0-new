@@ -41,7 +41,7 @@ class res_partner(osv.osv):
             partner_obj=self.browse(cr,uid,partner_id)       
 #            nextmonth=datetime.datetime.strptime(nextmonth, "%Y-%m-%d").date()
             maerge_invoice_data=[]
-            cr.execute('select id from res_partner_policy where  active_service = True and no_recurring=False and  agmnt_partner = %s  and ((free_trial_date is null) or free_trial_date <= (select billing_date from res_partner where id=%s))'% (partner_id,partner_id))
+            cr.execute('select id from res_partner_policy where  active_service = True and no_recurring=False and  agmnt_partner = %s  and (next_billing_date <= (select billing_date from res_partner where id=%s))'% (partner_id,partner_id))
             #cr.execute('select id from res_partner_policy where  active_service = True and agmnt_partner = %s  and ((free_trial_date is null) or free_trial_date <= (select billing_date from res_partner where id=%s))'% (partner_id,partner_id))
             policies = filter(None, map(lambda x:x[0], cr.fetchall()))
 	    print"policyyyyyyyyyyyyyyyyy",policies,today,partner_id
@@ -123,6 +123,7 @@ class res_partner(osv.osv):
                         partner_obj.write({'auto_import':True,'billing_date':str(nextmonth)},context=context)
                     invoice_id_obj = invoice_obj.browse(cr,uid,res_id)
                     sale_obj.email_to_customer(cr,uid,invoice_id_obj,'account.invoice','',partner_obj.emailid,context)
+                    self.cal_next_billing_amount(cr,uid,partner_id)
                     if partner_obj.ref:
                         try:
                             self.export_recurring_profile(cr,uid,[res_id],context)
@@ -476,26 +477,42 @@ class res_partner_policy(osv.osv):
         days_left = inv_dt_obj - start_dt_current_service
         current_price = current_service.product_id.list_price
         if old_free_trial_date > start_dt_current_service:
+            if (diff_days.days)>1:
+                adv_paid=original_price
             original_price=0.0
-            if (original_service.extra_days and original_service.extra_days>0):
-                days_left_old = old_free_trial_date-start_dt_current_service
-            else:
-                days_left_old=days_left
-        else:
-            original_price=original_service.last_amount_charged
+           # if (original_service.extra_days and original_service.extra_days>0):
+            #    days_left_old = old_free_trial_date-start_dt_current_service
+            #else:
+             #   days_left_old=days_left
+        #else:
+         #   original_price=original_service.last_amount_charged
             if (original_service.extra_days and original_service.extra_days>0):
                 days_left_old = start_dt_current_service-old_free_trial_date
                 original_price=0.0
-            else:
-                days_left_old=days_left
+            #else:
+             #   days_left_old=days_left
+        if context and context.get('cancel_date',False):
+            print"cancelllllllllllllllllllll",original_service,context.get('cancel_date',False)
+            cancel_date=datetime.datetime.strptime(str(original_service.cancel_date), "%Y-%m-%d")
+            days_left_old=inv_dt_obj-cancel_date
+            print"days_left_olddays_left_olddays_left_olddays_left_olddays_left_old",days_left_old
         cr.execute('update res_partner_policy set last_amount_charged=%s where id =%s'%(current_price,current_service.id))
-        original_subscription_charges =  (original_price * ((days_in_month- days_left_old.days)/float(days_in_month)))
+        if original_service.last_amount_charged<original_service.product_id.list_price and original_service.last_amount_charged!=0.0:
+            days_left_old =(start_dt_current_service-old_free_trial_date)
+            print"days_left_olddays_left_olddays_left_olddays_left_old",days_left_old
+            original_subscription_charges =  (original_price * ((days_left_old.days)/float(days_in_month)))
+        else:
+		original_subscription_charges =  (original_price * ((days_in_month- days_left_old.days)/float(days_in_month)))
         current_subscription_charges =  (current_price * (days_left.days/float(days_in_month)))
         addition = original_subscription_charges + current_subscription_charges
         if original_price > addition:
             final_charges =  original_price - addition
         else:
             final_charges =  addition - original_price
+        if adv_paid<final_charges:
+            final_charges=final_charges-adv_paid
+        else:
+            final_charges=adv_paid-final_charges
 	cr.commit()
         return final_charges
 

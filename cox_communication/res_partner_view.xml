@@ -397,7 +397,7 @@
                        string="Credits and Cancellation"
                        attrs="{'invisible': [('customer', '=', False)]}"/>
                 </xpath>
-                <xpath expr="/form/sheet/notebook" position="inside">
+<!--                <xpath expr="/form/sheet/notebook" position="inside">
                     <page string="Valid User Info">
                         <field name="auth_user" nolabel="1">
                             <tree string="User Info">
@@ -406,7 +406,7 @@
                             </tree>
                         </field>
                     </page>
-                </xpath>
+                </xpath>-->
             </field>
         </record>
 

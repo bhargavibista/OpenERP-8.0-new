@@ -615,9 +615,7 @@ class res_partner(models.Model):
             sale_obj=self.pool.get("sale.order")
             billing_info=dict_exist.get('billing_info')
             total=dict.get('Total')
-            print "total////////////////////////////////",total,dict
-#            sale_shop=self.pool.get("sale.shop")
-            print "partner id.............................",dict_exist,int(dict_exist.get('partner_id'))
+    #            sale_shop=self.pool.get("sale.shop")
             customer_id=partner_obj.search(request.cr,SUPERUSER_ID,[('id','=',int(dict_exist.get('partner_id')))])
             print "customer_idcustomer_id",customer_id
             if not customer_id:
@@ -684,18 +682,21 @@ class res_partner(models.Model):
                 sales_channel='playjam'
             else:
                 sales_channel='ecommerce'
-            so_data = {'partner_id':int(dict_exist.get('partner_id')),'amount_total':total,'magento_so_id':dict_exist.get('magento_orderid'),'pricelist_id': pricelist,'cox_sales_channels':sales_channel,'partner_invoice_id': invoice_add,'partner_shipping_id': ship_add,'location_id':location_id,'date_order': today}
-            print "so data////////////////////////////////////",so_data
+            fpos = partner_brw.property_account_position and  partner_brw.property_account_position.id or False
+    #        print"fpos",fpos
+            so_data = {'partner_id':int(dict_exist.get('partner_id')),'amount_total':total,'magento_so_id':dict_exist.get('magento_orderid'),'pricelist_id': pricelist,'cox_sales_channels':sales_channel,'partner_invoice_id': invoice_add,'partner_shipping_id': ship_add,'location_id':location_id,'date_order': today, 'fiscal_position':fpos}
+            print"so_data",so_data
             new_id = sale_obj.create(request.cr,SUPERUSER_ID, so_data, context=context)
             print"new_id",new_id
             sale_brw=sale_obj.browse(request.cr,SUPERUSER_ID,new_id)
-	    print "dict_exist.get('lines')---------------------",dict_exist.get('lines')
+            print "dict_exist.get('lines')---------------------",dict_exist.get('lines')
             for each in dict_exist.get('lines'):
-		print "each!!!!!!!!!!!!!!!!!!!!!!!---------------------!!!!!!!!!!!!!!1",each
+                print "each!!!!!!!!!!!!!!!!!!!!!!!---------------------!!!!!!!!!!!!!!1",each
                 each_param=dict_exist.get('lines').get(each)
-                dict_price=each_param.get('Price')
+    #                price=each_param.get('Price')
                 productid=each_param.get('ProductId')
                 product_id=product_obj.search(request.cr,SUPERUSER_ID,[('id','=',productid)])
+                print"product_id",product_id
                 if product_id:
                     price=product_obj.browse(request.cr,SUPERUSER_ID,productid).list_price
 #                    if dict_price!=price:
@@ -705,14 +706,14 @@ class res_partner(models.Model):
                     request.cr.execute("select product_id from res_partner_policy where active_service =True and agmnt_partner = %s"%(int(dict_exist.get('partner_id'))))
                     active_services = filter(None, map(lambda x:x[0], request.cr.fetchall()))
                     print "active_services",active_services
-#                    sub_components = self.pool.get('extra.prod.config').search(cr,uid,[('product_id','=',product_id)])
+    #                    sub_components = self.pool.get('extra.prod.config').search(cr,uid,[('product_id','=',product_id)])
                     quantity=each_param.get('Qty')
                     print "quantityquantityquantity",quantity
                     context.update({'active_model': 'sale.order','magento_orderid': dict_exist.get('magento_orderid'),'active_id':new_id})
                     line_data = {'order_id': new_id,'name':prdct_name,'price_unit': price,'product_uom_qty': quantity or 1.0,'product_uos_qty': quantity or 1.0,'product_id': product_id[0] or False,'actual_price':0.0}
-		    print "line data........................................",line_data
+                    print "line data........................................",line_data
                     sale_line_id=self.pool.get("sale.order.line").create(request.cr, SUPERUSER_ID, line_data, context=context)
-		    print "sale line id...............................",sale_line_id
+                    print "sale line id...............................",sale_line_id
                     sub_components = product_obj.browse(request.cr,SUPERUSER_ID,product_id[0]).ext_prod_config
                     print "sub_componentssub_components",sub_components,product_id
                     if sub_components:
@@ -946,7 +947,7 @@ class res_partner(models.Model):
                                 'new_policy_id':policy_id,
                                 })
                                 partner_policy.write(request.cr,SUPERUSER_ID,policy_id,{'up_down_id':up_down_id})
-                            partner_obj.next_billing_amount(request.cr,SUPERUSER_ID,partner_id[0])
+                            partner_obj.cal_next_billing_amount(request.cr,SUPERUSER_ID,partner_id[0])
                             if policy_id:
                                 return json.dumps({'body':{'code':True,'message':'Success'}})
                         else:

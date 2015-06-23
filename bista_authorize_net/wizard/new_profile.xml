@@ -12,8 +12,9 @@
                       <field name="partner_id" invisible="1"/>
                       <field name="auth_cc_number"  on_change="onchange_cc_number(auth_cc_number)"/>
                       <field name="auth_cc_expiration_date"/>
-                      <field name="auth_ccv_number"/>
+                      <!--<field name="auth_ccv_number"/>-->
                       <field name="transaction_type"/>
+                      <field name='ccv' required="1"/>
                       </group>
 <!--                      <separator string="Shipping Option"/>-->
                   <group col="4" colspan="4">

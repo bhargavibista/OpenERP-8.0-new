@@ -40,6 +40,7 @@
                         <field name="cox_sales_channels" readonly="1"/>
                         <field name="location_id" string="Inventory Location" attrs="{'invisible':[('order_type','=',False)],'required':[('order_type','=',True)],'readonly':[('state','not in',('draft'))]}" widget="selection"/>
                         <field name="prov_by_fanha"/>
+                        <button name="write_selected_agreement" type="object" string="Activate Policy" context="{'update':True}"/> <!--for testing-->
                     </group>
                     <group>
                         <field name="magento_so_id" readonly="1"/>

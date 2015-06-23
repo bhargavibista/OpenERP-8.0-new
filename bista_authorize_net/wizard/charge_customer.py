@@ -95,8 +95,9 @@ class charge_customer(osv.osv_memory):
                 #ccv=''
                 if obj_all.auth_transaction_id:
                     transaction_id = obj_all.auth_transaction_id
-                if amount>0.0:
-                    transaction_details =authorize_net_config.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',active_id,transaction_type,amount,customer_profile_id,cust_payment_profile_id,transaction_id,ccv,act_model,'',context)
+		if amount>0.0:
+                    transaction_details =authorize_net_config.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',active_id,transaction_type,amount,customer_profile_id,cust_payment_profile_id,transaction_id,ccv,act_model,'',context) 
+                    
                     cr.execute("select credit_card_no from custmer_payment_profile where profile_id='%s'"%(cust_payment_profile_id))
                     cc_number = filter(None, map(lambda x:x[0], cr.fetchall()))
                     if cc_number:

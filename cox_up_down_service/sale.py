@@ -100,11 +100,19 @@ class sale_order(osv.osv):
 #		    context.pop('new_pacakge_id')
                 policy_brw = service_data.get('policy_id_brw',False)
                 line=obj_sale_order_line.browse(cr,uid,service_data.get('line_id',False))
-                product_price = policy_brw.product_id.list_price
+                ###### changes for recurring price by yogita
+                if line:
+                    res_so_id=policy_obj.browse(cr,uid,service_data.get('policy_id',False))
+                    if (res_so_id.recurring_price)>0.0:
+                       product_price=res_so_id.recurring_price
+                    else:
+                       product_price=line.product_id.list_price
+                 ###########
+#                product_price = policy_brw.product_id.list_price
                 unit_price = product_price
                 if policy_brw.up_down_service and policy_brw.extra_days:
                     invoice_lines+= policy_obj.service_tier_calculation(cr,uid,policy_brw,unit_price,date_inv,context)
-                    cr.execute('update res_partner_policy set extra_days=0 where id =%s'%(policy_brw.id))
+                    cr.execute("update res_partner_policy set adv_paid=False,extra_days=0,next_billing_date= '%s' where id =%s"%(nextmonth,policy_brw.id))
 		    cr.commit()
                 else:
                     context['new_pacakge_id'] = policy_brw.product_id
@@ -117,13 +125,17 @@ class sale_order(osv.osv):
                     data.update({'price_unit':unit_price})
                     if service_data.get('extra_days', 0)>0 :
                         extra_days=service_data.get('extra_days')
-                        days=366 if calendar.isleap(date_inv.year) else 365
-                        partial_price=(unit_price*12/days)*int(extra_days)
-                        data.update({'price_unit':unit_price+partial_price})
-                        policy_obj.write(cr,uid,service_data['policy_id'],{'extra_days':0})
+                        days=calendar.monthrange(date_inv.year,date_inv.month)[1]
+#                        days=366 if calendar.isleap(date_inv.year) else 365
+#                        partial_price=(unit_price*12/days)*int(extra_days)
+                        partial_price=(unit_price/days)*int(extra_days)
+                        data.update({'price_unit':partial_price})
+                        policy_obj.write(cr,uid,service_data['policy_id'],{'extra_days':0,'adv_paid':True})
                     vals = obj_sale_order_line._prepare_invoice_line_cox(cr, uid, line, False, data, context)
                     if vals:
-                        cr.execute('update res_partner_policy set last_amount_charged=%s where id =%s'%(unit_price,policy_brw.id))
+                        last_amount_charged=vals.get('price_unit',False)
+                        print"last_amount_chargedlast_amount_chargedlast_amount_charged",last_amount_charged
+                        cr.execute("update res_partner_policy set adv_paid=False,next_billing_date= '%s',last_amount_charged=%s where id =%s"%(nextmonth,last_amount_charged,policy_brw.id))
                         invoice_lines+=[vals]
                 invoice_ref+= 'RB'+ service_data.get('order_name','') + '|'
                 if not service_data.get('sale_id',False) in sale_ids:

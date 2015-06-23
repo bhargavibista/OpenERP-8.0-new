@@ -91,6 +91,8 @@ class product_template(osv.osv):
                                             ('service', 'Service'),
                                             ('offer', 'Offer'),
                                             ],'Catalog Type'),
+                                            
+    'app_id':fields.integer('App Id'),#field to set app id of playjam side
     }
     _defaults={
     'recurring_service':True,

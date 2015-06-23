@@ -175,14 +175,14 @@ class CreateCustomerProfileTransaction:
        return info
 
     def Get(self,cr,uid,sale_order_id,transaction_type,amount,profile_id,payment_profile_id,approval_code,ccv,active_model,cc_number,context):
-        print "ccv///////////////////////////////////////////?",ccv
         lineitem,tax,approval_code_str,cardCode = '','','',''
+#       if condition to allow 0.0 amount order transaction to be created with 0.01 amount and authorize only
         if ccv:
             cardCode = """<cardCode>""" + ccv + """</cardCode> """
+            #transaction_type='profileTransAuthOnly'
         tax_obj = pooler.get_pool(cr.dbname).get('account.tax')
         if (context.get('recurring_billing',False)):
             recurring_billing = """<recurringBilling>true</recurringBilling>"""
-        
         if (active_model=='sale.order') or (active_model=='return.order') or (active_model=='credit.service'):
             obj1 = pooler.get_pool(cr.dbname).get(active_model).browse(cr,uid,sale_order_id)
             desc =obj1.note
@@ -204,6 +204,7 @@ class CreateCustomerProfileTransaction:
                 default_code = product_id.default_code or product_id.name
                 product_name = (str(product_id.name)[:31].replace('&','&amp;') if product_id.name else '')
                 description = (str(each_line.name)[:255].replace('&','&amp;') if each_line.name else '')
+                
                 quantity = (each_line.product_uom_qty if each_line.product_uom_qty else 0.0)
                 unit_price  =  (each_line.price_unit if each_line.price_unit else 0.0)
                 price = each_line.price_unit * (1 - (each_line.discount or 0.0) / 100.0)
@@ -925,6 +926,72 @@ class GetCustomerProfileExistence:
                             info[gcNode.nodeName] = gcNode.childNodes[0].data
        return info
 
+#    code to update customer profile for email change request
+class updateCustomerProfileRequest:
+    Session = Session()
+    def __init__(self, api_login_id, transaction_key, ServerURL):
+        self.Session.Initialize(api_login_id, transaction_key, ServerURL)
+    def get_response(self,nodelist):
+       info = {}
+       for node in nodelist:
+           for cNode in node.childNodes:
+               if cNode.nodeName == 'resultCode':
+                   if cNode.childNodes:
+                        info[cNode.nodeName] = cNode.childNodes[0].data
+               elif cNode.nodeName == 'message':
+                   for gcNode in cNode.childNodes:
+                        if gcNode.nodeName == 'text':
+                            info[cNode.nodeName] = gcNode.childNodes[0].data
+       return info
+   
+    def Get(self,emailid,profile_id):
+        print "emailidemailidemailidemailid",emailid,profile_id
+        api = Call()
+        api.Session = self.Session
+        api.RequestData ="""<?xml version='1.0' encoding='utf-8'?>
+                            <updateCustomerProfileRequest xmlns="AnetApi/xml/v1/schema/AnetApiSchema.xsd">
+                            <merchantAuthentication>
+                            <name>%s</name>
+                            <transactionKey>%s</transactionKey>
+                            </merchantAuthentication>
+                            <profile>
+                            <email>%s</email>
+                            <customerProfileId>%s</customerProfileId>
+                            </profile>
+                            </updateCustomerProfileRequest>"""% (self.Session.api_login_id,self.Session.transaction_key,emailid,profile_id)
+        print" api.RequestData", api.RequestData
+        responseDOM = api.MakeCall()
+        print "responseDOMresponseDOMresponseDOM",responseDOM
+        response_ok = self.get_response(responseDOM.getElementsByTagName('messages'))
+        print "response_okresponse_okresponse_ok",response_ok
+        if response_ok.get('resultCode',False) == 'Ok':
+            return True
+        else:
+            text = response_ok.get('message',False)
+            if text:
+                raise osv.except_osv(_('Error!'), _('%s')%(text))
+#        print"xml########",responseDOM.toprettyxml()
+        responseDOM.unlink()
+        
+class GetCustomerProfileExistence:
+    Session = Session()
+    def __init__(self, api_login_id, transaction_key, ServerURL):
+        self.Session.Initialize(api_login_id, transaction_key, ServerURL)
+    def get_response(self,nodelist):
+       info = {}
+       for node in nodelist:
+           for cNode in node.childNodes:
+               if cNode.nodeName == 'resultCode':
+                   if cNode.childNodes:
+                        info[cNode.nodeName] = cNode.childNodes[0].data
+               elif cNode.nodeName == 'message':
+                   for gcNode in cNode.childNodes:
+                        if gcNode.nodeName == 'text':
+                            info[gcNode.nodeName] = gcNode.childNodes[0].data
+                        elif gcNode.nodeName == 'code':
+                            info[gcNode.nodeName] = gcNode.childNodes[0].data
+       return info
+
     def Get(self,email_id):
 #        print "emsil id ........................",email_id
         api = Call()
@@ -1058,10 +1125,10 @@ class getUnsettledTransactionListRequest:
                 invoice_number= invoice_number[0].childNodes[0].data
 		trans_status = node.getElementsByTagName('transactionStatus')[0].childNodes[0].data
 		if trans_status not in  ('voided','declined','generalError','expired'):
-	                transid = node.getElementsByTagName('transId')[0].childNodes[0].data
-        	        amount = node.getElementsByTagName('settleAmount')[0].childNodes[0].data
-                	cc_number = node.getElementsByTagName('accountNumber')[0].childNodes[0].data
-	                info[invoice_number] = {'transid':transid,'amount':amount,'cc_number':cc_number}
+			transid = node.getElementsByTagName('transId')[0].childNodes[0].data
+			amount = node.getElementsByTagName('settleAmount')[0].childNodes[0].data
+			cc_number = node.getElementsByTagName('accountNumber')[0].childNodes[0].data
+			info[invoice_number] = {'transid':transid,'amount':amount,'cc_number':cc_number}
        return info
 
     def Get(self):

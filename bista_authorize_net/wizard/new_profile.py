@@ -147,24 +147,24 @@ class customer_profile_payment(osv.osv_memory):
                         if action_to_do == 'new_customer_profile':
                             response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerProfileOnly',email)
                             print "response",response
-                            if response:
+                            if response and 'cust_profile_id' in response:
                                 cust_profile_Id = response.get('cust_profile_id')
                                 if cust_profile_Id:
                                     if not response.get('success'):
                                         profile_info = authorize_net_config.call(cr,uid,config_obj,'GetCustomerProfile',cust_profile_Id)
                                         print "profile_info",profile_info
                                         if not profile_info.get('payment_profile'):
-                                          response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',active_id[0],False,False,False,cust_profile_Id,ccn,exp_date,act_model)
-                                          numberstring = response.get('customerPaymentProfileId',False)
+                                            response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',active_id[0],False,False,False,cust_profile_Id,ccn,exp_date,ccv,act_model)
+                                            numberstring = response.get('customerPaymentProfileId',False)
                                         else:
                                             profile_info = profile_info.get('payment_profile')
                                             if ccn[-4:] in profile_info.keys():
                                                 numberstring =  profile_info[ccn[-4:]]
                                             else:
-                                                response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',active_id[0],False,False,False,cust_profile_Id,ccn,exp_date,act_model)
+                                                response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',active_id[0],False,False,False,cust_profile_Id,ccn,exp_date,ccv,act_model)
                                                 numberstring = response.get('customerPaymentProfileId',False)
                                     else:
-                                        response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',active_id[0],False,False,False,cust_profile_Id,ccn,exp_date,act_model)
+                                        response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',active_id[0],False,False,False,cust_profile_Id,ccn,exp_date,ccv,act_model)
                                         print"response",response
                                         numberstring = response.get('customerPaymentProfileId',False)
                         else:
@@ -178,17 +178,17 @@ class customer_profile_payment(osv.osv_memory):
                                 profile_info = authorize_net_config.call(cr,uid,config_obj,'GetCustomerProfile',cust_profile_Id)
                                 print "profile_info",profile_info
                                 if not profile_info.get('payment_profile'):
-                                  response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',active_id[0],False,False,False,cust_profile_Id,ccn,exp_date,act_model)
-                                  numberstring = response.get('customerPaymentProfileId',False)
+                                    response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',active_id[0],False,False,False,cust_profile_Id,ccn,exp_date,ccv,act_model)
+                                    numberstring = response.get('customerPaymentProfileId',False)
                                 else:
                                     profile_info = profile_info.get('payment_profile')
                                     if ccn[-4:] in profile_info.keys():
                                         numberstring =  profile_info[ccn[-4:]]
                                     else:
-                                        response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',active_id[0],False,False,False,cust_profile_Id,ccn,exp_date,act_model)
+                                        response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',active_id[0],False,False,False,cust_profile_Id,ccn,exp_date,ccv,act_model)
                                         numberstring = response.get('customerPaymentProfileId',False)
                              if not numberstring:
-                                response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',active_id[0],False,False,False,cust_profile_Id,ccn,exp_date,act_model)
+                                response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',active_id[0],False,False,False,cust_profile_Id,ccn,exp_date,ccv,act_model)
                                 numberstring = response.get('customerPaymentProfileId',False)
                         if cust_profile_Id and numberstring:
                                 prepaid_id_search=prepaid_obj.search(cr,uid,[('card_no','=',ccn[-4:]),('partner_id','=',customer_id.id)])
@@ -197,7 +197,7 @@ class customer_profile_payment(osv.osv_memory):
                                 amount =  obj_all.browse(cr,uid,active_id[0]).amount_total
                                 print "amount at authorize side.............",amount
                                 if amount>0.0:
-                                    transaction_res = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',active_id[0],transaction_type,amount,cust_profile_Id,numberstring,'',act_model,'',context)  ##ccv
+                                    transaction_res = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',active_id[0],transaction_type,amount,cust_profile_Id,numberstring,'',ccv,act_model,'',context)
                                     if context.get('recurring_billing') or context.get('captured_api'):
                                         transaction_details = transaction_details.get('response','')
                                     else:
@@ -220,7 +220,7 @@ class customer_profile_payment(osv.osv_memory):
                                             context['cc_number'] ='XXXX'+ccn[-4:]
                                             context['customer_profile_id'] = cust_profile_Id
                                             obj_all.api_response(cr,uid,active_id[0],transaction_details,numberstring,transaction_type,context)
-                                            if context.get('recurring_billing'):
+                                            if context.get('recurring_billing') or context.get('captured_api'):
                                                 return transaction_res
 #                                if transaction_res and obj_all._name=='sale.order':
 #                                    wf_service = netsvc.LocalService("workflow")
@@ -235,8 +235,9 @@ class customer_profile_payment(osv.osv_memory):
     _columns = {
     'partner_id': fields.many2one('res.partner','Partner ID'),
     'auth_cc_number' :fields.char('Credit Card Number',size=256,help="Credit Card Number",required=True),
+    'ccv':fields.char('CCV',size=64), ##ccv changes
     'auth_cc_expiration_date' :fields.char('CC Exp Date [MMYYYY]',size=6,help="Credit Card Expiration Date",required=True),
-    'auth_ccv_number':fields.char('Credit Card Verification',size=256,required=True),
+    #'auth_ccv_number':fields.char('Credit Card Verification',size=256,required=True),
     'transaction_type':fields.selection([('profileTransAuthCapture','Authorize and Capture'),('profileTransAuthOnly','Authorize Only')], 'Transaction Type',readonly=True),
 #    'transaction_type':fields.selection([('profileTransAuthOnly','Authorize Only')], 'Transaction Type',readonly=True),
     }

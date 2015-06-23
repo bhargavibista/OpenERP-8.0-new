@@ -12,6 +12,8 @@ import random
 from dateutil.relativedelta import relativedelta
 from openerp.addons.base_external_referentials.external_osv import ExternalSession
 import pytz
+from psycopg2.extensions import ISOLATION_LEVEL_READ_COMMITTED
+import ast
 
 #class sale_shop(osv.osv):
 #    _inherit = 'sale.shop'
@@ -36,6 +38,13 @@ class sale_order_line(osv.osv):
                     #return super(sale_order_line, self).create(cr, uid, vals, context=context)
             #else:
                 #return super(sale_order_line, self).create(cr, uid, vals, context=context)
+    def create(self,cr,uid,vals,context=None):
+#        cr._cnx.set_isolation_level(ISOLATION_LEVEL_READ_COMMITTED)
+#        print"vals",vals
+#        print"context",context
+        res=super(sale_order_line,self).create(cr,uid,vals,context)
+        print"res",res
+        return res
     def write(self,cr,uid,ids,vals,context={}):
          if vals and vals.get('product_id'):
             ids_obj = self.browse(cr,uid,ids[0])
@@ -50,6 +59,7 @@ class sale_order_line(osv.osv):
                     cr.execute("update sale_order_line set product_uom_qty=%s where id=%d"%(total_qty,search_sale_line[0]))
                     self.unlink(cr,uid,ids,context)
                     return True
+#         cr._cnx.set_isolation_level(ISOLATION_LEVEL_READ_COMMITTED)
          return super(sale_order_line, self).write(cr, uid, ids,vals,context=context)
 
     _columns = {
@@ -655,6 +665,7 @@ class sale_order(osv.osv):
             ('amazon', 'Amazon'),
             ('playjam','Playjam'),
 	    ('tru', 'TRU'),
+	    ('playjam','Playjam'),
             ], 'Sales Channels'),
     'payment_policy': fields.selection([
             ('pro', 'Pro Rate'),
@@ -678,6 +689,7 @@ class sale_order(osv.osv):
                 'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
             },
             multi='sums', help="The total amount."),
+        'magento_incrementid': fields.char('Magento Order ID', size=64),########## cox gen2 changes by yogita
         'promo_code' : fields.char('Promo code',size=256,readonly=True,states={'draft': [('readonly', False)]}),
         'returns_status' : fields.function(get_returns_status, method=True,string="Returns Status", type="char",size=64),
         'tracking_no': fields.char('Tracking Number', size=64,readonly=True,states={'draft': [('readonly', False)],'progress': [('readonly', False)]}),
@@ -986,9 +998,10 @@ class sale_order(osv.osv):
         return super(sale_order, self).copy(cr, uid, ids, vals,context=context)
     
     def onchange_partner_id(self, cr, uid, ids, part,context=None):
+        print"onchange"
         val = {}
         if not part:
-            return {'value': {'partner_invoice_id': False, 'partner_shipping_id': False, 'partner_order_id': False, 'payment_term': False, 'fiscal_position': False}}
+            return {'value': {'partner_invoice_id': False, 'partner_shipping_id': False,  'payment_term': False, 'fiscal_position': False}}
         if context.get('shop_id','') and context.get('default_cox_sales_channels','') == 'call_center':
             shop = self.pool.get('sale.shop').browse(cr, uid, context.get('shop_id'))
             if shop.warehouse_id and shop.warehouse_id.lot_stock_id:
@@ -1003,7 +1016,7 @@ class sale_order(osv.osv):
         dedicated_salesman = part.user_id and part.user_id.id or uid
         val.update({
             'partner_invoice_id': addr['invoice'],
-            'partner_order_id': addr['contact'],
+#            'partner_order_id': addr['contact'],
             'partner_shipping_id': addr['delivery'],
             'payment_term': payment_term,
             'fiscal_position': fiscal_position,
@@ -1039,13 +1052,14 @@ class sale_order(osv.osv):
                 if billing_date_compare < billing_date:
                     billing_date = billing_date_compare
                 billing_date = billing_date.strftime("%Y-%m-%d")     
+        print"billing_datebilling_date",billing_date
         return billing_date,free_trial_date
     def shipping_product(self,cr,uid,ids,context={}):
         product_ref = ('bista_shipping', 'product_product_shipping')
         model, product_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, *product_ref)
         return product_id
     
-    def write_selected_agreement(self, cr, uid, ids,context={}):
+    '''def write_selected_agreement(self, cr, uid, ids,context={}):
         if context is None:
             context = {}
         sale_id_brw = self.browse(cr,uid,ids[0])
@@ -1153,6 +1167,147 @@ class sale_order(osv.osv):
                 if sale_id_brw.cox_sales_channels != 'amazon':
                     cr.execute('update res_partner set %s where id=%s'%(value,partner_id))
             self.calculate_extra_days(cr,uid,partner_id,billing_date)
+        return True'''
+    
+    def write_selected_agreement(self, cr, uid, ids,context={}):
+        if context is None:
+            context = {}
+        sale_id_brw = self.browse(cr,uid,ids[0])
+        policy_object=self.pool.get('res.partner.policy')
+        line_obj =self.pool.get('sale.order.line')
+        partner_obj=self.pool.get('res.partner')
+        user_auth_obj=self.pool.get('user.auth')
+        billing_date = False
+        so_name=sale_id_brw.name
+        partner_id=sale_id_brw.partner_id.id
+        confirm_date=sale_id_brw.date_confirm
+        print"date_confirm",confirm_date
+        sales_channel = sale_id_brw.cox_sales_channels
+        if sale_id_brw.cox_sales_channels == 'ecommerce':
+           confirm_date=sale_id_brw.date_order
+        if sale_id_brw.cox_sales_channels == 'call_center':
+            confirm_date=datetime.now()
+            confirm_date = confirm_date.strftime("%Y-%m-%d")
+        if confirm_date and (' ' in confirm_date):
+            confirm_date = confirm_date.split(' ')[0]
+        order_date=datetime.strptime(confirm_date, "%Y-%m-%d")
+        nextmonth = order_date + relativedelta(months=1)
+        days=calendar.monthrange(order_date.year,order_date.month)[1]
+        if order_date.day==31:
+            days=calendar.monthrange(nextmonth.year,nextmonth.month)[1]
+            nextmonth=str(nextmonth.year)+'-'+str(nextmonth.month)+'-'+str(days)
+        order_lines = sale_id_brw.order_line
+        active_services=policy_object.search(cr,uid,[('agmnt_partner','=',partner_id),('active_service','=',True)])
+        if active_services:
+		billing_date = sale_id_brw.partner_id.billing_date
+        shipping_prod_id = self.shipping_product(cr,uid,[],{})
+        for order_line in order_lines:
+            free_trial_date,no_recurring,recurring_price='',False,0.0
+            if order_line.product_id.type=='service' and order_line.product_id.id != shipping_prod_id:
+		if order_line.product_id.start_date:
+                   print"order_date",order_date
+                   order_date=datetime.strptime(order_line.product_id.start_date, "%Y-%m-%d")
+                order_line.write({'start_date':order_date})
+                free_trail_days = order_line.product_id.free_trail_days
+                if sales_channel == 'ecommerce':
+                    free_trail_days = (order_line.free_trial_days)
+		    if not free_trail_days:
+                        free_trail_days = order_line.product_id.free_trail_days 	
+                billing_date_fun,free_trial_date  = self.get_billing_date(cr,uid,order_date,free_trail_days,billing_date)
+                if billing_date_fun:
+                    billing_date = billing_date_fun
+                if type(billing_date)==str:
+                    billing_date=datetime.strptime(billing_date, "%Y-%m-%d")
+                if order_line.sub_components:
+#                    changes done by yogita
+                    for each_sub_com in order_line.sub_components:
+                        if each_sub_com.product_id.type=='service':
+                            if each_sub_com.recurring_price>0.0:
+                                recurring_price=each_sub_com.recurring_price
+                            no_recurring=each_sub_com.no_recurring
+#                changes done by yogita
+                    child_sol_id = line_obj.search(cr,uid,[('parent_so_line_id','=',order_line.id)])
+                    for each_child_sol in line_obj.browse(cr,uid,child_sol_id):
+                        if each_child_sol.product_id.type=='service':
+                            if each_child_sol.product_id.recurring_service:
+                                search_policy_id = policy_object.search(cr,uid,[('sale_id','=',ids[0]),('sale_line_id','=',each_child_sol.id),('sale_order','=',so_name)])
+                                if not search_policy_id:
+                                    vals={'sale_order':so_name,
+                                       # 'active_service':(False if sale_id_brw.cox_sales_channels == 'call_center' else True),
+                                        'product_id':each_child_sol.product_id.id,
+                                        #'start_date':(False if sale_id_brw.cox_sales_channels == 'call_center' else order_date),
+                                        'agmnt_partner':partner_id,
+                                        'sale_id':ids[0],
+                                        'sale_line_id':each_child_sol.id,
+                                        #'free_trial_date': (False if sale_id_brw.cox_sales_channels == 'call_center' else free_trial_date),
+                                        'free_trail_days':order_line.product_id.free_trail_days,
+					'last_amount_charged': float(each_child_sol.price_unit) * float(each_child_sol.product_uom_qty),
+                                        'no_recurring':no_recurring,
+                                        'recurring_reminder':False,
+                                        'recurring_price':recurring_price,
+                                        }
+                                    policy_object.create(cr,uid,vals)
+                                else:
+                                    policy_object.write(cr,uid,search_policy_id,{'active_service':True,
+                                    'start_date':order_date,
+                                    'free_trial_date':free_trial_date,
+                                    'next_billing_date':billing_date if billing_date >=free_trial_date else free_trial_date+relativedelta(days=1),
+                                    })
+                else:
+                    if order_line.product_id.recurring_service:
+                        search_policy_id = policy_object.search(cr,uid,[('sale_id','=',ids[0]),('sale_line_id','=',order_line.id),('sale_order','=',so_name)])
+                        if not search_policy_id:
+                            vals={'sale_order':so_name,
+                                #'active_service':(False if sale_id_brw.cox_sales_channels == 'call_center' else True),
+                                'product_id':order_line.product_id.id,
+                                #'start_date':(False if sale_id_brw.cox_sales_channels == 'call_center' else order_date),
+                                'agmnt_partner':partner_id,
+                                'sale_id':sale_id_brw.id,
+                                'sale_line_id':int(order_line.id),
+                                #'free_trial_date': (False if sale_id_brw.cox_sales_channels == 'call_center' else free_trial_date),
+                                'free_trail_days':order_line.product_id.free_trail_days,
+				'last_amount_charged': float(order_line.price_unit) * float(order_line.product_uom_qty),
+                                'no_recurring':no_recurring,
+                                'recurring_reminder':False,	
+                                'recurring_price':recurring_price,
+                                }
+                            duration=time.mktime(datetime.strptime('2020-12-31', "%Y-%m-%d").timetuple())
+                            rental_resp=user_auth_obj.rental_playjam(partner_id,order_line.product_id.product_tmpl_id.app_id,duration)
+#                            rental_res=ast.literal_eval(rental_resp)
+                            if ast.literal_eval(str(rental_resp)).has_key('body') and ast.literal_eval(str(rental_resp)).get('body')['result'] == 4113:
+                                print "rentalres---------------------",rental_res
+#                            if rental_res.has_key('body') and (rental_res.get('body')).has_key('result'):
+                                vals.update({
+                                'start_date':order_date,
+                                'active_service':True,
+                                'free_trial_date':(False if sale_id_brw.cox_sales_channels == 'call_center' else free_trial_date),
+                                'next_billing_date':billing_date if billing_date >=free_trial_date else free_trial_date+relativedelta(days=1),
+                                'rental_response':True,})
+                                context['update']=True
+                            else:
+                                vals.update({'rental_response':False})
+                            print"valsvalsvalsvalsvalsvalsvalsvalsvalsvalsvalsvals",vals
+                            policy_object.create(cr,uid,vals)
+                        else:
+                            policy_object.write(cr,uid,search_policy_id,{'active_service':True,
+                            'start_date':order_date,
+                            'free_trial_date':free_trial_date,
+                            'next_billing_date':billing_date if billing_date >=free_trial_date else free_trial_date+relativedelta(days=1),
+                            })
+        #if billing_date and ((sale_id_brw.cox_sales_channels != 'call_center') or (context.get('update'))) :
+        print"contextttttttttttttttt",context
+        if billing_date and (context.get('update')) :
+            print"ifffffffffffffff"
+            value = "billing_date='%s'"%billing_date
+            if not active_services:
+                value += ",start_date='%s'"%order_date
+            if value:
+                print"value",value
+                if sale_id_brw.cox_sales_channels != 'amazon':
+                    cr.execute('update res_partner set %s where id=%s'%(value,partner_id))
+                    cr.commit()
+            self.calculate_extra_days(cr,uid,partner_id,billing_date)
+            partner_obj.cal_next_billing_amount(cr,uid,partner_id)
         return True
 
     def calculate_extra_days(self,cr,uid,partner_id,billing_date):
@@ -1172,7 +1327,8 @@ class sale_order(osv.osv):
                 future_bill_date=datetime.strptime(future_bill_date, "%Y-%m-%d")
             diff_days=future_bill_date-free_trial_date
             if diff_days:
-                policy.write({'extra_days':int(diff_days.days)})
+                next_billing_date=future_bill_date-relativedelta(months=1)
+                policy.write({'extra_days':int(diff_days.days),'next_billing_date':next_billing_date})
         return True
 
     def get_future_bill_date(self,cr,uid,billing_date,free_trial_date):
