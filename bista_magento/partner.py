@@ -70,7 +70,7 @@ class res_partner(models.Model):
     _sql_constraints = [('username_uniq', 'unique(u_name)', 'A partner already exists with this User Name')]
 
     def create(self,cr,uid, vals, context={}):
-        print "password----------------",vals.get('password')
+        print "password--233435--------------",vals.get('password')
         if vals.has_key('password'):
             pwd=vals.get('password')
             hash = pbkdf2_sha256.encrypt(str(pwd), rounds=200, salt_size=16)
