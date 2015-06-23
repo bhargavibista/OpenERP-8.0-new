@@ -1281,7 +1281,7 @@
             <field name="res_model">sale.order</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar,graph</field>
-            <field name="domain">['|',('cox_sales_channels','=','amazon'),('cox_sales_channels','=','tru')]</field>
+            <field name="domain">['|','|',('cox_sales_channels','=','amazon'),('cox_sales_channels','=','tru'),('cox_sales_channels','=','playjam')]</field>
             <field name="search_view_id" ref="view_sales_order_search_amazon_cox"/>
             <field name="view_id" ref="view_sales_order_tree_amazon_cox"/>
             <field name="context">{'search_default_user_id':uid,'default_order_type':True,'default_cox_sales_channels':'tru'}</field>

@@ -32,7 +32,7 @@
     'author': 'Bistasolutions',
     'depends': ["base","purchase","account"],
     'data': [
-
+    'partner.xml',
     ],
     'demo': [
 

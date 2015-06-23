@@ -653,6 +653,7 @@ class sale_order(osv.osv):
             ('ecommerce', 'Ecommerce'),
             ('retail', 'Retail'),
             ('amazon', 'Amazon'),
+            ('playjam','Playjam'),
 	    ('tru', 'TRU'),
             ], 'Sales Channels'),
     'payment_policy': fields.selection([
@@ -1053,19 +1054,25 @@ class sale_order(osv.osv):
         billing_date = False
         so_name=sale_id_brw.name
         partner_id=sale_id_brw.partner_id.id
-        confirm_date=sale_id_brw.date_confirm
-        sales_channel = sale_id_brw.cox_sales_channels
-        if sale_id_brw.cox_sales_channels == 'ecommerce':
-           confirm_date=sale_id_brw.date_order
-        if sale_id_brw.cox_sales_channels == 'call_center':
-            confirm_date=datetime.now()
-            confirm_date = confirm_date.strftime("%Y-%m-%d")
-        order_date=datetime.strptime(confirm_date, "%Y-%m-%d")
-        nextmonth = order_date + relativedelta(months=1)
-        days=calendar.monthrange(order_date.year,order_date.month)[1]
-        if order_date.day==31:
-            days=calendar.monthrange(nextmonth.year,nextmonth.month)[1]
-            nextmonth=str(nextmonth.year)+'-'+str(nextmonth.month)+'-'+str(days)
+        if sale_id_brw.cox_sales_channels == 'playjam':
+            return True
+        order_date=datetime.strptime(str(date.today()), "%Y-%m-%d")
+#        confirm_date=sale_id_brw.date_confirm
+#        sales_channel = sale_id_brw.cox_sales_channels
+#        if sale_id_brw.cox_sales_channels == 'ecommerce':
+#           confirm_date=sale_id_brw.date_order
+#        if sale_id_brw.cox_sales_channels == 'call_center':
+#            confirm_date=datetime.now()
+#            confirm_date = confirm_date.strftime("%Y-%m-%d")
+#        print "sale_id_brw.cox_sales_channels",sale_id_brw.cox_sales_channels,confirm_date
+#        order_date=datetime.strptime(confirm_date, "%Y-%m-%d")
+#        print "order date......................",order_date
+#        jkhkjhj
+#        nextmonth = order_date + relativedelta(months=1)
+#        days=calendar.monthrange(order_date.year,order_date.month)[1]
+#        if order_date.day==31:
+#            days=calendar.monthrange(nextmonth.year,nextmonth.month)[1]
+#            nextmonth=str(nextmonth.year)+'-'+str(nextmonth.month)+'-'+str(days)
         order_lines = sale_id_brw.order_line
         active_services=policy_object.search(cr,uid,[('agmnt_partner','=',partner_id),('active_service','=',True)])
         billing_date = sale_id_brw.partner_id.billing_date

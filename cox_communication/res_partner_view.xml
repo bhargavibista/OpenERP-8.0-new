@@ -290,6 +290,9 @@
                     <attribute name="groups"></attribute>
 <!--                    <attribute name="required">0</attribute>-->
                 </xpath>
+                <xpath expr="//page[@string='Accounting']/group/group/field[@name='property_account_receivable']" position="after">
+                    <field name="deferred_revenue_account"/> 
+                </xpath>
                 <xpath expr="//page[@string='Accounting']/group/group/field[@name='property_account_payable']" position="attributes">
                     <attribute name="groups"></attribute>
                     <attribute name="required">0</attribute>

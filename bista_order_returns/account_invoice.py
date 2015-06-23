@@ -112,9 +112,35 @@ class account_voucher(osv.osv):
 #            x = cr.execute("update account_voucher set amount=%s where id=%s",(amount,voucher.id))
 #            print "res voucher id",res[voucher.id]
 #        return res
+
+    def api_response(self,cr,uid,ids,response,payment_profile_id,transaction_type,context={}):
+        split = response.split(',')
+        vals = {}
+        transaction_id = split[6]
+#        transaction_id ='6927637023'
+        transaction_message = split[3]
+#        transaction_message = 'This transaction has been approved.'
+        authorize_code = split[4]
+#        authorize_code = '199520'
+        if transaction_id and transaction_message:
+            vals['auth_transaction_id'] = transaction_id
+            vals['auth_respmsg'] = transaction_message
+        if authorize_code:
+            vals['authorization_code'] = authorize_code
+        if payment_profile_id:
+            vals['customer_payment_profile_id'] = payment_profile_id
+        if vals:
+                self.write(cr,uid,ids,vals)
+        print "vals of invoice............",vals
+        self.log(cr,uid,ids,transaction_message)
+        return True
 #
     _columns = {
         'writeoff_amount': fields.function(_get_writeoff_amount, string='Difference Amount', type='float', readonly=True, help="Computed as the difference between the amount stated in the voucher and the sum of allocation on the voucher lines."),
+        'auth_transaction_id' :fields.char('Transaction ID', size=40,readonly=True),
+        'authorization_code': fields.char('Authorization Code',size=64,readonly=True),
+        'customer_payment_profile_id': fields.char('Payment Profile ID',size=64,readonly=True),
+        'auth_respmsg' :fields.text('Response Message',readonly=True),
     }
 
 #    def writeoff_move_line_get(self, cr, uid, voucher_id, line_total, move_id, name, company_currency, current_currency, context=None):
@@ -167,6 +193,63 @@ class account_voucher(osv.osv):
 #            }
 #
 #        return move_line
+
+    def writeoff_move_line_get(self, cr, uid, voucher_id, line_total, move_id, name, company_currency, current_currency, context=None):
+        print "context in write move line of//////////////////////",context
+        '''
+        Set a dict to be use to create the writeoff move line.
+
+        :param voucher_id: Id of voucher what we are creating account_move.
+        :param line_total: Amount remaining to be allocated on lines.
+        :param move_id: Id of account move where this line will be added.
+        :param name: Description of account move line.
+        :param company_currency: id of currency of the company to which the voucher belong
+        :param current_currency: id of currency of the voucher
+        :return: mapping between fieldname and value of account move line to create
+        :rtype: dict
+        '''
+	account_obj=self.pool.get('account.account')
+        currency_obj = self.pool.get('res.currency')
+        move_line = {}
+
+        voucher_brw = self.pool.get('account.voucher').browse(cr,uid,voucher_id,context)
+        current_currency_obj = voucher_brw.currency_id or voucher_brw.journal_id.company_id.currency_id
+
+        if not currency_obj.is_zero(cr, uid, current_currency_obj, line_total):
+            diff = line_total
+            account_id = False
+            write_off_name = ''
+            if voucher_brw.payment_option == 'with_writeoff':
+                account_id = voucher_brw.writeoff_acc_id.id
+                write_off_name = voucher_brw.comment
+            elif voucher_brw.type in ('sale', 'receipt'):
+                account_id = voucher_brw.partner_id.property_account_receivable.id
+                if context.has_key('wallet_top_up'):
+                    account_id=account_obj.search(cr, uid, [('code', 'ilike', 'Deferred Revenue')])
+                    print "account_idaccount_idaccount_id for wallet top up.....",account_id
+                    if account_id:
+                        account_id = account_id[0]
+            else:
+                if voucher_brw.account_supplier_debit:
+                    account_id = voucher_brw.account_supplier_debit.id
+                else:
+                    account_id = voucher_brw.partner_id.property_account_payable.id
+                print "account id supplier",account_id
+            print "account id",account_id
+            move_line = {
+                'name': write_off_name or name,
+                'account_id': account_id,
+                'move_id': move_id,
+                'partner_id': voucher_brw.partner_id.id,
+                'date': voucher_brw.date,
+                'credit': diff > 0 and diff or 0.0,
+                'debit': diff < 0 and -diff or 0.0,
+                'amount_currency': company_currency <> current_currency and voucher_brw.writeoff_amount or False,
+                'currency_id': company_currency <> current_currency and current_currency or False,
+                'analytic_account_id': voucher_brw.analytic_id and voucher_brw.analytic_id.id or False,
+            }
+
+        return move_line
 
 ##more modifications continued from account_invoice::invoice_pay_customer funtion
 # overwrite function to change allocation amount negative to positive because invoice_pay_customer funtion return negative amount when invoice type is refund i.e in_refund or out_refund
@@ -332,6 +415,7 @@ class account_voucher(osv.osv):
         '''
         Confirm the vouchers given in ids and create the journal entries for each of them
         '''
+        print "context......................",context
         if context is None:
             context = {}
         move_pool = self.pool.get('account.move')
