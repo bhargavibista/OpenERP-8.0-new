@@ -258,6 +258,20 @@ class CreateCustomerProfileTransaction:
                                     <unitPrice>%s</unitPrice>
                                     <taxable>%s</taxable>
                                 </lineItems>"""% (default_code,product_name,description,quantity,unit_price,taxable)
+        #            code for wallet processing
+        elif active_model == 'res.partner':
+            ref=context.get('reference')
+            desc=context.get('description')
+            if ccv:
+                cardCode = """<cardCode>""" + ccv + """</cardCode> """
+            order_details = """<order>
+                    <invoiceNumber>%s</invoiceNumber>
+                    <description>%s</description>
+               </order>"""%(ref,desc)
+            profile_id=profile_id
+            amount=amount
+            profile_id=profile_id
+            payment_profile_id=payment_profile_id
         if transaction_type == 'profileTransPriorAuthCapture':
             approval_code_str = "<transId>%s</transId>"%(approval_code)
             order_details = ''
