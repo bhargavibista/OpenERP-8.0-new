@@ -25,6 +25,8 @@ class email_template(osv.osv):
 	    ('welcome_email_pop', 'Welcome Email For Game POP'),
             ('payment_confirmation', 'Payment Confirmation'),
             ('service_credit', 'Service Credit'),
+            ('expiry_card_mail_21_days', 'Expired Credit Card Mail before 21 Days'),
+            ('expiry_card_mail_7_days', 'Expired Credit Card Mail before 7 Days'),
             ('cancel_order', 'Cancel Order'),
             ('eula_reminder', 'Eula Reminder'),
             ('payment_exception', 'Payment Exception'),
@@ -102,7 +104,7 @@ class email_template(osv.osv):
                 values.update({'subject':context.get('subject',False)})
             if context.get('email_to',False):
                 values.update({'email_to':context.get('email_to',False)})
-            
+            print"valuesssssssssssss",values
             # Add report in attachments: generate once for all template_res_ids
             if template.report_template:
                 for res_id in template_res_ids:
