@@ -134,7 +134,7 @@ class res_partner(models.Model):
 		length=len(playjam_update_vals)
 		print "length-----------------------------",length
 		if int(x)!=0 and length>2:
-                    response=self.pool.get('user.auth').account_playjam(cr,uid,playjam_update_vals)
+                    response=self.pool.get('user.auth').account_playjam(playjam_update_vals)
                     print"res----account---------",response,type(response)
                     dict_res=ast.literal_eval(response)
                     if dict_res.has_key('body') and (dict_res.get('body')).has_key('result'):
@@ -148,7 +148,7 @@ class res_partner(models.Model):
 
 #    wallet processing
 #    function to Top up the wallet using  CC
-    def wallet_topup(self,cr,uid,dict,context):
+    def wallet_topup(self,dict,context=None):
         count=0
         context_maxmind={}
 #        dict={'BillingInfo': {'PaymentProfileId': '29720861','BillingAddress': {'Street1': '581 Telegraph Canyon Rd', 'Street2': '', 'State': 'CA', 'Zip': '91910-6436', 'City': 'Chula Vista'}, 'CreditCard': {'CCNumber': '510510493671000', 'CCV': '123', 'ExpDate': '122020'}}, 'FillAmount': 10.0, 'ApiId': '123', 'PaymentType': 'CC', 'CustomerId': 6,'DBName': 'april_26th_final_test'}
@@ -172,13 +172,13 @@ class res_partner(models.Model):
             if value is '':
                 result={"body":{ 'code':False, 'message':"('%s Not found')"%(key)}}
                 return json.dumps(result)
-        customer_id=partner_obj.search(cr,uid,[('id','=',int(dict_wallet.get('partner_id')))])
+        customer_id=partner_obj.search(request.cr,SUPERUSER_ID,[('id','=',int(dict_wallet.get('partner_id')))])
         print "customer_idcustomer_id",customer_id
         if not customer_id:
             result={"body":{ 'code':False, 'message':"Customer not found!!!!"}}
             return json.dumps(result)
         #if the payment needs to be processed using CC
-        auth_config_ids = authorize_net_config.search(cr,uid,[])
+        auth_config_ids = authorize_net_config.search(request.cr,SUPERUSER_ID,[])
         credit_card=dict_wallet.get('billing_info').get('CreditCard')
         if credit_card:
             ccn=credit_card.get('CCNumber')
@@ -186,7 +186,7 @@ class res_partner(models.Model):
             exp_date=credit_card.get('ExpDate')
             exp_date = exp_date[-4:] + '-' + exp_date[:2]
         active_id=int(dict_wallet.get('partner_id'))
-        partner_brw=partner_obj.browse(cr,uid,active_id)
+        partner_brw=partner_obj.browse(request.cr,SUPERUSER_ID,active_id)
 #        playjam_exported=partner_brw.playjam_exported
 #        if not playjam_exported:
 #            result={"body":{ 'code':False, 'message':"Customer not present at Playjam End"}}
@@ -194,22 +194,22 @@ class res_partner(models.Model):
         if dict_wallet.get('billing_info').has_key('PaymentProfileId') and auth_config_ids:
             billing_info=dict_wallet.get('billing_info')
             payment_profile_id=billing_info.get('PaymentProfileId')
-            config_obj = authorize_net_config.browse(cr,uid,auth_config_ids[0])
+            config_obj = authorize_net_config.browse(request.cr,SUPERUSER_ID,auth_config_ids[0])
             amount=dict_wallet.get('fill_amount')
-            bank_journal_ids = journal_pool.search(cr, uid, [('type', '=', 'bank')])
-            account_data = inv_obj.get_accounts(cr,uid,active_id,bank_journal_ids[0])
+            bank_journal_ids = journal_pool.search(request.cr,SUPERUSER_ID, [('type', '=', 'bank')])
+            account_data = inv_obj.get_accounts(request.cr,SUPERUSER_ID,active_id,bank_journal_ids[0])
             print "account_dataaccount_data",account_data,account_data['value']['account_id']
-            voucher_data = {'account_id':account_data['value']['account_id'],'partner_id': active_id,'journal_id':bank_journal_ids[0],'amount': amount,'type':'receipt','state': 'draft','pay_now': 'pay_later','name': '','date': today,'company_id': self.pool.get('res.company')._company_default_get(cr, uid, 'account.voucher',context=None),'payment_option': 'without_writeoff','comment': _('Write-Off')}
+            voucher_data = {'account_id':account_data['value']['account_id'],'partner_id': active_id,'journal_id':bank_journal_ids[0],'amount': amount,'type':'receipt','state': 'draft','pay_now': 'pay_later','name': '','date': today,'company_id': self.pool.get('res.company')._company_default_get(request.cr,SUPERUSER_ID, 'account.voucher',context=None),'payment_option': 'without_writeoff','comment': _('Write-Off')}
             print "voucher data,,,,,,,,,,,,,,,,,,,,,,,",voucher_data
-            voucher_id=account_voucher_obj.create(cr,uid,voucher_data, context=context)
-            context.update({'reference': voucher_id,'description':'Wallet Top-Up','captured_api':True})
+            voucher_id=account_voucher_obj.create(request.cr,SUPERUSER_ID,voucher_data, context=context)
+            context={'reference': voucher_id,'description':'Wallet Top-Up','captured_api':True}
 #        call to create transaction in case of existine payment profile
             try:
                 if payment_profile_id:
                     cust_profile_Id=partner_brw.customer_profile_id
                     print "cust_profile_Id",cust_profile_Id
-                    cr.execute("select credit_card_no from custmer_payment_profile where profile_id='%s'"%(payment_profile_id))
-                    ccn = filter(None, map(lambda x:x[0], cr.fetchall()))
+                    request.cr.execute("select credit_card_no from custmer_payment_profile where profile_id='%s'"%(payment_profile_id))
+                    ccn = filter(None, map(lambda x:x[0], request.cr.fetchall()))
     #                ccn = ['1111']
                     print "cccn.................",ccn
                     if ccn:
@@ -221,32 +221,32 @@ class res_partner(models.Model):
                     maxmind_response,context_maxmind=self.pool.get('customer.profile.payment').maxmind_call(cr,uid,ccn)
                     if maxmind_response:
                         email=partner_brw.emailid
-                        response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerProfileOnly',email)
+                        response = authorize_net_config.call(request.cr,SUPERUSER_ID,config_obj,'CreateCustomerProfileOnly',email)
                         if response and 'cust_profile_id' in response:
                             cust_profile_Id = response.get('cust_profile_id')
                             if cust_profile_Id:
             #                                   //if success is False
                                 if not response.get('success'):
-                                    profile_info = authorize_net_config.call(cr,uid,config_obj,'GetCustomerProfile',cust_profile_Id)
+                                    profile_info = authorize_net_config.call(request.cr,SUPERUSER_ID,config_obj,'GetCustomerProfile',cust_profile_Id)
                                     if not profile_info.get('payment_profile'):
-                                      response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',False,active_id,partner_brw,partner_brw,cust_profile_Id,ccn,exp_date,ccv,act_model)
+                                      response = authorize_net_config.call(request.cr,SUPERUSER_ID,config_obj,'CreateCustomerPaymentProfile',False,active_id,partner_brw,partner_brw,cust_profile_Id,ccn,exp_date,ccv,act_model)
                                       numberstring = response.get('customerPaymentProfileId',False)
                                     else:
                                         profile_info = profile_info.get('payment_profile')
                                         if ccn[-4:] in profile_info.keys():
                                             numberstring =  profile_info[ccn[-4:]]
                                         else:
-                                            response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',False,active_id,partner_brw,partner_brw,cust_profile_Id,ccn,exp_date,ccv,act_model)
+                                            response = authorize_net_config.call(request.cr,SUPERUSER_ID,config_obj,'CreateCustomerPaymentProfile',False,active_id,partner_brw,partner_brw,cust_profile_Id,ccn,exp_date,ccv,act_model)
                                             numberstring = response.get('customerPaymentProfileId',False)
             #                                   //if success is True
                                 else:
-                                    response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',False,active_id,partner_brw,partner_brw,cust_profile_Id,ccn,exp_date,ccv,act_model)
+                                    response = authorize_net_config.call(request.cr,SUPERUSER_ID,config_obj,'CreateCustomerPaymentProfile',False,active_id,partner_brw,partner_brw,cust_profile_Id,ccn,exp_date,ccv,act_model)
                                     numberstring = response.get('customerPaymentProfileId',False)
                 if cust_profile_Id and numberstring:
                     payment_profile_val = {ccn[-4:]: numberstring}
                     if dict_wallet.get('fill_amount')>0.0:
                         amount=dict_wallet.get('fill_amount')
-                        present_amt_playjam_req=user_auth_obj.wallet_playjam(cr, uid,active_id, 0.0, context=None)
+                        present_amt_playjam_req=user_auth_obj.wallet_playjam(request.cr,SUPERUSER_ID,active_id, 0.0, context=None)
                         print "present_amt_playjampresent_amt_playjam",present_amt_playjam_req
 			if ast.literal_eval(str(present_amt_playjam_req)).has_key('body') and ast.literal_eval(str(present_amt_playjam_req)).get('body')['result']==4129: 
    #                            present_amt_playjam=float(ast.literal_eval(present_amt_playjam_req).get("body").get('quantity'))
@@ -258,40 +258,40 @@ class res_partner(models.Model):
     #                                return json.dumps(result) 
 			    print"resultttttttttttttttttttttttttttttttttttttttttttttttttttT"
                             context['customer_profile_id']=cust_profile_Id
-                            response =authorize_net_config.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',active_id,transaction_type,amount,cust_profile_Id,numberstring,transaction_id,ccv,act_model,'',context)
+                            response =authorize_net_config.call(request.cr,SUPERUSER_ID,config_obj,'CreateCustomerProfileTransaction',active_id,transaction_type,amount,cust_profile_Id,numberstring,transaction_id,ccv,act_model,'',context)
                             transaction_id = response.get('response').split(',')[6]
-                            prepaid_id_search=prepaid_obj.search(cr,uid,[('card_no','=',ccn[-4:])])
+                            prepaid_id_search=prepaid_obj.search(request.cr,SUPERUSER_ID,[('card_no','=',ccn[-4:])])
                             print "transaction_id//////////////////",transaction_id,prepaid_id_search
                             if context_maxmind and context_maxmind.get('prepaid'):
                                 payment_id=payment_obj.search(cr,uid,[('credit_card_no','=',ccn[-4:])])
                                 print "payment_idpayment_idpayment_id",payment_id
                                 if payment_id:
                                     for each in payment_id:
-                                        payment_obj.write(cr,uid,each,{'prepaid':True})
+                                        payment_obj.write(request.cr,SUPERUSER_ID,each,{'prepaid':True})
                             if prepaid_id_search:
                                 prepaid_obj.write(cr,uid,prepaid_id_search[0],{'transaction_id':transaction_id})
                             if response.get('resultCode') == 'Ok':
-                                wallet_response=user_auth_obj.wallet_playjam(cr, uid, active_id, amount, context=None)
+                                wallet_response=user_auth_obj.wallet_playjam(request.cr,SUPERUSER_ID, active_id, amount, context=None)
                                 print "wallet_responsewallet_response",wallet_response
         #                            retry 5 attempts in case if wallet update fails at playjam end
                                 while count<6:
                                     print "while cinrehvjkfdhjfdhb234567",count
                                     if ast.literal_eval(wallet_response).get("body") and ast.literal_eval(wallet_response).get("body").get('result')==4129:
                                         quantity=ast.literal_eval(wallet_response).get("body").get('quantity')
-                                        partner_obj.cust_profile_payment(cr,uid,active_id,cust_profile_Id,payment_profile_val,exp_date,context)
+                                        partner_obj.cust_profile_payment(request.cr,SUPERUSER_ID,active_id,cust_profile_Id,payment_profile_val,exp_date,context)
                                         result={"body":{"code":True, "message":"Success", "WalletBalance":quantity}}
-                                        partner_obj.write(cr,uid,active_id,{'wal_bal':quantity})
-                                        account_voucher_obj.write(cr,uid,voucher_id,{'state':'posted'})
-                                        account_voucher_obj.api_response(cr,uid,voucher_id,response.get('response'),numberstring,transaction_type,context)
+                                        partner_obj.write(request.cr,SUPERUSER_ID,active_id,{'wal_bal':quantity})
+                                        account_voucher_obj.write(request.cr,SUPERUSER_ID,voucher_id,{'state':'posted'})
+                                        account_voucher_obj.api_response(request.cr,SUPERUSER_ID,voucher_id,response.get('response'),numberstring,transaction_type,context)
                                         context['wallet_top_up']=True
                                          #Add Journal Entries
-                                        account_voucher_obj.action_move_line_create(cr,uid,[voucher_id],context)
+                                        account_voucher_obj.action_move_line_create(request.cr,SUPERUSER_ID,[voucher_id],context)
                                         return json.dumps(result)
                                         count=7
                                     else:
                                         count+=1
                                 if count==6:
-                                    authorize_net_config.call(cr,uid,config_obj,'VoidTransaction',cust_profile_Id,numberstring,transaction_id)
+                                    authorize_net_config.call(request.cr,SUPERUSER_ID,config_obj,'VoidTransaction',cust_profile_Id,numberstring,transaction_id)
                                     result={"body":{ "code":False, "message":"Failed to update wallet at Playjam end"}}
                             else:
                                 result={"body":{ "code":False, "message":"Transaction is not settled succesfully!!!"}}  
@@ -767,6 +767,7 @@ class res_partner(models.Model):
 ######## Update Subscription API to upgrade/downgrade service by yogita
     def update_subscription(self,subscription_data,context=None):
 	print "subscription data-----",subscription_data
+        tmpl_brw = self.pool.get('product.template')
         if subscription_data and subscription_data.get('CustomerId',''):
             dict_exist = { 'CustomerId':subscription_data.get('CustomerId'),'NewProductId':subscription_data.get('NewProductId'),
             'StartDate':subscription_data.get('StartDate'),'OldProductId':subscription_data.get('OldProductId'),
@@ -810,8 +811,8 @@ class res_partner(models.Model):
                     return json.dumps({'body':{'code':False,'message':'Customer Payment Profile does not exist.'}})
                 if not partner_brw.playjam_exported:
                     return json.dumps({'body':{'code':False,'message':'Customer Profile does not exist on playjam side.'}})
-            	cr.execute('select product_id from res_partner_policy where active_service=True and return_cancel_reason is null and agmnt_partner= %s'%partner_id[0])
-            	product_ids=filter(None, map(lambda x:x[0], cr.fetchall()))
+            	request.cr.execute('select product_id from res_partner_policy where active_service=True and return_cancel_reason is null and agmnt_partner= %s'%partner_id[0])
+            	product_ids=filter(None, map(lambda x:x[0], request.cr.fetchall()))
             	if product_ids and new_pack_oe_id[0] in product_ids:
                     return json.dumps({'body':{'code':False,'message':'You can not Upgrade/Downgrade to the active subscription.'}})
             	search_old_policy = partner_policy.search(request.cr,SUPERUSER_ID,[('product_id','=',old_pack_oe_id[0]),('active_service','=',True),('agmnt_partner','in',partner_id)])
@@ -820,7 +821,8 @@ class res_partner(models.Model):
                 if search_old_policy:
 #                        new_pack_id = product_obj.search(request.cr,SUPERUSER_ID,[('default_code','=ilike',new_sku)])
                     new_pack_oe_brw=product_obj.browse(request.cr,SUPERUSER_ID,new_pack_oe_id[0])
-                    if new_pack_oe_brw.product_type!='service':
+                    print"new_pack_oe_brw",new_pack_oe_brw,new_pack_oe_brw.product_type,tmpl_brw.browse(request.cr,SUPERUSER_ID,new_pack_oe_brw.product_tmpl_id.id).product_type
+                    if new_pack_oe_brw.product_tmpl_id and tmpl_brw.browse(request.cr,SUPERUSER_ID,new_pack_oe_brw.product_tmpl_id.id).product_type!='service':
                         return json.dumps({'body':{'code':False,'message':'You can Upgrade/Downgrade to the subscription only.'}})
 #                            new_pack_oe_brw=product_obj.browse(request.cr,SUPERUSER_ID,new_pack_id[0])
                     old_prod_categ,old_prod_categ_parent,free_trial_date,flag,source=[],[],'',False,''
@@ -892,23 +894,23 @@ class res_partner(models.Model):
                     print "user_id---------",user_id
                     print "app_id---------",app_id
                     print "expiry_epoch---------",start_date
-                    expiry_epoch=time.mktime(datetime.datetime.strptime(str(start_date), "%Y-%m-%d").timetuple())
+                    expiry_epoch=time.mktime(datetime.datetime.now(), "%Y-%m-%d").timetuple()
                     print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch
                     expiry_epoch1=(int(expiry_epoch)+3600)
                     print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch1
-                    old_policy_result = user_auth_obj.rental_playjam(request.cr,SUPERUSER_ID,user_id,app_id,expiry_epoch1)
+                    old_policy_result = user_auth_obj.rental_playjam(user_id,app_id,expiry_epoch1)
                     print "voucher_return----------",old_policy_result
                     if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
                         #4113 is the result response value for successfull rental update
                         additional_info = {'source':source,'cancel_return_reason':'downgrade'}
                         cancel_reason = return_obj.additional_info(request.cr,SUPERUSER_ID,additional_info)
-                        cr.execute("update res_partner_policy set active_service = False,return_cancel_reason='downgrade',cancel_date=%s,additional_info=%s where id = %s",(start_date,cancel_reason,old_policy_brw.id))
+                        request.cr.execute("update res_partner_policy set active_service = False,return_cancel_reason='downgrade',cancel_date=%s,additional_info=%s where id = %s",(start_date,cancel_reason,old_policy_brw.id))
                         app_id=new_pack_oe_brw.app_id
 #                                    app_id=284
                         expiry_epoch=time.mktime(datetime.datetime.strptime(str('2050-12-31'), "%Y-%m-%d").timetuple())
 			expiry_epoch=int(expiry_epoch)
-                        print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
-                        new_policy_result = user_auth_obj.rental_playjam(request.cr,SUPERUSER_ID,user_id,app_id,expiry_epoch)
+                        print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch122",expiry_epoch
+                        new_policy_result = user_auth_obj.rental_playjam(request.cr, SUPERUSER_ID, user_id, app_id, expiry_epoch)
                         print "voucher_return-------------++++++++++++++",new_policy_result
                         if ast.literal_eval(str(new_policy_result)).has_key('body') and ast.literal_eval(str(new_policy_result)).get('body')['result'] == 4113:
                             #4113 is the result response value for successfull rental update
