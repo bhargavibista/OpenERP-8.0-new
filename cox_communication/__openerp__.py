@@ -54,7 +54,7 @@ This module is built to handle requirements of Cox Communication.
         'partner_policy_view.xml',
         'invoice_view.xml',
         'res_partner_view.xml',
-        # 'product_view.xml',
+         'product_view.xml',
         'crm_helpdesk.xml',
         'reasons_view.xml',
         'returns_view.xml',
@@ -113,6 +113,7 @@ This module is built to handle requirements of Cox Communication.
 	
 	'sale_import_view.xml',
         'mrp_view.xml',
+        'service_config_view.xml',
     ],
     'demo_xml': [],
     'js':['static/src/js/*.js'],
