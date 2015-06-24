@@ -13,6 +13,7 @@ import credit_service
 import vista_delivery
 import sale_import
 import mrp
+import service_config
 #import sale_bundle_product
 #import test_svn
 
