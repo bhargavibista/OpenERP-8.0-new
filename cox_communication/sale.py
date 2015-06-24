@@ -1882,6 +1882,7 @@ class sale_order(osv.osv):
         raise osv.except_osv(_('Warning!'), _('%s')%(str(message)))
 
     def email_to_customer(self, cr, uid, ids_obj,model,email_type,email_to,context={}):
+        print"emaillllllllllllllllll",email_type
         
 #        smtp_obj = self.pool.get('email.smtpclient')
         template_obj=self.pool.get('email.template')
@@ -1893,6 +1894,7 @@ class sale_order(osv.osv):
         else:
             template_search = template_obj.search(cr,uid,[('model','=',model),('email_type','=',email_type)])
         if template_search:
+            print"template_search",template_search
 #        template_id_obj = template_obj.browse(cr,uid,template_search[0])
             self.pool.get('email.template').send_mail(cr,uid,template_search[0],ids_obj.id,'True',False,context)
 #        if smtpserver_id:
@@ -2185,6 +2187,69 @@ class schedular_function(osv.osv):
                         #################Ends here ################################
             except Exception, e:
                 print "Error in URLLIB",str(e)
+                
+    
+                
+#    #    function to send mail to customer for expired credit card or no credit card
+#    def expiry_credit_card_check(self,cr,uid,ids,context):
+#        no_of_days=context.get('no_of_days')
+#        now = datetime.datetime.now()
+#        print "nownownownownownownownownownownow",now,context
+#        sale_obj=self.pool.get('sale.order')
+#        partner_obj=self.pool.get('res.partner')
+#        billing_after_no_of_days=now+datetime.timedelta(days=no_of_days)
+#        print "billing_after_no_of_days//////////////////",billing_after_no_of_days
+#        billing_date=billing_after_no_of_days.strftime("%Y-%m-%d")
+#        billing_month=billing_after_no_of_days.strftime("%Y-%m")
+#        print "billing_monthbilling_month",billing_month
+#        customer_id=partner_obj.search(cr,uid,[('billing_date','=',billing_date)])
+#        print "customer_idcustomer_idcustomer_id",customer_id
+#        if customer_id:
+#            for each in customer_id:
+#                partner_brw=partner_obj.browse(cr,uid,each)
+#                cust_profile_id=partner_brw.customer_profile_id
+#                if cust_profile_id:
+#                    cr.execute("select exp_date from custmer_payment_profile where customer_profile_id='%s' and active_payment_profile=True"%(str(cust_profile_id)))
+#                    payment_profile_data=cr.dictfetchall()
+#                    if payment_profile_data:
+#                        expiration_date=payment_profile_data[0].get('exp_date')
+#                        if expiration_date<billing_month:
+#                            partner_obj.write(cr,uid,each,{'comment':'Credit Card Expired'})
+#                            sale_obj.email_to_customer(cr,uid,partner_brw,'res.partner','expiry_card_mail',partner_brw.emailid,context)
+#                    else:
+#                        partner_obj.write(cr,uid,each,{'comment':'No Credit Card'})
+#                        sale_obj.email_to_customer(cr,uid,partner_brw,'res.partner','expiry_card_mail',partner_brw.emailid,context)
+#                else:
+#                    partner_obj.write(cr,uid,each,{'comment':'No Credit Card'})
+#                    sale_obj.email_to_customer(cr,uid,partner_brw,'res.partner','expiry_card_mail',partner_brw.emailid,context)
+#            return True
+        
+        
+    def expiry_credit_card_check_14_days(self,cr,uid,context={}):
+        config_obj=self.pool.get('service.configuration')
+        config_ids=config_obj.search(cr,uid,[('scheduler_type','=','expiry_credit_card_check_14_days')])
+        print"config_idsconfig_idsconfig_idsconfig_ids",config_ids
+        if config_ids:
+            no_of_days=config_obj.browse(cr,uid,config_ids[0]).no_days
+        else:
+            no_of_days=14
+        context['no_of_days']=no_of_days
+        self.pool.get('res.partner').expiry_credit_card_check(cr,uid,[],context)
+        
+        
+    ##### schedular check expiry of credit card
+    def expiry_credit_card_check_7_days(self,cr,uid,context={}):
+        config_obj=self.pool.get('service.configuration')
+        config_ids=config_obj.search(cr,uid,[('scheduler_type','=','expiry_credit_card_check_7_days')])
+        print"config_idsconfig_idsconfig_idsconfig_ids",config_ids
+        if config_ids:
+            no_of_days=config_obj.browse(cr,uid,config_ids[0]).no_days
+        else:
+            no_of_days=7
+        context['no_of_days']=no_of_days
+        self.pool.get('res.partner').expiry_credit_card_check(cr,uid,[],context)
+        
+        
     def recurring_payment_reminder(self,cr,uid,context={}):
         so_obj = self.pool.get('sale.order')
         payment_error_obj = self.pool.get('partner.payment.error')
