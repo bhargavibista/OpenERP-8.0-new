@@ -93,6 +93,36 @@ class account_voucher(osv.osv):
             currency = voucher.currency_id or voucher.company_id.currency_id
             res[voucher.id] =  currency_obj.round(cr, uid, currency, abs(abs(voucher.amount) - abs(credit - debit)))
         return res
+    
+    def api_response(self,cr,uid,ids,response,payment_profile_id,transaction_type,context={}):
+        split = response.split(',')
+        vals = {}
+        transaction_id = split[6]
+#        transaction_id ='6927637023'
+        transaction_message = split[3]
+#        transaction_message = 'This transaction has been approved.'
+        authorize_code = split[4]
+#        authorize_code = '199520'
+        if transaction_id and transaction_message:
+            vals['auth_transaction_id'] = transaction_id
+            vals['auth_respmsg'] = transaction_message
+        if authorize_code:
+            vals['authorization_code'] = authorize_code
+        if payment_profile_id:
+            vals['customer_payment_profile_id'] = payment_profile_id
+        if vals:
+                self.write(cr,uid,ids,vals)
+        print "vals of invoice............",vals
+        self.log(cr,uid,ids,transaction_message)
+        return True
+#
+    _columns = {
+        'writeoff_amount': fields.function(_get_writeoff_amount, string='Difference Amount', type='float', readonly=True, help="Computed as the difference between the amount stated in the voucher and the sum of allocation on the voucher lines."),
+        'auth_transaction_id' :fields.char('Transaction ID', size=40,readonly=True),
+        'authorization_code': fields.char('Authorization Code',size=64,readonly=True),
+        'customer_payment_profile_id': fields.char('Payment Profile ID',size=64,readonly=True),
+        'auth_respmsg' :fields.text('Response Message',readonly=True),
+    }
 #
 #    def _get_writeoff_amount(self, cr, uid, ids, name, args, context=None):
 #        print "xxxxx voucher",ids
@@ -113,9 +143,9 @@ class account_voucher(osv.osv):
 #            print "res voucher id",res[voucher.id]
 #        return res
 #
-    _columns = {
-        'writeoff_amount': fields.function(_get_writeoff_amount, string='Difference Amount', type='float', readonly=True, help="Computed as the difference between the amount stated in the voucher and the sum of allocation on the voucher lines."),
-    }
+#    _columns = {
+#        'writeoff_amount': fields.function(_get_writeoff_amount, string='Difference Amount', type='float', readonly=True, help="Computed as the difference between the amount stated in the voucher and the sum of allocation on the voucher lines."),
+#    }
 
 #    def writeoff_move_line_get(self, cr, uid, voucher_id, line_total, move_id, name, company_currency, current_currency, context=None):
 #        '''
