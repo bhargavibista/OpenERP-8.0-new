@@ -43,6 +43,7 @@ class retail_delivery(osv.osv_memory):
                 ###
                 cr.execute("select procurement_id from stock_move where picking_id = %d and parent_stock_mv_id is null"%(pick_id[0]))
                 procurement_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
+                
                 print"procurement_ids",procurement_ids
                 sale_line_ids = self.pool.get('procurement.order').browse(cr,uid,procurement_ids[0]).sale_line_id.id
                 print"sale_line_ids",sale_line_ids
@@ -96,10 +97,13 @@ class retail_delivery(osv.osv_memory):
             name = self.pool.get('sale.order').browse(cr,uid,sale_id).name
         pick_id = self.pool.get('stock.picking').search(cr,uid,[('origin','=',name),('state','not in',('done','cancel'))])
         print "sale and pick idsssssssssssssssss",pick_id,sale_id
+        procurement= []
         if pick_id:
 
             so_line_ids = self.browse(cr,uid,ids[0]).so_line_ids
             procurement_id = self.browse(cr,uid,ids[0]).procurement_ids
+            print"procurement_id",procurement_id,type(procurement_id)
+#            if len(procurement_id) > 1:
             context = dict(context, active_ids=pick_id, active_model='stock.picking',procurement_id=procurement_id,so_line_ids=so_line_ids,trigger='retail_store',sale_id=sale_id)
             print"context",context
             return {
