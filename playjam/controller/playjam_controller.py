@@ -49,7 +49,7 @@ class Playjam(http.Controller):
             print "wc-------",type(wc)
             if wc==u'True':
                 want_code=True            
-            registry = RegistryManager.get('odoo_8_test_db')
+            registry = RegistryManager.get('test_odoo8_1')
             with registry.cursor() as cr:
                 u = registry['user.auth']
                 result = u.get_key_code(dev_id, wc)
@@ -91,7 +91,7 @@ class Playjam(http.Controller):
 #                auth_reply=""
             print "a-----",device_id
             print "wc-------",type(auth_reply),auth_reply
-            registry = RegistryManager.get('odoo_8_test_db')
+            registry = RegistryManager.get('test_odoo8_1')
             with registry.cursor() as cr:
                 u = registry['user.auth']
                 result = u.user_login(dict_req)
@@ -131,10 +131,79 @@ class Playjam(http.Controller):
             print "request---------",dict_req,type(dict_req)
             session_token=dict_req.get('deviceId')
             auth_reply=dict_req.get('authReply')
-            registry = RegistryManager.get('odoo_8_test_db')
+            registry = RegistryManager.get('test_odoo8_1')
             with registry.cursor() as cr:
                 u = registry['user.auth']
                 result = u.wallet_top_up(dict_req)            
             print 'result---------------',result            
             return (str(result))
         return str({"body":{'result':1537}})
+    
+    
+
+class Playcast(http.Controller):
+    
+    @http.route('/flare/playjam/ValidateToken', type='http', auth="public")
+    def ValidateToken(self,s_action=None,**kw):
+        result={}
+	t='true'
+        f='false'
+        print "aaaaaaaaaa------",self,kw
+        want_code=False
+        osv_pool = pooler.get_pool('test_odoo8_1')
+#        user = osv_pool.get('user.auth')
+
+        if 'request' in kw:
+            request=kw.get('request')
+            string_con=str(request)
+            if '%' in string_con:
+                #string_con=urllib.unquote(string_con).decode('utf8')
+                if '+' in string_con:
+                    string_con=string_con.replace('+','')
+                    string_con=urllib.unquote(string_con).decode('utf8')
+            if t in string_con:
+                string_con=string_con.replace('true', "True")
+                print "string--------------",string_con
+
+            if f in string_con:
+                string_con=string_con.replace(f, "False")
+
+            print "str(request)------",string_con,type(string_con),request
+            try:
+                dict_req = ast.literal_eval(str(string_con))
+
+            except Exception ,e:
+                return str({"body":{'result':-1537}})
+            print "request---------",dict_req,type(dict_req)
+	    token=dict_req.get('Token')
+            
+            registry = RegistryManager.get('test_odoo8_1')
+            with registry.cursor() as cr:
+                user = registry['user.auth']
+                result=user.validate_insecure_token(token,{})
+
+            print 'result---------------',result
+            response={}
+            if result:
+                response={"body":{"code": 1, "message": "Success" }}
+            else:
+                response={"body":{"code": -1, "message": "Expired Token" }}
+
+            return str(response)
+        return str({"body":{'result':-1}})
+    
+    
+    @http.route('/flare/playjam/QualityOfService', type='http', auth="public")
+    def QualityOfService(self,s_action=None,**kw):
+        result={}
+	t='true'
+        f='false'
+        print "aaaaaaaaaa------",self,kw
+        osv_pool = pooler.get_pool('test_odoo8_1')
+
+        if 'request' in kw:
+            
+            response={"body":{"code": 1, "message": "Call Succesful" }}
+
+            return str(response)
+        return str({"body":{'result':-1, "message": "Call Failed" }})
