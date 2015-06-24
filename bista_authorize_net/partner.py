@@ -39,7 +39,7 @@ class custmer_payment_profile(osv.osv):
                             numberstring = response.get('customerPaymentProfileId',False)
             if numberstring:
                 payment_profile = {cc_number[-4:]: numberstring}
-                self.pool.get('res.partner').cust_profile_payment(cr,uid,partner_id,profile_id,payment_profile,context)
+                self.pool.get('res.partner').cust_profile_payment(cr,uid,partner_id,profile_id,payment_profile,exp_date,context)
                 return numberstring
     _columns = {
         'profile_id' : fields.char('PaymentProfile ID',size=64),
@@ -61,7 +61,6 @@ class res_partner(osv.osv):
         active_payment_profile_id = []
         for cc_number in payment_profile_data.iterkeys():
             print"cc_number",cc_number
-            dshfjd
             each_profile = payment_profile_data[cc_number]
             search_payment_profile = payment_obj.search(cr,uid,[('profile_id','=',each_profile),('credit_card_no','=',cc_number)])
             if not search_payment_profile:
