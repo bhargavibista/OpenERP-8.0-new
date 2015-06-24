@@ -78,8 +78,8 @@ class authorize_net_config(authorize_osv.authorize_osv):
                                 if customerPaymentProfile:
 #                                    cc_number = (customerPaymentProfile.keys()[0] if customerPaymentProfile.keys() else '')
 #                                    customerPaymentProfileId = customerPaymentProfile.values()
-                                    partner_obj.cust_profile_payment(cr,uid,search_partner[0],customerProfileId,customerPaymentProfile,context)
-
+                                    partner_obj.cust_profile_payment(cr,uid,search_partner[0],customerProfileId,customerPaymentProfile,exp_date,context)
+                                    
         return True
     def onchange_test_production(self,cr,uid,ids,test_production,context):
         if test_production:
