@@ -53,6 +53,47 @@ class res_partner(osv.Model):
 #    'cable': fields.boolean('Essential Tier Cox Cable'),
 #    'flare_account': fields.boolean('Flare Account'),
     }
+    
+    
+    #    function to send mail to customer for expired credit card or no credit card
+    def expiry_credit_card_check(self,cr,uid,ids,context):
+        no_of_days=context.get('no_of_days')
+        now = datetime.datetime.now()
+        print "nownownownownownownownownownownow",now,context
+        sale_obj=self.pool.get('sale.order')
+        partner_obj=self.pool.get('res.partner')
+        billing_after_no_of_days=now+datetime.timedelta(days=no_of_days)
+        print "billing_after_no_of_days//////////////////",billing_after_no_of_days
+        billing_date=billing_after_no_of_days.strftime("%Y-%m-%d")
+        print"billing_date",billing_date
+        billing_month=billing_after_no_of_days.strftime("%Y-%m")
+        print "billing_monthbilling_month",billing_month
+        customer_id=partner_obj.search(cr,uid,[('billing_date','=',billing_date)])
+        print "customer_idcustomer_idcustomer_id",customer_id
+        if customer_id:
+            for each in customer_id:
+                partner_brw=partner_obj.browse(cr,uid,each)
+                cust_profile_id=partner_brw.customer_profile_id
+                if cust_profile_id:
+                    cr.execute("select exp_date from custmer_payment_profile where customer_profile_id='%s' and active_payment_profile=True"%(str(cust_profile_id)))
+                    payment_profile_data=cr.dictfetchall()
+                    print"payment_profile_data",payment_profile_data
+                    if payment_profile_data:
+                        print"ifffffff"
+                        expiration_date=payment_profile_data[0].get('exp_date')
+                        print"expiration_date",expiration_date
+                        if expiration_date<billing_month:
+                            print"credit card expiredddddddddd"
+                            partner_obj.write(cr,uid,each,{'comment':'Credit Card Expired'})
+                            sale_obj.email_to_customer(cr,uid,partner_brw,'res.partner','expiry_card_mail_21_days',partner_brw.emailid,context)
+                    else:
+                        partner_obj.write(cr,uid,each,{'comment':'No Credit Card'})
+                        sale_obj.email_to_customer(cr,uid,partner_brw,'res.partner','expiry_card_mail_21_days',partner_brw.emailid,context)
+                else:
+                    partner_obj.write(cr,uid,each,{'comment':'No Credit Card'})
+                    sale_obj.email_to_customer(cr,uid,partner_brw,'res.partner','expiry_card_mail_21_dayss',partner_brw.emailid,context)
+            return True
+        
     def cal_next_billing_amount(self,cr,uid,ids,context=None):
         if not context:
             context={}
@@ -830,7 +871,7 @@ class res_partner(osv.Model):
         return {}
     #Function is inherited from the Authorize.net becasue to make current payment profile as active
     #and make another payment profile as inactive from Openerp and also from Magento site
-    def cust_profile_payment(self,cr,uid,ids,profile_id,payment_profile_data,context={}):
+    def cust_profile_payment(self,cr,uid,ids,profile_id,payment_profile_data,exp_date,context={}):
         ids =int(ids)
         cr.execute("UPDATE res_partner SET customer_profile_id='%s' where id=%d"%(profile_id,ids))
         payment_obj = self.pool.get('custmer.payment.profile')
@@ -839,14 +880,14 @@ class res_partner(osv.Model):
             each_profile = payment_profile_data[cc_number]
             search_payment_profile = payment_obj.search(cr,uid,[('profile_id','=',each_profile),('credit_card_no','=',cc_number)])
             if not search_payment_profile:
-                create_payment = payment_obj.create(cr,uid,{'active_payment_profile':True,'profile_id':each_profile,'credit_card_no':cc_number,'customer_profile_id':profile_id})
+                create_payment = payment_obj.create(cr,uid,{'active_payment_profile':True,'profile_id':each_profile,'credit_card_no':cc_number,'customer_profile_id':profile_id,'exp_date':exp_date})
                 active_payment_profile_id.append(create_payment)
                 cr.execute('INSERT INTO partner_profile_ids \
                         (partner_id,profile_id) values (%s,%s)', (ids, create_payment))
             else:
                 active_payment_profile_id.append(search_payment_profile[0])
         if active_payment_profile_id:
-            payment_obj.write(cr,uid,active_payment_profile_id,{'active_payment_profile':True})
+            payment_obj.write(cr,uid,active_payment_profile_id,{'active_payment_profile':True,'exp_date':exp_date})
             cr.execute("select profile_id from partner_profile_ids where partner_id=%s and profile_id not in %s",(ids,tuple(active_payment_profile_id),))
             in_active_payment_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
             if in_active_payment_ids:
@@ -1397,7 +1438,8 @@ class partner_payment_error(osv.osv):
                 cust_payment_profile_id=payment_profile_data[0]
             if config_ids and customer_profile_id:
                 config_obj = authorize_net_config.browse(cr,uid,config_ids[0])
-                transaction_details =authorize_net_config.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',invoice_id,transaction_type,amount,customer_profile_id,cust_payment_profile_id,transaction_id,act_model,'',context)
+                ccv=''
+                transaction_details =authorize_net_config.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',invoice_id,transaction_type,amount,customer_profile_id,cust_payment_profile_id,transaction_id,ccv,act_model,'',context)
                 cr.execute("select credit_card_no from custmer_payment_profile where profile_id='%s'"%(cust_payment_profile_id))
                 cc_number = filter(None, map(lambda x:x[0], cr.fetchall()))
                 if cc_number:
