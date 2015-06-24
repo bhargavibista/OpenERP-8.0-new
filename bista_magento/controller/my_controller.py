@@ -74,7 +74,7 @@ class Magento(http.Controller):
         f='false'
         print "aaaaaaaaaa------",self,kw
         want_code=False
-        osv_pool = pooler.get_pool('test_odoo8_1')
+        osv_pool = pooler.get_pool('stable_8_openerp')
 #        user = osv_pool.get('user.auth')
 
         if kw.has_key('request'):
@@ -115,7 +115,7 @@ class Magento(http.Controller):
 
 #            obj=request.registry.get('user.auth')
 #            result=obj.register_user(request.cr,1,act_code,{})
-            registry = RegistryManager.get('test_odoo8_1')
+            registry = RegistryManager.get('stable_8_openerp')
             with registry.cursor() as cr:
                 u = registry['user.auth']
                 result = u.register_user(act_code)
@@ -130,7 +130,7 @@ class Magento(http.Controller):
         f='false'
         print "aaaaaaaaaa------",self,kw
         want_code=False
-        osv_pool = pooler.get_pool('test_odoo8_1')
+        osv_pool = pooler.get_pool('stable_8_openerp')
         user = osv_pool.get('res.partner')
 
         if kw.has_key('request'):
@@ -171,7 +171,7 @@ class Magento(http.Controller):
 #                result=user.login_magento(cr,1,u_name,pwd,{})
 #            obj=request.registry['res.partner']
 #            result=obj.login_magento(u_name,pwd,{})
-            registry = RegistryManager.get('test_odoo8_1')
+            registry = RegistryManager.get('stable_8_openerp')
             with registry.cursor() as cr:
                 u = registry['res.partner']
                 result = u.login_magento(u_name,pwd)
@@ -288,7 +288,7 @@ class Magento(http.Controller):
 #            obj=request.registry['res.partner']
 #            result=obj.create_update_profile(request.cr,1,dict_req,{})
 
-            registry = RegistryManager.get('test_odoo8_1')
+            registry = RegistryManager.get('stable_8_openerp')
             with registry.cursor() as cr:
                 u = registry['res.partner']
                 result = u.create_update_profile(dict_req)
@@ -351,7 +351,7 @@ class Magento(http.Controller):
 #            obj=request.registry['res.partner']
 #            result=obj.update_billing_info(request.cr,1,dict_req,{})
 
-            registry = RegistryManager.get('test_odoo8_1')
+            registry = RegistryManager.get('stable_8_openerp')
             with registry.cursor() as cr:
                 u = registry['res.partner']
                 result = u.update_billing_info(dict_req)
@@ -414,7 +414,7 @@ class Magento(http.Controller):
 #            obj=request.registry['res.partner']
 #            result=obj.create_order_magento(request.cr,1,dict_req,{})
 
-            registry = RegistryManager.get('test_odoo8_1')
+            registry = RegistryManager.get('stable_8_openerp')
             with registry.cursor() as cr:
                 u = registry['res.partner']
                 result = u.create_order_magento(dict_req)
@@ -472,7 +472,7 @@ class Magento(http.Controller):
 #            with registry.cursor() as cr:
 #                result=user.update_subscription(cr,1,dict_req,{})
             ###
-            registry = RegistryManager.get('test_odoo8_1')
+            registry = RegistryManager.get('stable_8_openerp')
             with registry.cursor() as cr:
                 u = registry['res.partner']
                 result = u.update_subscription(dict_req)
@@ -529,7 +529,7 @@ class Magento(http.Controller):
 #            obj=request.registry['res.partner']
 #            result=obj.get_transactions_magento(request.cr,1,dict_req,{})
 
-            registry = RegistryManager.get('test_odoo8_1')
+            registry = RegistryManager.get('stable_8_openerp')
             with registry.cursor() as cr:
                 u = registry['res.partner']
                 result = u.get_transactions_magento(dict_req)
@@ -586,7 +586,7 @@ class Magento(http.Controller):
 #            obj=request.registry['product.product']
 #            result=obj.get_product_info(request.cr,1,{})
 
-            registry = RegistryManager.get('test_odoo8_1')
+            registry = RegistryManager.get('stable_8_openerp')
             with registry.cursor() as cr:
                 u = registry['product.product']
                 result = u.get_product_info({})
@@ -646,7 +646,7 @@ class Magento(http.Controller):
 #            obj=request.registry['product.product']
 #            result=obj.update_product_info({})
 
-            registry = RegistryManager.get('test_odoo8_1')
+            registry = RegistryManager.get('stable_8_openerp')
             with registry.cursor() as cr:
                 u = registry['product.product']
                 result = u.update_product_info({})
@@ -787,7 +787,7 @@ class Magento(http.Controller):
 #            obj=request.registry['res.partner']
 #            result=obj.get_account_info(request.cr ,1,dict_req,{})
 
-            registry = RegistryManager.get('test_odoo8_1')
+            registry = RegistryManager.get('stable_8_openerp')
             with registry.cursor() as cr:
                 u = registry['res.partner']
                 result = u.get_account_info(dict_req,{})
@@ -836,7 +836,7 @@ class Magento(http.Controller):
 #            obj=request.registry['res.partner']
 #            result=obj.get_order_info(request.cr ,1,dict_req,{})
 
-            registry = RegistryManager.get('test_odoo8_1')
+            registry = RegistryManager.get('stable_8_openerp')
             with registry.cursor() as cr:
                 u = registry['res.partner']
                 result = u.get_order_info(dict_req,{})

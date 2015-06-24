@@ -663,6 +663,7 @@ class sale_order(osv.osv):
             ('ecommerce', 'Ecommerce'),
             ('retail', 'Retail'),
             ('amazon', 'Amazon'),
+            ('playjam','Playjam'),
 	    ('tru', 'TRU'),
 	    ('playjam','Playjam'),
             ], 'Sales Channels'),

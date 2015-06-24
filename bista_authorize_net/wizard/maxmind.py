@@ -33,3 +33,4 @@ class prepaid_cards_rejected(osv.osv):
         'date':fields.date('Date of Rejection'),
         'partner_id':fields.many2one('res.partner','Partner ID'),
     }
+

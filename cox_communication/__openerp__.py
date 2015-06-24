@@ -48,7 +48,7 @@ This module is built to handle requirements of Cox Communication.
         'board_purchase_view.xml',   ##cox gen2 added
         'board_crm_view.xml', ##cox gen2 added
         'board_account_view.xml',  ##cox gen2 added
-        'board_project_view.xml', ##cox gen2 added
+#        'board_project_view.xml', ##cox gen2 added
         'board_warehouse_view.xml', ##cox gen2 added
         'board_view.xml',  ##cox gen2
         'partner_policy_view.xml',

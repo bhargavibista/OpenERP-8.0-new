@@ -135,11 +135,10 @@ class Playjam(http.Controller):
             with registry.cursor() as cr:
                 u = registry['user.auth']
                 result = u.wallet_top_up(dict_req)            
-            print 'result---------------',result            
+            print 'result---------------',result    
+            
             return (str(result))
         return str({"body":{'result':1537}})
-    
-    
 
 class Playcast(http.Controller):
     
@@ -207,3 +206,50 @@ class Playcast(http.Controller):
 
             return str(response)
         return str({"body":{'result':-1, "message": "Call Failed" }})
+
+#        @openerpweb.httprequest
+
+
+    @http.route('/flare/playjam/pushtransaction', type='http', auth="public")
+    def pushtransaction(self,req,**kw):
+        result={}
+	t='true'
+        f='false'
+        print "aaaaaaaaaa------",self,kw
+        want_code=False
+        osv_pool = pooler.get_pool('stable_8_openerp')
+        user = osv_pool.get('res.partner')
+
+        if kw.has_key('request'):
+            request=kw.get('request')
+            string_con=str(request)
+            if '%' in string_con:
+                #string_con=urllib.unquote(string_con).decode('utf8')
+                if '+' in string_con:
+                    string_con=string_con.replace('+','')
+                    string_con=urllib.unquote(string_con).decode('utf8')
+            if t in string_con:
+                string_con=string_con.replace('true', "True")
+                print "string--------------",string_con
+
+            if f in string_con:
+                string_con=string_con.replace(f, "False")
+
+            print "str(request)------",string_con,type(string_con),request
+            try:
+                dict_req = ast.literal_eval(str(string_con))
+
+            except Exception ,e:
+                return req.make_response(str({"body":{'result':-1537}}), [('Content-Type', 'application/json; charset=UTF-8')])
+            print "request---------",dict_req,type(dict_req)
+            #a=dict_req.get('deviceId')
+            registry = RegistryManager.get('stable_8_openerp')
+            with registry.cursor() as cr:
+                u = registry['res.partner']
+                result = u.push_transactions(dict_req)            
+            print 'result---------------',result
+    #        user = osv_pool.get('res.users')
+            print "user--------------------",user
+    #        ero
+            return req.make_response(str(result), [('Content-Type', 'application/json; charset=UTF-8')])
+        return str({"body":{'result':-1537}})

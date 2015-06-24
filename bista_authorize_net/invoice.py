@@ -77,18 +77,21 @@ class account_invoice(osv.osv):
                 self.write(cr,uid,ids,vals)
         self.log(cr,uid,ids,transaction_message)
         return True
-
     def make_payment_of_invoice(self, cr, uid, ids, context):
 #         logger = netsvc.Logger()
          if not context:
              context = {}
          inv_obj = self.browse(cr,uid,ids[0])
+	 account_obj=self.pool.get('account.account')
          voucher_id = False
          invoice_number = inv_obj.number
          voucher_pool = self.pool.get('account.voucher')
          journal_pool = self.pool.get('account.journal')
          period_obj = self.pool.get('account.period')
-         bank_journal_ids = journal_pool.search(cr, uid, [('type', '=', 'bank')])
+	 if context.get('journal_type',''):
+            bank_journal_ids=  journal_pool.search(cr, uid, [('type', '=', context.get('journal_type'))])
+         else:
+            bank_journal_ids = journal_pool.search(cr, uid, [('type', '=', 'bank')])
          if not len(bank_journal_ids):
              return True
          context.update({
@@ -104,12 +107,18 @@ class account_invoice(osv.osv):
          if inv_obj.type in ('out_refund','in_refund'):
              context.update({'default_amount':-inv_obj.amount_total})
          tax_id = self._get_tax(cr, uid, context)
- 
          account_data = self.get_accounts(cr,uid,inv_obj.partner_id.id,bank_journal_ids[0])
+         account_id=account_data['value']['account_id']
+         if context.has_key('wallet_purchase'):
+            account_id=account_obj.search(cr, uid, [('code', 'ilike', 'Deferred Revenue')])
+            print "account_idaccount_idaccount_id for wallet top up.....",account_id
+            if account_id:
+                account_id = account_id[0]
+         print "account_data['value']['account_id']",account_id
          date = time.strftime('%Y-%m-%d')
          voucher_data = {
                  'period_id': inv_obj.period_id.id,
-                 'account_id': account_data['value']['account_id'],
+                 'account_id': account_id,
                  'partner_id': inv_obj.partner_id.id,
                  'journal_id':bank_journal_ids[0],
                  'currency_id': inv_obj.currency_id.id,

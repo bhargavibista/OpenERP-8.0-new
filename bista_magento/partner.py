@@ -70,7 +70,7 @@ class res_partner(models.Model):
     _sql_constraints = [('username_uniq', 'unique(u_name)', 'A partner already exists with this User Name')]
 
     def create(self,cr,uid, vals, context={}):
-        print "password----------------",vals.get('password')
+        print "password--233435--------------",vals.get('password')
         if vals.has_key('password'):
             pwd=vals.get('password')
             hash = pbkdf2_sha256.encrypt(str(pwd), rounds=200, salt_size=16)
@@ -173,7 +173,8 @@ class res_partner(models.Model):
                 result={"body":{ 'code':False, 'message':"('%s Not found')"%(key)}}
                 return json.dumps(result)
         customer_id=partner_obj.search(request.cr,SUPERUSER_ID,[('id','=',int(dict_wallet.get('partner_id')))])
-        print "customer_idcustomer_id",customer_id
+
+        print "customer_idcustome343546r_id",customer_id
         if not customer_id:
             result={"body":{ 'code':False, 'message':"Customer not found!!!!"}}
             return json.dumps(result)
@@ -599,6 +600,7 @@ class res_partner(models.Model):
                     }
         print "dict...4756768678................",dict
         if dict.has_key('tru') or dict.has_key('wallet_purchase'):
+            print "dict_existdict_existdict_existdict_exist",dict_exist
 #            if dict.get('tru'):
             dict_exist.pop('magento_orderid')
             context['tru']=True
@@ -698,6 +700,9 @@ class res_partner(models.Model):
                 print"product_id",product_id
                 if product_id:
                     price=product_obj.browse(request.cr,SUPERUSER_ID,productid).list_price
+#                    if dict_price!=price:
+#                        result={"body":{ 'code':'False', 'message':"Price of the product doesnt match with the list price defined"}}
+#                        return json.dumps(result) 
                     prdct_name=str(product_obj.browse(request.cr,SUPERUSER_ID,productid).name)
                     request.cr.execute("select product_id from res_partner_policy where active_service =True and agmnt_partner = %s"%(int(dict_exist.get('partner_id'))))
                     active_services = filter(None, map(lambda x:x[0], request.cr.fetchall()))
@@ -748,7 +753,7 @@ class res_partner(models.Model):
                             amnt_after_deduction=exist_wallet_quantity-amount_deduct
                         else:
                             amnt_after_deduction=amount_deduct
-                        partner_obj.write(request.cr,request.uid,int(dict_exist.get('partner_id')),{'wal_bal':amnt_after_deduction})
+                        partner_obj.write(request.cr,SUPERUSER_ID,int(dict_exist.get('partner_id')),{'wal_bal':amnt_after_deduction})
                 result={"body":{ 'code':True, 'message':"Success",'OrderNo':so_name}}
     #        call at Authorize for a new profile creation
             elif billing_info.get('CreditCard'):

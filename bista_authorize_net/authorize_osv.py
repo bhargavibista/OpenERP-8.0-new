@@ -8,6 +8,7 @@
 
 from openerp.osv import osv, fields
 from openerp.tools.translate import _
+#from openerp.tools.translate import _cc
 import openerp.pooler as pooler
 import httplib, ConfigParser, urlparse
 from xml.dom.minidom import parse, parseString
@@ -89,7 +90,7 @@ class GetProfileIDS:
             text = response_ok.get('message',False)
             if text:
                 raise osv.except_osv(_('Error!'), _('%s')%(text))
-        print"xml########",responseDOM.toprettyxml()
+        #print"xml########",responseDOM.toprettyxml()
         responseDOM.unlink()
         return response_ids
 
@@ -231,6 +232,8 @@ class CreateCustomerProfileTransaction:
 #                description = ''
 #            else:
             description =inv_number
+            
+                
             order_details = """<order>
                             <invoiceNumber>%s</invoiceNumber>
                             <description>%s</description>
@@ -258,7 +261,8 @@ class CreateCustomerProfileTransaction:
                                     <unitPrice>%s</unitPrice>
                                     <taxable>%s</taxable>
                                 </lineItems>"""% (default_code,product_name,description,quantity,unit_price,taxable)
-        #            code for wallet processing
+
+#            code for wallet processing
         elif active_model == 'res.partner':
             ref=context.get('reference')
             desc=context.get('description')
@@ -299,31 +303,33 @@ class CreateCustomerProfileTransaction:
     """ + tax.encode('utf-8') + """
     """ + lineitem.encode('utf-8') + """
     <customerProfileId>"""+str(profile_id)+"""</customerProfileId>
+    
     <customerPaymentProfileId>"""+str(payment_profile_id)+"""</customerPaymentProfileId>
+    
     """ + cc_number.encode('utf-8') + """
     """ + order_details.encode('utf-8') + """
     """ + cardCode.encode('utf-8') + """
     """ + approval_code_str.encode('utf-8') + """
      </""" + transaction_type.encode('utf-8') + """>
+     
     </transaction>
     <extraOptions><![CDATA[x_duplicate_window=0]]></extraOptions>
     </createCustomerProfileTransactionRequest>"""
-        print"api.RequestData", api.RequestData
-#        dfsdfsdsddfdfsd
+        print"api.RequestDatae546", api.RequestData
         responseDOM = api.MakeCall()
         print" responseDOM", responseDOM.toprettyxml()
         print"api.RequestData", api.RequestData
         directResponse = ''
         response_ok = self.get_response(responseDOM.getElementsByTagName('messages'))
+        print "response_okresponse_ok1234534546576",response_ok
         if response_ok.get('resultCode',False) == 'Ok':
             directResponse = responseDOM.getElementsByTagName('directResponse')[0].childNodes[0].data
-            print"directResponsedirectResponse",directResponse
-            print"context",context 
             if (context.get('recurring_billing',False)) or (context.get('captured_api',False)):
                 response = {'resultCode':response_ok.get('resultCode',False),'response':directResponse}
                 return response
         else:
             text = response_ok.get('message',False)
+            print "texttexttexttexttexttexttexttext-----------",text
             if responseDOM.getElementsByTagName('directResponse'):
                 directResponse = responseDOM.getElementsByTagName('directResponse')[0].childNodes[0].data
             if text:
@@ -334,7 +340,6 @@ class CreateCustomerProfileTransaction:
                 raise osv.except_osv(_('Error!'), _('%s')%(text))
         responseDOM.unlink()
         return directResponse
-
 class CreateCustomerProfile:
     Session = Session()
     def __init__(self, api_login_id, transaction_key, ServerURL):
@@ -505,7 +510,7 @@ class CreateCustomerProfile:
                                               'email': email,
                                               'cc': cc,
                                               'ext_date': ext_date}
-        print"api.RequestData", api.RequestData
+        #print"api.RequestData", api.RequestData
         responseDOM = api.MakeCall()
 #        print"response",responseDOM.toprettyxml()
         Dictionary ={}
@@ -521,7 +526,7 @@ class CreateCustomerProfile:
             text = response_ok.get('message',False)
             if text:
                 raise osv.except_osv(_('Error!'), _('%s')%(text))
-        print"xml",responseDOM.toprettyxml()
+        #print"xml",responseDOM.toprettyxml()
         responseDOM.unlink()
         return Dictionary
 
@@ -548,7 +553,6 @@ class CreateCustomerPaymentProfile:
         if ccv:
             cardCode = """<cardCode>""" + ccv + """</cardCode> """
         str_billto,str_shipto,address,mode = '','','',''
-        print"active_model",active_model,sale_order_id
         if sale_order_id:
             if active_model=='sale.order':
                 obj_all = pooler.get_pool(cr.dbname).get('sale.order')
@@ -689,9 +693,9 @@ class CreateCustomerPaymentProfile:
                                               'cust_profile_id': cust_profile_id,
                                               'cc': cc,
                                               'ext_date': ext_date}
-        print" api.RequestData", api.RequestData
+        #print" api.RequestData", api.RequestData
         responseDOM = api.MakeCall()
-        print"response",responseDOM.toprettyxml()
+        #print"response",responseDOM.toprettyxml()
         Dictionary ={}
         response_ok = self.get_response(responseDOM.getElementsByTagName('messages'))
         if response_ok.get('resultCode',False) == 'Ok':
@@ -741,7 +745,7 @@ class ValidateCustomerPaymentProfile:
                                               'cust_profile_id': customer_profile_id,
                                               'payment_profile_id': payment_profile_id,
                                               'shipping_address_id': shipping_address_id}
-        print" api.RequestData", api.RequestData
+        #print" api.RequestData", api.RequestData
         responseDOM = api.MakeCall()
         response_ids = ''
         response_ok = self.get_response(responseDOM.getElementsByTagName('messages'))
@@ -751,7 +755,7 @@ class ValidateCustomerPaymentProfile:
             text = response_ok.get('message',False)
             if text:
                 raise osv.except_osv(_('Error!'), _('%s')%(text))
-        print"xml",responseDOM.toprettyxml()
+        #print"xml",responseDOM.toprettyxml()
         responseDOM.unlink()
         return response_ids
 
@@ -794,7 +798,7 @@ class getTransactionDetailsRequest:
                 </merchantAuthentication>
                 <transId>%s</transId>
             </getTransactionDetailsRequest>"""% (self.Session.api_login_id,self.Session.transaction_key,trans_id)
-        print" api.RequestData", api.RequestData
+        #print" api.RequestData", api.RequestData
         responseDOM = api.MakeCall()
         response = ''
         response_ok = self.get_response(responseDOM.getElementsByTagName('messages'))
@@ -804,7 +808,7 @@ class getTransactionDetailsRequest:
             text = response_ok.get('message',False)
             if text:
                 raise osv.except_osv(_('Error!'), _('%s')%(text))
-        print"xml########",responseDOM.toprettyxml()
+        #print"xml########",responseDOM.toprettyxml()
         responseDOM.unlink()
         return response
 
@@ -842,7 +846,7 @@ class VoidTransaction:
             </profileTransVoid>
             </transaction>
             </createCustomerProfileTransactionRequest>"""% (self.Session.api_login_id,self.Session.transaction_key,profile_id,payment_profile_id,trans_id)
-        print" api.RequestData", api.RequestData
+        #print" api.RequestData", api.RequestData
         responseDOM = api.MakeCall()
         response = ''
         response_ok = self.get_response(responseDOM.getElementsByTagName('messages'))
@@ -853,9 +857,75 @@ class VoidTransaction:
             if text:
                 raise osv.except_osv(_('Error!'), _('%s')%(text))
 
-        print"xml########",responseDOM.toprettyxml()
+        #print"xml########",responseDOM.toprettyxml()
         responseDOM.unlink()
         return response
+        
+#    code to update customer profile for email change request
+class updateCustomerProfileRequest:
+    Session = Session()
+    def __init__(self, api_login_id, transaction_key, ServerURL):
+        self.Session.Initialize(api_login_id, transaction_key, ServerURL)
+    def get_response(self,nodelist):
+       info = {}
+       for node in nodelist:
+           for cNode in node.childNodes:
+               if cNode.nodeName == 'resultCode':
+                   if cNode.childNodes:
+                        info[cNode.nodeName] = cNode.childNodes[0].data
+               elif cNode.nodeName == 'message':
+                   for gcNode in cNode.childNodes:
+                        if gcNode.nodeName == 'text':
+                            info[cNode.nodeName] = gcNode.childNodes[0].data
+       return info
+   
+    def Get(self,emailid,profile_id):
+        print "emailidemailidemailidemailid",emailid,profile_id
+        api = Call()
+        api.Session = self.Session
+        api.RequestData ="""<?xml version='1.0' encoding='utf-8'?>
+                            <updateCustomerProfileRequest xmlns="AnetApi/xml/v1/schema/AnetApiSchema.xsd">
+                            <merchantAuthentication>
+                            <name>%s</name>
+                            <transactionKey>%s</transactionKey>
+                            </merchantAuthentication>
+                            <profile>
+                            <email>%s</email>
+                            <customerProfileId>%s</customerProfileId>
+                            </profile>
+                            </updateCustomerProfileRequest>"""% (self.Session.api_login_id,self.Session.transaction_key,emailid,profile_id)
+        print" api.RequestData", api.RequestData
+        responseDOM = api.MakeCall()
+        print "responseDOMresponseDOMresponseDOM",responseDOM
+        response_ok = self.get_response(responseDOM.getElementsByTagName('messages'))
+        print "response_okresponse_okresponse_ok",response_ok
+        if response_ok.get('resultCode',False) == 'Ok':
+            return True
+        else:
+            text = response_ok.get('message',False)
+            if text:
+                raise osv.except_osv(_('Error!'), _('%s')%(text))
+#        print"xml########",responseDOM.toprettyxml()
+        responseDOM.unlink()
+        
+class GetCustomerProfileExistence:
+    Session = Session()
+    def __init__(self, api_login_id, transaction_key, ServerURL):
+        self.Session.Initialize(api_login_id, transaction_key, ServerURL)
+    def get_response(self,nodelist):
+       info = {}
+       for node in nodelist:
+           for cNode in node.childNodes:
+               if cNode.nodeName == 'resultCode':
+                   if cNode.childNodes:
+                        info[cNode.nodeName] = cNode.childNodes[0].data
+               elif cNode.nodeName == 'message':
+                   for gcNode in cNode.childNodes:
+                        if gcNode.nodeName == 'text':
+                            info[gcNode.nodeName] = gcNode.childNodes[0].data
+                        elif gcNode.nodeName == 'code':
+                            info[gcNode.nodeName] = gcNode.childNodes[0].data
+       return info
 
 #    code to update customer profile for email change request
 class updateCustomerProfileRequest:
@@ -1021,12 +1091,12 @@ class CreateCustomerProfileOnly:
     <profile>
     <email>%s</email>
     </profile></createCustomerProfileRequest>"""% (self.Session.api_login_id,self.Session.transaction_key,email_id)
-        print" api.RequestData", api.RequestData
+        #print" api.RequestData", api.RequestData
         responseDOM = api.MakeCall()
-        print "responseDOM",responseDOM.toprettyxml()
+        #print "responseDOM",responseDOM.toprettyxml()
         custmer_profile_data = {}
         response_ok = self.get_response(responseDOM.getElementsByTagName('messages'))
-        print "response_ok",response_ok
+        #print "response_ok",response_ok
         if response_ok.get('resultCode',False) == 'Ok':
             cust_profile_id = responseDOM.getElementsByTagName('customerProfileId')[0].childNodes[0].data
             custmer_profile_data['cust_profile_id'] = cust_profile_id
@@ -1074,7 +1144,7 @@ class getUnsettledTransactionListRequest:
 </getUnsettledTransactionListRequest>
         """% (self.Session.api_login_id,self.Session.transaction_key)
         responseDOM = api.MakeCall()
-        print "responseDOM",responseDOM.toprettyxml()
+#        print "responseDOM",responseDOM.toprettyxml()
         response = ''
         response = self.get_transaction_response(responseDOM.getElementsByTagName('transaction'))
         responseDOM.unlink()

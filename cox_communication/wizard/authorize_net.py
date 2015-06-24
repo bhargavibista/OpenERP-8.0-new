@@ -305,6 +305,7 @@ class customer_profile_payment(osv.osv_memory):
                 if (sale_object.auth_transaction_id) or context.get('call_from','') != 'wizard':
                     invoice_obj = self.pool.get('account.invoice')
                     tax_obj = self.pool.get('account.tax')
+                    print "ctive id///////////////////////",active_id
                     wf_service.trg_validate(uid, 'sale.order', active_id, 'order_confirm', cr)
                     email_to = sale_object.partner_id.emailid
                     if sale_object.cox_sales_channels in ('retail','ecommerce','tru','playjam'):

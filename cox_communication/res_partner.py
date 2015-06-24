@@ -22,6 +22,13 @@ _logger = logging.getLogger(__name__)
 class res_partner(osv.Model):
     _inherit="res.partner"
     _columns = {
+    'deferred_revenue_account': fields.property(
+            type='many2one',
+            relation='account.account',
+            string="Deferred Revenue Account",
+            view_load=True,
+            help="This account will be used instead of the default one as the receivable account for the current partner",
+            required=True),
     'email': fields.char('Email', size=240,required=False),
     'emailid':fields.char('Email Address', size=100, help="Ecommerce site uses this email ID to match the customer. If filled, if a Magento customer is imported from the selected website with the exact same email, he will be bound with this partner and this latter will be updated with Ecommerce site values."), ###cox gen2
 #    'name': fields.char('Name', size=128, select=True),
@@ -871,26 +878,38 @@ class res_partner(osv.Model):
         return {}
     #Function is inherited from the Authorize.net becasue to make current payment profile as active
     #and make another payment profile as inactive from Openerp and also from Magento site
+
+    #and make another payment profile as inactive from Openerp and also from Magento site
     def cust_profile_payment(self,cr,uid,ids,profile_id,payment_profile_data,exp_date,context={}):
+        print "expiration date is .......................",exp_date
+
         ids =int(ids)
+	print "ids................................",ids
+    #    kjlkjlkj
         cr.execute("UPDATE res_partner SET customer_profile_id='%s' where id=%d"%(profile_id,ids))
         payment_obj = self.pool.get('custmer.payment.profile')
         active_payment_profile_id = []
         for cc_number in payment_profile_data.iterkeys():
+	    print "ccc number......................",cc_number,payment_profile_data
             each_profile = payment_profile_data[cc_number]
             search_payment_profile = payment_obj.search(cr,uid,[('profile_id','=',each_profile),('credit_card_no','=',cc_number)])
+	    print "search payment prfile.............................",search_payment_profile
             if not search_payment_profile:
+
                 create_payment = payment_obj.create(cr,uid,{'active_payment_profile':True,'profile_id':each_profile,'credit_card_no':cc_number,'customer_profile_id':profile_id,'exp_date':exp_date})
                 active_payment_profile_id.append(create_payment)
                 cr.execute('INSERT INTO partner_profile_ids \
                         (partner_id,profile_id) values (%s,%s)', (ids, create_payment))
             else:
+		print "else part callll///////////////////////////////"
                 active_payment_profile_id.append(search_payment_profile[0])
         if active_payment_profile_id:
+
             payment_obj.write(cr,uid,active_payment_profile_id,{'active_payment_profile':True,'exp_date':exp_date})
             cr.execute("select profile_id from partner_profile_ids where partner_id=%s and profile_id not in %s",(ids,tuple(active_payment_profile_id),))
             in_active_payment_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
             if in_active_payment_ids:
+		print "in active payment ids.........................",in_active_payment_ids
                 payment_obj.write(cr,uid,in_active_payment_ids,{'active_payment_profile':False})
         return True
     def get_magento_group_id(self,cr,uid,context):
