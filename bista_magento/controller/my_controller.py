@@ -694,9 +694,14 @@ class Magento(http.Controller):
 #            with registry.cursor() as cr:
 #		print"user====",user
 #                result=user.wallet_topup(cr ,1,dict_req,{})
-            obj=request.registry['res.partner']
-            result=obj.wallet_topup(request.cr ,1,dict_req,{})
+            registry = RegistryManager.get('stable_8_openerp')
+            with registry.cursor() as cr:
+                u = registry['res.partner']
+                result = u.wallet_topup(dict_req)
             print 'result---------------',result
+#            obj=request.registry['res.partner']
+#            result=obj.wallet_topup(request.cr ,1,dict_req,{})
+#            print 'result---------------',result
             print "user--------------------",user
             return str(result)
         return str({"body":{"result":"SERVER ERROR INVALID SYNTAX"}})
