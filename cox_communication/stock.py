@@ -709,5 +709,6 @@ class stock_location(osv.osv):
     _inherit ="stock.location"
     _columns = {
     'return_location': fields.boolean('Return Location'),
+    'tru':fields.boolean('TRU'),
     }
 stock_location()
