@@ -533,15 +533,20 @@ class picking_scanning(osv.osv_memory):
                                                 if each_move_line.procurement_id.sale_line_id and each_move_line.procurement_id.sale_line_id.order_id:
                                                     line_scanned_ids.append(each_move_line.id)
                                         cr.execute('insert into stock_move_lot (stock_move_id,production_lot) values (%s,%s)', (current_stock_move_id, stock_lot_id[0]))
-                                        cr.commit()
+                                        
                                         received_qty = received_qty + 1
-                                        status = stock_move_obj.write(cr, uid, each_move.id,{'received_qty': received_qty,'restrict_lot_id':current_stock_lot_obj.id})
+                                        cr.execute("update stock_move set received_qty='%s', restrict_lot_id='%s' where id='%s'"%(received_qty,current_stock_lot_obj.id,current_stock_move_id))
+                                        cr.commit()
+#                                        status = stock_move_obj.write(cr, uid, each_move.id,{'received_qty': received_qty,'restrict_lot_id':current_stock_lot_obj.id})
                                         search_child_mv_ids = stock_move_obj.search(cr,uid,[('parent_stock_mv_id','=',each_move.id)])
                                         if search_child_mv_ids:
                                             status = stock_move_obj.write(cr, uid, search_child_mv_ids,{'received_qty': received_qty})
                                         prodlot_status = prodlot_obj.write(cr, uid, stock_lot_id[0], {'serial_used':True})
                                         if each_move.product_qty == received_qty:
-                                            stock_move_obj.write(cr, uid, each_move.id,{'status': 'done'})
+#                                            stock_move_obj.write(cr, uid, each_move.id,{'status': 'done'})
+                                            cr.execute("update stock_move set status='done' where id='%s'"%(current_stock_move_id))
+                                            cr.commit()
+#                                            stock_move_obj.write(cr, uid, each_move.id,{'status': 'done'})
                                             stock_move_obj.write(cr, uid, search_child_mv_ids,{'status': 'done'})
                                             total_scanned_moves += 1
                                             if total_scanned_moves == len(obj_stock_moves):
@@ -558,8 +563,7 @@ class picking_scanning(osv.osv_memory):
                                     if search_child_mv_ids:
                                         status = stock_move_obj.write(cr, uid, search_child_mv_ids,{'received_qty': received_qty})
                                     stock_lot_id = prodlot_obj.create(cr, uid, {'product_id': scan_product_id,'name': default_code,'serial_used':True})
-                                    cr.execute("update stock_move set received_qty ='%s',restrict_lot_id = '%s'  where id='%s' "%(received_qty,stock_lot_id,current_stock_move_id))
-                                    cr.commit()
+                                    cr.execute("update stock_move set received_qty ='%s',restrict_lot_id = '%s' where id='%s'"%(received_qty,stock_lot_id,current_stock_move_id))
                                     cr.execute('insert into stock_move_lot (stock_move_id,production_lot) values (%s,%s)', (current_stock_move_id, stock_lot_id))
                                     cr.commit()
                                 line_scanned_ids = []
