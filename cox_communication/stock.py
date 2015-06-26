@@ -648,7 +648,7 @@ class stock_move(osv.osv):
                 return False
         return True
 
-    def _check_tracking(self, cr, uid, ids, context=None):
+    def check_tracking(self, cr, uid, ids,lot_id, context=None):
         """ Checks if serial number is assigned to stock move or not.
         @return: True or False
         """
@@ -664,9 +664,9 @@ class stock_move(osv.osv):
     } 
     
     _constraints = [
-        (_check_tracking,
-            'You must assign a serial number for this product.',
-            ['prodlot_id']),
+#        (_check_tracking,
+#            'You must assign a serial number for this product.',
+#            ['prodlot_id']),
         (_check_tracking_stock_prod_lots,
             'You must assign a serial number for this product.',
             ['stock_prod_lots'])]
