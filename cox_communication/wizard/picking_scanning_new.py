@@ -7,7 +7,8 @@ class picking_scanning(osv.osv_memory):
     _description = 'Make Scanning'
     
     def get_product_ids(self,cr,uid,context={}):
-        product_ids,move_prod_id,picking_ids= [],[],[]
+        product_ids,move_prod_id,picking_ids,new_product_ids= [],[],[],[]
+        product_obj = self.pool.get('product.product')
         if context is None:
             context={}
         picking_obj = self.pool.get('stock.picking')
@@ -37,9 +38,11 @@ class picking_scanning(osv.osv_memory):
                         for each in procurement_ids:
 #                            print"procurement_id",type(procurement_id),procurement_id[0]
                             cr.execute("select product_id from stock_move where state not in ('done','cancel') and procurement_id =%s"%(each))        ##cox gen2
-                            product_id = filter(None, map(lambda x:x[0], cr.fetchall()))
-                            if product_id and not product_id in product_ids:
-                                product_ids.append(product_id[0])
+                            product_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
+                            if product_ids:
+                                for each_product in product_obj.browse(cr,uid,product_ids):
+                                    if each_product.track_incoming==True or each_product.track_production==True:
+                                        new_product_ids.append(each_product.id)
 #                   if context.get('so_line_ids'):
 #                        so_line_id = [context.get('so_line_ids')]
 #                        if so_line_id:
@@ -52,12 +55,13 @@ class picking_scanning(osv.osv_memory):
 #                       if moveline.sale_line_id:
  #                          if moveline.sale_line_id and moveline.state != 'cancel' and (not moveline.parent_stock_mv_id):
 			   if moveline.state != 'cancel' and (not moveline.parent_stock_mv_id):	
-                                product_ids.append(moveline.product_id.id)
-           if product_ids:
-               print"product_idssssss",product_ids
+                               if moveline.product_id.track_incoming == True or moveline.product_id.track_production == True:
+                                    new_product_ids.append(moveline.product_id.id)
+           if new_product_ids:
                product_obj = self.pool.get('product.product')
-               [move_prod_id.append((each_prod.id,each_prod.name))for each_prod in product_obj.browse(cr,uid,product_ids)]
-        return list(set(move_prod_id))
+               [move_prod_id.append((each_prod.id,each_prod.name))for each_prod in product_obj.browse(cr,uid,new_product_ids)]
+               print"move_prod_id",move_prod_id
+        return list(move_prod_id)
     
     #Function is inherited to show only main product in the Packing Lines
     def default_get(self, cr, uid, fields, context=None):
@@ -406,6 +410,8 @@ class picking_scanning(osv.osv_memory):
                     print"shipping_type",shipping_type
                     if shipping_type == 'incoming':
                         type = 'in'
+		    elif shipping_type == 'internal':   ###changes for BOM product in internal moves
+                        type = 'internal'
                     else:
                         type = 'out'
             if type == 'in':
@@ -461,8 +467,9 @@ class picking_scanning(osv.osv_memory):
                                     if each_move.product_qty == each_move.received_qty:
                                         return {'value': {'default_code': False, 'bcquantity': 1,'is_new_pick':False,'note':'Product Already scanned'}}
                                     received_qty = received_qty + 1
-                                    status = stock_move_obj.write(cr, uid, each_move.id,{'received_qty': received_qty})
-                                    prodlot_id = prodlot_obj.create(cr, uid, {'product_id': scan_product_id,'name': default_code})
+                                    cr.execute("update stock_move set received_qty='%s' where id='%s'"%(received_qty,current_stock_move_id))
+                                    cr.commit()
+                                    prodlot_id = prodlot_obj.create(cr, uid, {'product_id': scan_product_id,'name': default_code,'location_id':each_move.location_dest_id.id})
                                     cr.execute('insert into stock_move_lot (stock_move_id,production_lot) values (%s,%s)', (current_stock_move_id, prodlot_id))
                                     cr.commit()
                                     line_scanned_ids = []
@@ -472,14 +479,15 @@ class picking_scanning(osv.osv_memory):
                                                 if each_move_line.sale_line_id and each_move_line.sale_line_id.order_id:
                                                     line_scanned_ids.append(each_move_line.id)
                                     if each_move.product_qty == received_qty:
-                                        stock_move_obj.write(cr, uid, each_move.id,{'status': 'done'})
+                                        cr.execute("update stock_move set status='done' where id='%s'"%(current_stock_move_id))
+                                        cr.commit()
                                         total_scanned_moves += 1
                                         if total_scanned_moves == len(obj_stock_moves):
                                             return {'value': {'bcquantity': 1,'line_ids':line_scanned_ids,'is_new_pick':False,'note':'Scanning is Done!'},'type': 'ir.actions.act_window_close'}
                                         else:
-                                            return {'value': {'line_ids':line_scanned_ids,'bcquantity': 1,'is_new_pick':False,'note':''}}
+                                            return {'value': {'line_ids':line_scanned_ids,'bcquantity': 1,'is_new_pick':False,'note':'','default_code':False,'new_product_id':False}}
                                     else:
-                                            return {'value': {'line_ids':line_scanned_ids,'bcquantity': 1,'is_new_pick':False,'note':''}}
+                                            return {'value': {'line_ids':line_scanned_ids,'bcquantity': 1,'is_new_pick':False,'note':'','default_code':False,'new_product_id':False}}
             else:
                 #change the image if the prevous one is scanned
 #                barcode_product = barcode_image =False
@@ -487,6 +495,8 @@ class picking_scanning(osv.osv_memory):
                     if default_code != False:
                         if picking:
                             stock_move_ids = line_ids[0][2]
+                            cr.execute("select id from stock_move where status!='done' and id in %s",(tuple(stock_move_ids),))
+                            stock_move_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
                             stock_move_ids.sort()
                             obj_stock_moves = stock_move_obj.browse(cr, uid, stock_move_ids)
                             stock_lot_id= prodlot_obj.search(cr,uid,[('name', '=', default_code)])
@@ -520,6 +530,7 @@ class picking_scanning(osv.osv_memory):
                                 scan_product_id = new_product_id
                                 if each_move.product_id.id != scan_product_id:
                                     continue
+				stock_lot_id= prodlot_obj.search(cr,uid,[('name', '=', default_code),('product_id','=',scan_product_id)])
 #                                if each_move.status != 'done':
                                 if each_move.product_qty == each_move.received_qty:
                                     return {'value': {'bcquantity': 1,'is_new_pick':False,'note':'Product Already scanned'}}
@@ -541,7 +552,7 @@ class picking_scanning(osv.osv_memory):
                                         search_child_mv_ids = stock_move_obj.search(cr,uid,[('parent_stock_mv_id','=',each_move.id)])
                                         if search_child_mv_ids:
                                             status = stock_move_obj.write(cr, uid, search_child_mv_ids,{'received_qty': received_qty})
-                                        prodlot_status = prodlot_obj.write(cr, uid, stock_lot_id[0], {'serial_used':True})
+                                        prodlot_status = prodlot_obj.write(cr, uid, stock_lot_id[0], {'serial_used':True,'ref':each_move.picking_id.name, 'location_id':each_move.location_dest_id.id})
                                         if each_move.product_qty == received_qty:
 #                                            stock_move_obj.write(cr, uid, each_move.id,{'status': 'done'})
                                             cr.execute("update stock_move set status='done' where id='%s'"%(current_stock_move_id))
@@ -556,16 +567,17 @@ class picking_scanning(osv.osv_memory):
                                         else:
                                             return {'value': {'bcquantity': 1,'is_new_pick':False,'note':''}}
                                 else:
-                                    received_qty = received_qty + 1
-#                                    stock_move_obj.write(cr, uid, each_move.id,{'received_qty': received_qty})
-                                    
-                                    search_child_mv_ids = stock_move_obj.search(cr,uid,[('parent_stock_mv_id','=',each_move.id)])
-                                    if search_child_mv_ids:
-                                        status = stock_move_obj.write(cr, uid, search_child_mv_ids,{'received_qty': received_qty})
-                                    stock_lot_id = prodlot_obj.create(cr, uid, {'product_id': scan_product_id,'name': default_code,'serial_used':True})
-                                    cr.execute("update stock_move set received_qty ='%s',restrict_lot_id = '%s' where id='%s'"%(received_qty,stock_lot_id,current_stock_move_id))
-                                    cr.execute('insert into stock_move_lot (stock_move_id,production_lot) values (%s,%s)', (current_stock_move_id, stock_lot_id))
-                                    cr.commit()
+                                    raise osv.except_osv(_('ERROR !'), _('Serial number not found'))
+#                                    received_qty = received_qty + 1
+##                                    stock_move_obj.write(cr, uid, each_move.id,{'received_qty': received_qty})
+#                                    
+#                                    search_child_mv_ids = stock_move_obj.search(cr,uid,[('parent_stock_mv_id','=',each_move.id)])
+#                                    if search_child_mv_ids:
+#                                        status = stock_move_obj.write(cr, uid, search_child_mv_ids,{'received_qty': received_qty})
+#                                    stock_lot_id = prodlot_obj.create(cr, uid, {'product_id': scan_product_id,'name': default_code,'serial_used':True})
+#                                    cr.execute("update stock_move set received_qty ='%s',restrict_lot_id = '%s' where id='%s'"%(received_qty,stock_lot_id,current_stock_move_id))
+#                                    cr.execute('insert into stock_move_lot (stock_move_id,production_lot) values (%s,%s)', (current_stock_move_id, stock_lot_id))
+#                                    cr.commit()
                                 line_scanned_ids = []
                                 if not line_ids:
                                     if picking_obj1:
@@ -576,17 +588,127 @@ class picking_scanning(osv.osv_memory):
                                     line_scanned_ids = line_ids[0][2]
 
                                 if each_move.product_qty == received_qty:
-                                    stock_move_obj.write(cr, uid, each_move.id,{'status': 'done','restrict_lot_id':stock_lot_id})
+                                    stock_move_obj.write(cr, uid, each_move.id,{'status': 'done'})
                                     search_child_mv_ids = stock_move_obj.search(cr,uid,[('parent_stock_mv_id','=',each_move.id)])
                                     if search_child_mv_ids:
                                         stock_move_obj.write(cr, uid, search_child_mv_ids,{'status': 'done'})
                                     total_scanned_moves += 1
                                     if total_scanned_moves == len(obj_stock_moves):
-                                        return {'value': {'bcquantity': 1,'line_ids':line_scanned_ids,'is_new_pick':False,'note':'Scanning is Done'}}
+                                        return {'value': {'bcquantity': 1,'line_ids':line_scanned_ids,'is_new_pick':False,'note':'Scanning is Done'},'type': 'ir.actions.act_window_close'}
                                     else:
                                         return {'value': {'line_ids':line_scanned_ids,'bcquantity': 1,'is_new_pick':False,'note':'', 'stock_picking_id':picking_obj1.id,'default_code':False,'picking_ids':picking_ids}}
                                 else:
-                                        return {'value': {'line_ids':line_scanned_ids, 'bcquantity': 1, 'note':'','stock_picking_id':picking_obj1.id,'default_code':False,'picking_ids':picking_ids}}
+                                        return {'value': {'line_ids':line_scanned_ids, 'bcquantity': 1, 'is_new_pick':False, 'note':'','stock_picking_id':picking_obj1.id,'default_code':False,'picking_ids':picking_ids}}
+		elif type == 'internal':
+                    if default_code != False:
+                        if picking:
+                            stock_move_ids = line_ids[0][2]
+                            stock_move_ids.sort()
+                            obj_stock_moves = stock_move_obj.browse(cr, uid, stock_move_ids)
+                            #stock_lot_id= prodlot_obj.search(cr,uid,[('name', '=', default_code)])  ####changes for assiging serial no.
+#                            if not stock_lot_id:
+#                                return {'value': {'default_code': False, 'note':'Invalid barcode'}}
+                            
+                            if range_scan:
+                                if new_product_id and start_range:
+                                    validate_scan_vals = {
+                                        'default_code' : default_code,
+                                        'new_product_id' : new_product_id,
+                                        'start_range' : start_range,
+                                        'range_scan' : range_scan,
+                                        'line_ids' : obj_stock_moves,
+                                    }
+                                    return_vals = self.validate_scan(cr, uid, ids, validate_scan_vals)
+                                    return_vals['line_ids'] = line_scanned_ids
+                                    return {'value': return_vals}
+                                else:
+                                    return True
+                            total_scanned_moves_received = 0
+                            for each_move in obj_stock_moves:
+                                if each_move.status == 'done':
+                                    total_scanned_moves_received += 1
+                            for each_move in obj_stock_moves:
+                                current_stock_move_id = each_move.id
+                                received_qty = 0
+                                if each_move.received_qty:
+                                    received_qty = each_move.received_qty
+                                    print"received_qty",received_qty
+                                if not new_product_id:
+                                    raise osv.except_osv(_('Product ERROR !'), _('Please select a product'))
+                                scan_product_id = new_product_id
+                                if each_move.product_id.id != scan_product_id:
+                                    continue
+				stock_lot_id= prodlot_obj.search(cr,uid,[('name', '=', default_code),('product_id','=',scan_product_id),('location_id','=',each_move.location_id.id)])    ####changes for assiging serial no.
+                                print"stock_lot_idstock_lot_id",stock_lot_id        
+#                                if each_move.status != 'done':
+                                if each_move.product_qty == each_move.received_qty:
+                                    return {'value': {'bcquantity': 1,'is_new_pick':False,'note':'Product Already scanned'}}
+                                if stock_lot_id:
+                                    current_stock_lot_obj = prodlot_obj.browse(cr, uid, stock_lot_id[0])
+                                    if current_stock_lot_obj.serial_used:
+                                        return {'value': {'bcquantity': 1,'line_ids':scanning_line,'is_new_pick':False,'note':'This Serial Number is Already used'}}
+                                    else:
+                                        if picking_obj1:
+                                            for each_move_line in picking_obj1.move_lines:
+                                                if each_move_line.sale_line_id and each_move_line.sale_line_id.order_id:
+                                                    line_scanned_ids.append(each_move_line.id)
+#                                        cr.execute('insert into stock_move_lot (stock_move_id,production_lot) values (%s,%s)', (current_stock_move_id, stock_lot_id[0]))
+#                                        cr.commit()
+                                        received_qty = received_qty + 1
+                                        status = stock_move_obj.write(cr, uid, each_move.id,{'received_qty': received_qty ,'prodlot_id':current_stock_lot_obj.id})
+                                        search_child_mv_ids = stock_move_obj.search(cr,uid,[('parent_stock_mv_id','=',each_move.id)])
+                                        if search_child_mv_ids:
+                                            status = stock_move_obj.write(cr, uid, search_child_mv_ids,{'received_qty': received_qty})
+#					if type=='internal':   ####scanning in internal moves 
+                                        prodlot_obj.write(cr, uid, stock_lot_id[0], {'serial_used':False,'ref':each_move.picking_id.name,'location_id':each_move.location_dest_id.id})   ####changes done for assigning serial no.
+#                                        else:
+#                                            prodlot_obj.write(cr, uid, stock_lot_id[0], {'serial_used':True,'ref':each_move.picking_id.name})   ####changes done for assigning serial no.
+                                        #prodlot_status = prodlot_obj.write(cr, uid, stock_lot_id[0], {'serial_used':True,})
+                                        if each_move.product_qty == received_qty:
+                                            stock_move_obj.write(cr, uid, each_move.id,{'status': 'done'})
+                                            stock_move_obj.write(cr, uid, search_child_mv_ids,{'status': 'done'})
+                                            total_scanned_moves_received += 1
+                                            if total_scanned_moves_received == len(obj_stock_moves):
+                                                return {'value': {'bcquantity': 1,'line_ids':[],'is_new_pick':False,'note':'Scan Next Shipment!'},'type': 'ir.actions.act_window_close'}
+                                            else:
+                                                return {'value': {'bcquantity': 1,'is_new_pick':False,'note':'','line_ids':line_scanned_ids,}}
+                                        else:
+                                            return {'value': {'bcquantity': 1,'is_new_pick':False,'note':'','line_ids':line_scanned_ids}}
+#                                elif carrier_tracking_ref:
+                                    
+                                else:
+				    ###*****scaning the product by serial no.
+                                    raise osv.except_osv(_('Warning !'), _('Serial Number not found'))
+                                    '''received_qty = received_qty + 1
+                                    status = stock_move_obj.write(cr, uid, each_move.id,{'received_qty': received_qty})
+                                    search_child_mv_ids = stock_move_obj.search(cr,uid,[('parent_stock_mv_id','=',each_move.id)])
+                                    if search_child_mv_ids:
+                                        status = stock_move_obj.write(cr, uid, search_child_mv_ids,{'received_qty': received_qty})
+                                    prodlot_id = prodlot_obj.create(cr, uid, {'product_id': scan_product_id,'name': default_code,'serial_used':True})
+                                    cr.execute('insert into stock_move_lot (stock_move_id,production_lot) values (%s,%s)', (current_stock_move_id, prodlot_id))
+                                    cr.commit()'''
+				    ###########******
+                                line_scanned_ids = []
+                                if not line_ids:
+                                    if picking_obj1:
+                                        for each_move_line in picking_obj1.move_lines:
+                                            if each_move_line.sale_line_id and each_move_line.sale_line_id.order_id:
+                                                line_scanned_ids.append(each_move_line.id)
+                                else:
+                                    line_scanned_ids = line_ids[0][2]
+
+                                if each_move.product_qty == received_qty:
+                                    stock_move_obj.write(cr, uid, each_move.id,{'status': 'done'})
+                                    search_child_mv_ids = stock_move_obj.search(cr,uid,[('parent_stock_mv_id','=',each_move.id)])
+                                    if search_child_mv_ids:
+                                        stock_move_obj.write(cr, uid, search_child_mv_ids,{'status': 'done'})
+                                    total_scanned_moves_received += 1
+                                    if total_scanned_moves_received == len(obj_stock_moves):
+                                        return {'value': {'bcquantity': 1,'line_ids':[],'is_new_pick':False,'note':'Scanning is Done'},'type': 'ir.actions.act_window_close'}
+                                    else:
+                                        return {'value': {'line_ids':line_scanned_ids,'bcquantity': 1,'is_new_pick':False,'note':''}}
+                                else:
+                                        return {'value': {'line_ids':line_scanned_ids,'bcquantity': 1,'is_new_pick':False,'note':'','default_code': ''}}
     _columns = {
         'active_model' : fields.char('Active Model',size=64),
         'src_location':fields.many2one('stock.location','Source Location'),
