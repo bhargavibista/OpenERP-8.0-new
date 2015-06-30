@@ -35,6 +35,7 @@ import shipping_send_mail
 import shipping_order
 import export_customer_history
 import active_recurring_billing
-#import mrp_product_produce
-# import procurement_wizard
+import import_serials
+import mrp_product_produce
+import procurement_wizard
 #http://reservations.hcrivers.com/support/index.php?pg=kb.page&id=42
