@@ -113,7 +113,7 @@ This module is built to handle requirements of Cox Communication.
 	
 	'sale_import_view.xml',
         'mrp_view.xml',
-        'service_config_view.xml',
+#        'service_config_view.xml',
     ],
     'demo_xml': [],
     'js':['static/src/js/*.js'],
