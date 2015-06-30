@@ -184,6 +184,7 @@ class sale_order(osv.osv):
                     context['customer_profile_id'] = partner_id_obj.customer_profile_id
 		    check_trans=""
                     check_trans = self.pool.get("authorize.net.config").check_authorize_net(cr,uid,'account.invoice',res,context)
+                    print"check_transcheck_transcheck_transcheck_trans",check_trans
                     if not check_trans:
                         returnval=invoice.charge_customer_recurring_or_etf(cr,uid,[res],context)
                     else:
