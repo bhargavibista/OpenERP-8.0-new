@@ -439,6 +439,7 @@ class account_invoice(models.Model):
             current_obj=self.browse(cr,uid,ids[0])
             config_ids = authorize_net_config.search(cr,uid,[])
             customer_profile_id=current_obj.partner_id.customer_profile_id
+            print"customer_profile_idcustomer_profile_id",customer_profile_id,config_ids
             act_model='account.invoice'
             next_try_date=current_obj.date_invoice
             next_retry_date=datetime.datetime.strptime(next_try_date, "%Y-%m-%d")
@@ -446,13 +447,17 @@ class account_invoice(models.Model):
             if config_ids and customer_profile_id:
                 config_obj = authorize_net_config.browse(cr,uid,config_ids[0])
                 cust_payment_profile_id = current_obj.customer_payment_profile_id
+                print"cust_payment_profile_idcust_payment_profile_idcust_payment_profile_id",cust_payment_profile_id
                 transaction_type = current_obj.auth_transaction_type
+                print"transaction_typetransaction_typetransaction_type",transaction_type,current_obj.capture_status
                 amount=current_obj.amount_total
                 try:
                     capture_status = current_obj.capture_status
                     if not capture_status:
+                        ccv=''
                         #context['recurring_billing'] =True
-                        transaction_details =authorize_net_config.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',ids[0],transaction_type,amount,customer_profile_id,cust_payment_profile_id,'',act_model,'',context)
+                        transaction_details =authorize_net_config.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',ids[0],transaction_type,amount,customer_profile_id,cust_payment_profile_id,'',ccv,act_model,'',context)
+                        print"transaction_detailstransaction_detailstransaction_details",transaction_details
                         if transaction_details:
                             transaction_response = transaction_details.get('response')
                             if transaction_response:
@@ -466,19 +471,19 @@ class account_invoice(models.Model):
                                                 'invoice_date':current_obj.date_invoice,
                                                 'invoice_id':ids[0],
                                                 'message':transaction_details.get('message'),
-						'source': source,
-						'next_retry_date':next_retry_date,
-						'active_payment':True,
+                                                'source': source,
+                                                'next_retry_date':next_retry_date,
+                                                'active_payment':True,
                                                 }
-					if not context.get('called_from_rentals',False):
-	                                        exception_id = exception_object.create(cr,uid,vals,context)
-						exception_id_brw =exception_object.browse(cr,uid,exception_id)
-#                                    transaction_response =  transaction_response[2]
- #                                   if transaction_response in ('2','3') :
-                	                        self.pool.get('sale.order').email_to_customer(cr,uid,exception_id_brw,'partner.payment.error','payment_exception',current_obj.partner_id.emailid,context)
-					else:
-                                            	msg=vals.get('message')
-                                            	cr.execute("UPDATE account_invoice SET comment='%s' where id=%d"%(msg,ids[0]))
+                                        if not context.get('called_from_rentals',False):
+                                                exception_id = exception_object.create(cr,uid,vals,context)
+                                                exception_id_brw =exception_object.browse(cr,uid,exception_id)
+    #                                    transaction_response =  transaction_response[2]
+    #                                   if transaction_response in ('2','3') :
+                                                self.pool.get('sale.order').email_to_customer(cr,uid,exception_id_brw,'partner.payment.error','payment_exception',current_obj.partner_id.emailid,context)
+                                        else:
+                                                msg=vals.get('message')
+                                                cr.execute("UPDATE account_invoice SET comment='%s' where id=%d"%(msg,ids[0]))
                                     return False
                     state = current_obj.state
                     if state != 'paid':
