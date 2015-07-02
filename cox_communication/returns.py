@@ -68,12 +68,19 @@ class return_order(osv.osv):
                 else:
                     raise osv.except_osv(_('Invalid action !'), _('You cannot Delete Return orders whose state is not In Draft'))
         return super(return_order, self).unlink(cr, uid, unlink_ids, context)
+    #Start code Preeti for RMA
     def get_location(self,cr,uid,context={}):
         if uid:
             src_location_id = self.pool.get('res.users').browse(cr,uid,uid).src_location_id
             if src_location_id:
                 return src_location_id.id
+            else:
+                src_location_id = self.pool.get('stock.location').search(cr,uid,[('name','ilike','Return Location')])
+                if src_location_id:
+                    return src_location_id[0]
+        else:
             return False
+    #End code Preeti for RMA
     def onchange_show_components(self,cr,uid,ids,show_components,return_order_line,return_type,linked_sale_id,context={}):
         vals,order_line_vals,tax_ids_used = {},[],[]
         if show_components and return_order_line:
@@ -295,6 +302,181 @@ class return_order(osv.osv):
            #als['pricelist_id'] = False
            #return {'value': vals}
            
+    #Start Code Preeti for RMA
+    def onchange_partner_invoice(self,cr,uid,ids,partner_invoice):    
+        vals={}            
+        obj_account_invoice = self.pool.get('account.invoice')
+        obj_sale_order = self.pool.get('sale.order')        
+        policy_obj = self.pool.get('res.partner.policy')
+        if partner_invoice:
+            obj_account_invoice_link = obj_account_invoice.browse(cr, uid, partner_invoice)        
+            obj_sale_order_link = obj_sale_order.search(cr, uid, [('name', '=', obj_account_invoice_link.origin)])
+            sale_brw = obj_sale_order.browse(cr,uid,obj_sale_order_link[0])
+            partner_id=obj_account_invoice_link.partner_id.id
+            search_policy_id = policy_obj.search(cr,uid,[('sale_order','=',obj_account_invoice_link.origin),('agmnt_partner','=',partner_id)])
+            vals.update({'partner_id' : obj_account_invoice_link.partner_id.id,
+                   'partner_invoice_id' : sale_brw.partner_invoice_id.id,
+    #               'partner_order_id' : sale_brw.partner_order_id.id,
+                   'partner_shipping_id' : sale_brw.partner_shipping_id.id,
+                   'pricelist_id' : sale_brw.pricelist_id.id,
+                   'payment_term' : sale_brw.payment_term.id,
+    #               'linked_sale_order': obj_account_invoice_link.origin 
+                   })
+            return {'value': vals}
+        else:
+            vals['partner_id'] = False
+            vals['partner_invoice_id'] = False            
+            vals['partner_shipping_id'] = False
+            vals['pricelist_id'] = False
+            vals['payment_term'] = False
+            return {'value': vals}
+        
+    def onchange_cancel_option(self,cr,uid,ids,service_id,cancel_option,context={}):
+        res={}
+        res['value'] = {}
+        warning,warning_mesg = {'title': _('Warning!')},''
+        policy_object=self.pool.get('res.partner.policy')     
+        if cancel_option == 'yes':   
+            if service_id:
+                policy_brw=policy_object.browse(cr,uid,service_id)
+                if (policy_brw.active_service == False):
+                    warning_mesg += _('Service is already cancelled for %s.'%(policy_brw.sale_order))                
+                    warning = {
+                    'title': _('Error!'),
+                    'message' : warning_mesg
+                       }
+                    return {'warning':warning}
+                else:
+                    return True
+        else:
+            return True
+        
+    def onchange_refund_against(self,cr,uid,ids,refund_against,context={}):
+        vals={}
+        vals['partner_id'] = False
+        vals['partner_invoice_id'] = False            
+        vals['partner_shipping_id'] = False
+        vals['pricelist_id'] = False
+        vals['payment_term'] = False
+        vals['order_line']=False
+        vals['credit_option']=False
+        vals['cancel_option']=False
+        vals['device_option']=False
+        vals['refun_type']=False
+        vals['linked_sale_order']=False
+        vals['service_id']=False        
+        return {'value':vals}
+    
+    def onchange_return_type(self,cr,uid,ids,return_type,context={}):
+        vals={}
+        vals['partner_id'] = False
+        vals['partner_invoice_id'] = False            
+        vals['partner_shipping_id'] = False
+        vals['pricelist_id'] = False
+        vals['payment_term'] = False
+        vals['order_line']=False
+        vals['credit_option']=False
+        vals['cancel_option']=False
+        vals['device_option']=False
+        vals['refun_type']=False
+        vals['linked_sale_order']=False
+        vals['service_id']=False
+        vals['refund_against']=False
+        return {'value':vals}
+        
+    def onchange_service_id(self,cr,uid,ids,service_id,context={}):
+        res,order_line_vals={},[]
+        res['value'] = {}
+        vals={}
+        warning,warning_mesg = {'title': _('Warning!')},''        
+        policy_object=self.pool.get('res.partner.policy')        
+        obj_sale_order=self.pool.get('sale.order')
+        product_obj=self.pool.get('product.product')
+        ext_prod_obj=self.pool.get('extra.prod.config')
+        
+        if service_id:
+            policy_brw=policy_object.browse(cr,uid,service_id)
+            linked_sale_id=policy_brw.sale_id
+            obj_sale_link_order = obj_sale_order.browse(cr,uid,linked_sale_id)             
+#            if (policy_object.cancel_date) and (not policy_object.active_service):
+            if (policy_brw.active_service == False) and (policy_brw.cancel_date or policy_brw.return_date or policy_brw.suspension_date) :
+                warning_mesg += _('Service is already cancelled for %s.'%(policy_brw.sale_order))
+                vals['service_id'] = False
+                vals['partner_id'] = False
+                vals['partner_invoice_id'] = False            
+                vals['partner_shipping_id'] = False
+                vals['pricelist_id'] = False
+                vals['payment_term'] = False
+                vals['order_line']=False
+                warning = {
+                'title': _('Error!'),
+                'message' : warning_mesg
+                   }
+#                 vals['warning']  = warning
+                return {'value':vals, 'warning':warning}
+            for each_line in obj_sale_link_order.order_line:
+                prod_brw= product_obj.browse(cr,uid,each_line.product_id.id)                
+                ext_prod_brw = ext_prod_obj.search(cr,uid,[('product_id','=',prod_brw.id)])
+                if ext_prod_brw:
+                    for each_prod in ext_prod_brw:
+                        sub_comp=ext_prod_obj.browse(cr,uid,each_prod)   
+                        prod_prod = product_obj.browse(cr,uid,sub_comp.comp_product_id.id)
+                        if prod_prod.type == 'service':
+                            if sub_comp.recurring_price != 0:
+                                order_line_vals.append({
+                                    'product_id':policy_brw.product_id.id,
+                                    'name':(policy_brw.sale_order if policy_brw.sale_order else '')+'|'+(policy_brw.product_id.name if policy_brw.product_id else ''),
+                                    'product_uom':(policy_brw.product_id.uom_id.id if policy_brw.product_id.uom_id.id else False),
+                                    'price_unit':sub_comp.recurring_price,
+                                    'copy_unit_price':sub_comp.recurring_price,
+                                    'state':'draft',
+                                    'product_uom_qty':1,        
+                                    'type': 'make_to_stock',
+                                    })
+                            else:
+                                order_line_vals.append({
+                                    'product_id':policy_brw.product_id.id,
+                                    'name':(policy_brw.sale_order if policy_brw.sale_order else '')+'|'+(policy_brw.product_id.name if policy_brw.product_id else ''),
+                                    'product_uom':(policy_brw.product_id.uom_id.id if policy_brw.product_id.uom_id.id else False),
+                                    'price_unit':policy_brw.product_id.list_price,
+                                    'copy_unit_price':policy_brw.product_id.list_price,
+                                    'state':'draft',
+                                    'product_uom_qty':1,            
+                                    'type': 'make_to_stock',
+                                    })  
+                else:
+                    prod_prod = product_obj.browse(cr,uid,prod_brw.id)
+                    if prod_prod.type == 'service':
+                        order_line_vals.append({
+                                'product_id':policy_brw.product_id.id,
+                                'name':(policy_brw.sale_order if policy_brw.sale_order else '')+'|'+(policy_brw.product_id.name if policy_brw.product_id else ''),
+                                'product_uom':(policy_brw.product_id.uom_id.id if policy_brw.product_id.uom_id.id else False),
+                                'price_unit':policy_brw.product_id.list_price,
+                                'copy_unit_price':policy_brw.product_id.list_price,
+                                'state':'draft',
+                                'product_uom_qty':1,            
+                                'type': 'make_to_stock',
+                                })  
+                    
+                print "order_line_vals====>",order_line_vals
+                break;
+            vals.update({'partner_id' : obj_sale_link_order.partner_id.id,
+               'partner_invoice_id' : obj_sale_link_order.partner_invoice_id.id,
+               'partner_shipping_id' : obj_sale_link_order.partner_shipping_id.id,
+               'pricelist_id' : obj_sale_link_order.pricelist_id.id,
+               })
+            if order_line_vals:
+                vals['order_line'] = order_line_vals
+                return {'value': vals}
+    
+        else:
+            vals['partner_id'] = False
+            vals['partner_invoice_id'] = False            
+            vals['partner_shipping_id'] = False
+            vals['pricelist_id'] = False
+            vals['payment_term'] = False
+            vals['order_line']=False
+            return {'value': vals}                
     
     def onchange_sale_order(self, cr, uid, ids,  linked_sale_id,serial_no,line_ids,return_type,context):
         #print "context.................def onchange_sa......",context
@@ -317,7 +499,7 @@ class return_order(osv.osv):
         if linked_sale_id:
            obj_sale_link_order = obj_sale_order.browse(cr, uid, linked_sale_id)
            partner_id=obj_sale_link_order.partner_id.id
-           search_policy_id = policy_obj.search(cr,uid,[('sale_id','=',linked_sale_id),('agmnt_partner','=',partner_id)])
+           search_policy_id = policy_obj.search(cr,uid,[('sale_id','=',linked_sale_id),('agmnt_partner','=',partner_id),('active_service','=',True)])
            if search_policy_id:
                policy_brw=policy_obj.browse(cr,uid,search_policy_id[0])
                if policy_brw.cancel_date or policy_brw.suspension_date or policy_brw.return_date:
@@ -332,12 +514,12 @@ class return_order(osv.osv):
            print"obj_sale_link_order",obj_sale_link_order
            days = self.no_of_days_passed(cr,uid,obj_sale_link_order)
            
-	   if days <= 30:
-		message = 'This order is within policy. Early Termination Fee will be incurred if ALL hardware is not returned.'
+	  # if days <= 30:
+	#	message = 'This order is within policy. Early Termination Fee will be incurred if ALL hardware is not returned.'
            if (days >= 31) and (days <= 90):
-		message = "This order was placed %s days ago and is not within the policy so this will be treated as a service cancelation. Early Termination Fee will be incurred if ALL hardware is not returned."%(days)			
+		message = "This order was placed %s days ago and is not within the return policy Customer will not get refund against sale order. Customer can however exchange the device."%(days)
 	   if days > 90 :
-		message = "This order was placed %s days ago and is not within the policy so this will be treated as a service cancelation."%(days)	
+		message = "This order was placed %s days ago and is not within the policy so this will be treated as a service cancellation. Customer can to get ONLY refund on subscription"%(days)	
            if message:
                warning = {
                        'title': _('Warning!'),
@@ -376,7 +558,7 @@ class return_order(osv.osv):
                        warning = { 'title': _('Alert!'),
                                'message': warn_msg }
                        res['linked_sale_order'] = ''
-                       return {'value': res, 'warning': warning}
+                       return {'value': res}
                 else:
                     warn_msg = _("Delivery is not yet done for the selected sale order")
                     warning = { 'title': _('Alert!'),
@@ -406,6 +588,7 @@ class return_order(osv.osv):
                                             'product_uom':(each_line.product_uom.id if each_line.product_uom else False),
                                             'product_uom_qty':each_line.product_uom_qty,
                                             'price_unit':each_line.price_unit,
+                                            'copy_unit_price':each_line.price_unit,
                                             'discount':each_line.discount,
                                             'tax_id':[(6, 0,tax_ids)],
                                             'state':'draft',
@@ -420,10 +603,11 @@ class return_order(osv.osv):
                                                     'product_uom':(each_line.product_uom.id if each_line.product_uom else False),
                                                     'product_uom_qty':each_line.product_uom_qty,
                                                     'price_unit':each_line.price_unit,
+                                                    'copy_unit_price':each_line.price_unit,
                                                     'discount':each_line.discount,
                                                     'tax_id':[(6, 0,tax_ids)],
                                                     'state':'draft',
-                                                     'type': each_line.type,
+#                                                     'type': each_line.type, ##cox gen2
                                                      'sale_line_id':each_line.id })
                         else:
                             order_line_vals.append({'product_id':each_line.product_id.id,
@@ -431,6 +615,7 @@ class return_order(osv.osv):
                                             'product_uom':(each_line.product_uom.id if each_line.product_uom else False),
                                             'product_uom_qty':each_line.product_uom_qty,
                                             'price_unit':each_line.price_unit,
+                                            'copy_unit_price':each_line.price_unit,
                                             'discount':each_line.discount,
                                             'tax_id':[(6, 0,tax_ids)],
                                             'state':'draft',
@@ -454,8 +639,8 @@ class return_order(osv.osv):
            vals['partner_order_id'] = False
            vals['partner_shipping_id'] = False
            vals['pricelist_id'] = False
-           return {'value': vals}
-
+           return {'value': vals, 'warning': warning}
+    #End Code Preeti for RMA
 
     def create_lines(self, cr, uid, order_lines):
         lines = []
@@ -483,6 +668,7 @@ class return_order(osv.osv):
                                         (each_line.product_id.categ_id.tax_code_id  and each_line.product_id.categ_id.tax_code_id.name)) or None
                             })
         return lines
+    #Start code Preeti for RMA
     def compute_tax(self, cr, uid, ids, context=None):
         avatax_config_obj = self.pool.get('account.salestax.avatax')
         account_tax_obj = self.pool.get('account.tax')
@@ -492,18 +678,22 @@ class return_order(osv.osv):
         if avatax_config and not avatax_config.disable_tax_calculation and \
         avatax_config.default_tax_schedule_id.id == return_order.partner_id.tax_schedule_id.id:
 #            address = (return_order.source_location.partner_id if return_order.source_location.partner_id else False)
-            address = (return_order.linked_sale_order.location_id.partner_id if return_order.linked_sale_order.location_id.partner_id else False)
-            if not address:
-                raise osv.except_osv(_('Error !'),_('Please Specify Address Location for %s')%(return_order.source_location.name))
-            else:
-                address =  address.id
-            lines = self.create_lines(cr, uid, return_order.order_line)
-            if lines:
-                tax_amount = account_tax_obj._check_compute_tax(cr, uid, avatax_config, return_order.date_confirm or return_order.date_order,
+            if return_order.linked_sale_order:
+		address = (return_order.linked_sale_order.location_id.partner_id if return_order.linked_sale_order.location_id.partner_id else False)
+		if not address:
+			raise osv.except_osv(_('Error !'),_('Please Specify Address Location for %s')%(return_order.source_location.name))
+		else:
+			address =  address.id
+		lines = self.create_lines(cr, uid, return_order.order_line)
+		if lines:
+			tax_amount = account_tax_obj._check_compute_tax(cr, uid, avatax_config, return_order.date_confirm or return_order.date_order,
                                                                 return_order.name, 'ReturnOrder', return_order.partner_id,address,
                                                                 return_order.partner_invoice_id.id,lines,0.0, return_order.user_id,
                                                                 context=context).TotalTax
+            else:
+                tax_amount=0.0                    
         return tax_amount
+    #End code Preeti for RMA
 
     def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
         cur_obj = self.pool.get('res.currency')
@@ -537,14 +727,13 @@ class return_order(osv.osv):
         for line in self.pool.get('return.order.line').browse(cr, uid, ids, context=context):
             result[line.order_id.id] = True
         return result.keys()
+    #Start code Preeti for RMA
     def onchange_refund_type(self,cr,uid,ids,return_type,context={}):
-        res= {}
-	res['value'] = {}
         if return_type =='partial_refund':
-           res['value']['show_components'] = True
-	else:
-            res['value']['show_components'] = False
-        return res 
+            raise osv.except_osv(_('Attention !'),
+                            _('Please modify unit price in return order lines to refund partial amount. If the field is invisible for you, please call support manager.'))
+        return True
+    #End code Preeti for RMA
 
     def service_deactivation(self,cr,uid,return_id_brw,context={}):
         if return_id_brw.linked_sale_order:
@@ -629,12 +818,32 @@ class return_order(osv.osv):
             ], 'Order State', readonly=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the order date.", select=True),
         'email_send_2_week': fields.datetime('Email Sent Date after 2 weeks'),
 	'return_option':fields.selection([('refund','Refund Generated'),('cancel_service','Service Cancelled'),('termination_charge','Termination Fee Charged')],'Return Option',readonly=True),
+        #Preeti added fields below for RMA	
+        'credit_option':fields.selection([
+            ('yes', 'Yes'),
+            ('no', 'No')
+            ], 'Will the customer need refund?',states={'done': [('readonly', True)]}),
+        'cancel_option':fields.selection([('yes','Yes'),('no','No')],'Does the customer want to cancel his service?',states={'done': [('readonly', True)]}),
+        'device_option':fields.selection([('yes','Yes'),('no','No')],'Will the customer return device?',states={'done': [('readonly', True)]}),
+        'cancel_immediately':fields.selection([('yes','Yes'),('no','No')],'Does the customer want to cancel his service immediately?',states={'done': [('readonly', True)]}),
+        'partner_invoice':fields.many2one('account.invoice','Refund against Invoice',states={'done': [('readonly', True)]}),
+        'cancellation_type':fields.selection([('credits','Credits Only'),('cancel','Cancel Only'),('credits_cancel','Credit and Cancel'),('cancel_immediately','Cancel Immediately')],'Cancellation Type',states={'done': [('readonly', True)]}),        
+        'refund_option':fields.selection([('sale_order','Sale Order'),('customer_invoice','Customer Invoice')],'Refund against?',states={'done': [('readonly', True)]}),
+        'service_id':fields.many2one('res.partner.policy','Active Service',states={'done': [('readonly', True)]}),        
+        'refund_against':fields.selection([
+            ('sale_order', 'Sale Order'),
+            ('subscription', 'Subscription')
+            ], 'Refund Against?',states={'done': [('readonly', True)]}),
     }
     _defaults = {
     'source_location': get_location,
     'delivered':False,
-    'return_type':'',
-    'generate_label':True
+    #RMA Fields    
+    'return_type':'',    
+    'credit_option':'',
+    'cancel_option':'',
+    'device_option':'',
+    'generate_label':True    
     }
     def check_return_line_qty(self,cr,uid,ids,context={}):
         if ids:
@@ -656,7 +865,7 @@ class return_order(osv.osv):
                         child_so_line_ids = line_obj.search(cr,uid,[('parent_so_line_id','=',return_line.sale_line_id.id)])
                         for each_line in child_so_line_ids:
 #                            cr.execute("select product_qty from stock_move where sale_line_id=%d and state!='done'"%(each_line))
-                            cr.execute("select product_qty from stock_move state != 'done' and procurement_id in (select id from procurement_order where sale_line_id = '%s')"%(each_line))
+                            cr.execute("select product_qty from stock_move where state != 'done' and procurement_id in (select id from procurement_order where sale_line_id = '%s')"%(each_line))
                             move_qty = filter(None, map(lambda x:x[0], cr.fetchall()))
                             if move_qty:
                                 if return_line.product_uom_qty > move_qty[0]:
@@ -709,18 +918,20 @@ class return_order(osv.osv):
             if each_line.product_id.type =='service':
                 flag = True
         return flag
+    #Start code Preeti for RMA
     def return_confirm(self,cr,uid,ids,context=None):
         return_obj = self.browse(cr,uid,ids[0])
         linked_order = return_obj.linked_sale_order
         if linked_order:
-#            duplicate_return = self.search(cr,uid,[('linked_sale_order','=',linked_order.id),('state','in',('progress','done')),('id','not in',ids)])
-#            if duplicate_return:
-#                raise osv.except_osv(_('Warning!'),_('Returns is Already Processed for %s')%(linked_order.name))
+            duplicate_return = self.search(cr,uid,[('linked_sale_order','=',linked_order.id),('state','in',('progress','done')),('id','not in',ids)])
+            if duplicate_return:
+                raise osv.except_osv(_('Warning!'),_('Returns is Already Processed for %s')%(linked_order.name))
             self.check_return_line_qty(cr,uid,ids,context)
             if return_obj.amount_total > linked_order.amount_total:
                 raise osv.except_osv(_('Warning!'),_('Total Of Return Order Cannot Be Greater than %s Total')%(linked_order.name))
             if not return_obj.receive:
                 delivered = linked_order.shipped
+#                End code Preeti for RMA flow
 		context['active_id'] = return_obj.id
                 context['active_ids'] = [return_obj.id]
                 context['active_model'] = 'return.order'
@@ -742,6 +953,7 @@ class return_order(osv.osv):
                 return_data = self.flow_option_based_on_days(cr,uid,no_days_passed,context)
                 if return_data:
                     return return_data
+    #End code Preeti for RMA
     def receive_confirm(self,cr,uid,ids,context=None):
         return_obj = self.browse(cr,uid,ids[0])
         linked_order = return_obj.linked_sale_order
@@ -802,13 +1014,16 @@ class return_order(osv.osv):
             if free_trial_date:
                 free_trial_date=datetime.strptime(free_trial_date,'%Y-%m-%d')
                 new_billing_date=free_trial_date + relativedelta(days=1)
+                if new_billing_date<cancelation_req_date:
+                    new_billing_date=billing_date+relativedelta(months=1)
                 #print "new_billing_datenew_billing_date",new_billing_date
-                if new_billing_date>billing_date:
+                if new_billing_date>billing_date and new_billing_date>cancelation_req_date:
                     new_billing_date=free_trial_date + relativedelta(days=1)
+                    policy_brw.write({'extra_days':0,'next_billing_date':new_billing_date})
                 else:
                     new_billing_date=billing_date
                 partner_obj.write(cr,uid,partner_id,{'billing_date':new_billing_date})
-                policy_brw.write({'extra_days':0})
+                #policy_brw.write({'extra_days':0})
         elif len(policy_ids) > 1:
             cr.execute("select min(free_trial_date) from res_partner_policy where id in %s"%(tuple(policy_ids),))
             min_free_trial_date = cr.fetchone()
@@ -823,13 +1038,15 @@ class return_order(osv.osv):
                 else:
                     new_billing_date=billing_date
                     #print "condition f2222222222222222",new_billing_date
+                if new_billing_date<cancelation_req_date:
+                    new_billing_date=billing_date+relativedelta(months=1)
                 partner_obj.write(cr,uid,partner_id,{'billing_date':new_billing_date})
                 for policy in policy_obj.browse(cr,uid,policy_ids):
                     free_trial_date = datetime.strptime(policy.free_trial_date,'%Y-%m-%d') #assuming free trials is gonna written in every case, son no exception handling here
                     free_trail_date1 = free_trial_date + relativedelta(days=1)
                     #print "free_trail_date1free_trail_date1",free_trail_date1,new_billing_date
                     if free_trail_date1 == new_billing_date:
-                       policy.write({'extra_days':0})
+                       policy.write({'extra_days':0,'next_billing_date':new_billing_date})
                     elif free_trail_date1 >new_billing_date:
                         #print "new billlllll date...........",new_billing_date
                         future_date = sale_order_obj.get_future_bill_date(cr,uid,new_billing_date,free_trail_date1)
@@ -837,7 +1054,7 @@ class return_order(osv.osv):
                         diff = future_date-free_trail_date1
                         #print "diffdiffdiffdiffdiffdiffdiff",diff
                         if diff:
-                            policy.write({'extra_days':int(diff.days)})
+                            policy.write({'extra_days':int(diff.days),'next_billing_date':new_billing_date})
         return True
     #Function is inherited because want to make entry in the return_order_line and sale_order_line
     def manual_invoice_return(self,cr,uid,ids,context={}):
@@ -1038,19 +1255,148 @@ class return_order(osv.osv):
                     'target': 'new',
                      'context': context
                 }
+    #    Start code Preeti for RMA                
+    def credit_refund(self, cr,uid,ids,context):
+        res={}        
+        context['action_to_do'] = 'cancel_option'
+        context['call_from'] = 'function'
+        return {
+                    'name': ('Cancel Service'),
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'res_model': 'credit.refund',
+                    'view_id': False,
+                    'type': 'ir.actions.act_window',
+                    'target': 'new',
+                     'context': context
+                        }
+
+    def process_order(self,cr,uid,ids,context):
+        print"context",context
+        return_obj=self.browse(cr,uid,ids[0])
+        obj_sale_order=self.pool.get('sale.order')
+        policy_object=self.pool.get('res.partner.policy')     
+        linked_sale_id=return_obj.linked_sale_order
+        if linked_sale_id:
+            obj_sale_link_order = obj_sale_order.browse(cr, uid, linked_sale_id.id)
+            days = self.no_of_days_passed(cr,uid,obj_sale_link_order,{})
+        if context:
+            if (context.get('device_option') == 'yes'):                
+                if (days >= 31) and (days <= 90):
+                    raise osv.except_osv(_('Warning!'), _('This order was placed %s days ago and is not within the policy. Customer can either exchange the device or please select refund against subscription to refund or cancel service'%(days)))
+                else:
+                    id = self.pool.get('return.shipment.label').create(cr,uid,{'return_id':ids[0]})
+                    return {
+                        'name':_("Shipment Needed ?"),
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'res_id': id,
+                        'res_model': 'return.shipment.label',
+                        'type': 'ir.actions.act_window',
+                        'nodestroy': True,
+                        'target': 'new',
+                        }
+            elif(context.get('device_option') == 'no'):
+                print"return without hardware"                
+                if (days >= 0) and (days <= 30):
+	            id = self.pool.get('return.refund.cancellation').create(cr,uid,{'refund_cancel':'refund','return_id':ids[0]})
+		    if not return_obj.manual_invoice_invisible:	
+	        	    return {
+        	        	    'name':_("Payment Finalization"),
+	        	            'view_type': 'form',
+        	        	    'view_mode': 'form',
+		                    'res_id': id,
+        		            'res_model': 'return.refund.cancellation',
+		                    'type': 'ir.actions.act_window',
+	       		            'nodestroy': True,
+		                    'target': 'new',
+        		            }
+                return True
+                    
+            elif (context.get('credit_option') == 'yes'):
+                if (context.get('cancel_option') == 'yes'):
+                    print "No Device Return"
+                    
+                    if context.get('cancel_option') == 'yes':                           
+                        if context.get('service_id'):
+                            policy_brw=policy_object.browse(cr,uid,context.get('service_id'))
+                            if (policy_brw.active_service == False):
+                                raise osv.except_osv(_('Error !'),
+                                        _('Service is already cancelled for: "%s"') %(policy_brw.sale_order))
+                    self.pool.get('refund.against.invoice').refund_cancel_service(cr,uid,ids,context)
+                    return True
+                else:
+                    print"credit only"
+                    self.pool.get('refund.against.invoice').refund_service(cr,uid,ids,context)
+            elif (context.get('cancel_option') == 'yes'):
+                    print "Cancel Only"           
+                    service_id = context.get('service_id')
+                    policy_object=self.pool.get('res.partner.policy')     
+#                    if cancel_option == 'yes':   
+                    if service_id:
+                        policy_brw=policy_object.browse(cr,uid,context.get('service_id'))
+                        if (policy_brw.active_service == False):
+                            raise osv.except_osv(_('Error !'),
+                                    _('Service is already cancelled for: "%s"') %(policy_brw.sale_order))
+                    self.pool.get('refund.against.invoice').cancel_service(cr,uid,ids,context)                        
+                    return True
+            else:
+                raise osv.except_osv(_("Warning"),
+                        _("To proceed, Atleast one of the options should be yes."))
+        else:
+            print"Context is empty"
+            return True
+    
+    def create(self,cr,uid,vals,context={}): 
+        print"valsssssss",vals
+        print"valsssssss",vals['order_line'][0]
+        print"price_unit",vals['order_line'][0][2].get('price_unit')
+        print"price_unit",vals['order_line'][0][2].get('copy_unit_price')        
+        if vals.get('refund_type') == 'partial_refund':            
+            if vals['order_line'][1][2].get('price_unit') >= vals['order_line'][1][2].get('copy_unit_price'):
+                print"copy_unit_price=======>",vals.get('copy_unit_price')
+                print"price_unit=======>",vals.get('price_unit')
+                raise osv.except_osv(_('Error !'),
+                            _('Partial refund amount should be less than subscription price. Please modify unit price in return order lines to refund partial amount. If the field is invisible for you, please call support manager.'))        
+        return super(return_order, self).create(cr,uid,vals,context=context)
+    
+    def write(self,cr,uid,ids,vals,context={}):
+         return_obj = self.pool.get('return.order')
+         if type(ids) is list:
+             return_brw = return_obj.browse(cr,uid,ids[0])
+         else:      
+             return_brw = return_obj.browse(cr,uid,ids)
+         if vals.has_key('refund_type') and vals['refund_type'] != 'complete_refund':
+            if return_brw.refund_type == 'partial_refund' or vals['refund_type'] == 'partial_refund' :        
+                for line in return_brw.order_line:
+                    if vals.has_key('order_line'):
+                        if vals['order_line'][0][2].get('price_unit') >= line.copy_unit_price:                
+                            raise osv.except_osv(_('Error !'),
+                                   _('Partial refund amount should be less than subscription price. Please modify unit price in return order lines to refund partial amount. If the field is invisible for you, please call support manager.'))
+                    elif line.price_unit >= line.copy_unit_price:
+                         raise osv.except_osv(_('Error !'),
+                                   _('Partial refund amount should be less than subscription price. Please modify unit price in return order lines to refund partial amount. If the field is invisible for you, please call support manager.'))                
+         return super(return_order, self).write(cr, uid, ids,vals,context=context)
+#    End code Preeti for RMA
 return_order()
 
 class return_order_line(osv.osv):
     _inherit = 'return.order.line'
-    def onchange_price_unit(self,cr,uid,ids,price_unit,qty,return_type,sale_line_id,context={}):
-        res,stored_price_unit = {},0.0
-        res['value'] = {}
-        if return_type == 'complete_refund':
-            if sale_line_id:
-                line_brw = self.pool.get('sale.order.line').browse(cr,uid,sale_line_id)
-                original_price_subtotal = line_brw.price_subtotal
-                price_subtotal = float(price_unit) * float(qty)
-                if original_price_subtotal != price_subtotal:
+    #Start code Preeti for RMA    
+    _columns={
+        'discount_amt':fields.float('Sales Discount'),
+        'actual_price':fields.float('Actual Price'),    
+        'copy_unit_price':fields.float('Copy of Unit price')
+    }
+    
+    def onchange_price_unit(self,cr,uid,ids,price_unit,qty,return_type,sale_line_id,copy_unit_price,context={}):
+        res={}
+        res['value']={}
+        print"copy_unit_price",copy_unit_price
+        if sale_line_id:
+            line_brw = self.pool.get('sale.order.line').browse(cr,uid,sale_line_id)            
+            if return_type == 'complete_refund':
+                if float(copy_unit_price) * float(qty) != float(price_unit) * float(qty):
                     warning = {
                 'title': _('Warning!'),
                 'message' : _("Entered price doesn't match with Original price as you have selected Refund Type as Complete.")
@@ -1061,10 +1407,36 @@ class return_order_line(osv.osv):
                     res['value']['price_unit'] = stored_price_unit
                     if stored_qty:
                         res['value']['product_uom_qty'] = stored_qty
+            elif return_type == 'partial_refund':
+                if float(copy_unit_price) * float(qty) < float(price_unit) * float(qty):
+                    print"float(price_unit) * float(qty)",float(price_unit) * float(qty)
+                    warning = {
+                    'title': _('Warning!'),
+                    'message' : _("Entered price should be less than Original price.")
+                        }
+                    res['warning'] =  warning
+                    stored_price_unit =  line_brw.price_unit
+                    stored_qty =  line_brw.product_uom_qty
+                    res['value']['price_unit'] = stored_price_unit
+                    if stored_qty:
+                        res['value']['product_uom_qty'] = stored_qty
+        else:
+            if float(price_unit) * float(qty) > float(copy_unit_price) * float(qty):
+                warning = {
+                    'title': _('Warning!'),
+                    'message' : _("Entered price should be less than Original price.")
+                        }
+                res['warning'] =  warning
+                stored_price_unit =  float(copy_unit_price) * float(qty)
+                stored_qty =  float(qty)
+                res['value']['price_unit'] = float(copy_unit_price)
+                if stored_qty:
+                    res['value']['product_uom_qty'] = stored_qty
         return res	
     def create(self,cr,uid,vals,context={}):
-        if not vals.get('sale_line_id'):
-            raise osv.except_osv(_('Error!'),  _('Please Check Your Return Order Lines'))
-        else:
+        #if not vals.get('sale_line_id'):
+         #   raise osv.except_osv(_('Error!'),  _('Please Check Your Return Order Lines'))
+        #else:
              return super(return_order_line, self).create(cr,uid,vals,context=context)
+#End code Preeti for RMA
 return_order_line()
