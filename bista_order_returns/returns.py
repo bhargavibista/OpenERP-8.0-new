@@ -396,7 +396,7 @@ class return_order(osv.osv):
         'company_id': fields.related('warehouse_id','company_id',type='many2one',relation='res.company',string='Company',store=True,readonly=True),
         ####Return modified fields
 #        'return_type': fields.selection([('warranty','Warranty'),('non-warranty','Non-Warranty'),('exchange', 'Exchange'),('car_return', 'Credit Return'),('30_day', '30 Days'),('destroy','Destroy')], 'Return Type', required=True),
-        'return_type': fields.selection([('exchange', 'Exchange'),('car_return', 'Credit Return')], 'Return Type', required=True),
+        'return_type': fields.selection([('exchange', 'Exchange'),('car_return', 'Credit or cancel')], 'Return Type', required=True),
         'linked_sale_order':fields.many2one('sale.order','Sale Reference',select=True, readonly=True, states={'draft': [('readonly', False)]}),
         'actual_linked_order':fields.many2one('sale.order','Actual Reference'),
 #        'mrp_repair_ids': fields.one2many('mrp.repair', 'sale_return_id', 'Related Repair', readonly=True),
@@ -428,7 +428,7 @@ class return_order(osv.osv):
     }
     _defaults = {
         'picking_policy': 'direct',
-        'shop_id': 1,
+        #'shop_id': 1,
         'warehouse_id': 1,
         'return_type':'car_return',
         'date_order': fields.date.context_today,
