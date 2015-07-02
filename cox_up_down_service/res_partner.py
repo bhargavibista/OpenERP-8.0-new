@@ -129,6 +129,29 @@ class res_partner(osv.osv):
                             self.export_recurring_profile(cr,uid,[res_id],context)
                         except Exception, e:
                             print "error string",e
+                else:
+#                    user_id=partner_id
+                    for service_data in maerge_invoice_data:
+                        policy_brw = service_data.get('policy_id_brw',False)
+                        app_id=policy_brw.product_id.id
+                        print"policy_brwpolicy_brwpolicy_brwpolicy_brwpolicy_brw",policy_brw
+                        print "user_id-service_data--------",user_id,policy_brw
+                        print "app_id---------",app_id
+                        print "expiry_epoch---------",start_date
+                        expiry_epoch=time.mktime(datetime.datetime.strptime(str(today), "%Y-%m-%d").timetuple())
+                        print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch
+                        expiry_epoch=expiry_epoch+3600.0
+                        print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
+                        rental_result = user_auth_obj.rental_playjam(cr,uid,partner_id,app_id,expiry_epoch)
+                        print "voucher_return----------",old_policy_result
+        #                    result=4113
+                        if ast.literal_eval(str(rental_result)).has_key('body') and ast.literal_eval(str(rental_result)).get('body')['result'] == 4113:
+                            #4113 is the result response value for successfull rental update
+        #                    if result==4113:
+                            additional_info = {'source':'COX','cancel_return_reason':'Credit Card Not on File.'}
+                            cancel_reason = return_obj.additional_info(cr,uid,additional_info)
+                            cr.execute("update res_partner_policy set active_service = False,return_cancel_reason='Credit Card Not on File.',cancel_date=%s,additional_info=%s where id = %s",(today,cancel_reason,policy_brw.id))
+                            sale_obj.email_to_customer(cr,uid,pay_error,'partner.payment.error','cancel_service',partner_obj.emailid,context)
         return True
     def magento_connection(self,cr,uid,context={}):
         referential_obj = self.pool.get('external.referential')
@@ -455,7 +478,8 @@ class res_partner_policy(osv.osv):
     'last_amount_charged':fields.float('Last Amount Charged'),
     'source': fields.char('Upgrade/Downgrade Source'),
     'from_package_id': fields.many2one('res.partner.policy','From Pacakge ID'),
-    'up_down_service': fields.char('Upgrade/Downgrade',size=256)
+    'up_down_service': fields.char('Upgrade/Downgrade',size=256),
+    'up_down_id':fields.many2one('upgrade.downgrade.policy','Updown Policy')
     }
     def up_down_charges_gcluster(self,cr,uid,original_service,current_service,context):
         last_amount_paid = original_service.last_amount_charged
@@ -469,6 +493,10 @@ class res_partner_policy(osv.osv):
         return final_charges
  
     def up_down_charges(self,cr,uid,original_service,current_service,date_inv,context):
+        adv_paid=0.0
+        if not context:
+            context={}
+            print"contexttttttttttttttt",context
         start_dt_current_service = datetime.datetime.strptime(str(current_service.start_date), '%Y-%m-%d')
         old_free_trial_date=datetime.datetime.strptime(str(original_service.free_trial_date), "%Y-%m-%d")
 #        old_start_trial_date=datetime.datetime.strptime(str(original_service.start_date), "%Y-%m-%d")
@@ -476,6 +504,9 @@ class res_partner_policy(osv.osv):
         days_in_month=calendar.monthrange(inv_dt_obj.year,inv_dt_obj.month)[1]
         days_left = inv_dt_obj - start_dt_current_service
         current_price = current_service.product_id.list_price
+        diff_days=inv_dt_obj-old_free_trial_date
+        original_price=original_service.last_amount_charged
+        days_left_old=days_left
         if old_free_trial_date > start_dt_current_service:
             if (diff_days.days)>1:
                 adv_paid=original_price
@@ -535,7 +566,34 @@ class res_partner_policy(osv.osv):
         original_service =  policy_brw.from_package_id
         current_service = policy_brw
         upgrade_downgrade = policy_brw.up_down_service
+        extra_days=0
+        days=calendar.monthrange(date_inv.year,date_inv.month)[1]
         start_dt_current_service = datetime.datetime.strptime(str(current_service.start_date), '%Y-%m-%d')
+        invoice_lines  =context.get('invoice_lines',[])
+        if original_service.from_package_id:
+            extra_days=original_service.extra_days
+            print"extra_daysextra_daysextra_daysextra_days",extra_days
+            while extra_days>0:
+                context['cancel_date']=True
+                print"original_serviceoriginal_serviceoriginal_service",original_service
+#                if original_service.from_package_id and original_service.up_down_service:
+#                    if original_service.up_down_service:
+                start_current_service = datetime.datetime.strptime(str(original_service.start_date), '%Y-%m-%d')
+                cancel_date=datetime.datetime.strptime(str(original_service.cancel_date), "%Y-%m-%d")
+                extra_days_old=cancel_date-start_current_service
+                extra_charges_old=(original_service.product_id.list_price/days)*int(extra_days_old.days)
+                print"extra_charges_oldextra_charges_oldextra_charges_oldextra_charges_old",extra_charges_old,original_service.product_id.list_price,extra_days_old,original_service.extra_days
+                if extra_charges_old>0.0:
+                    context['name'] = original_service.product_id.name + '(Extra Charges of Previous Service)'
+                    context['new_pacakge_id'] = original_service.product_id
+                    lines  = self.invoice_line_up_down(cr,uid,original_service,extra_charges_old,context)
+                    invoice_lines += lines
+                upgrade_downgrade=original_service.up_down_service
+#                cr.execute('update res_partner_policy set extra_days=0 where id =%s'%(original_service.id))
+                print"upgrade_downgradeupgrade_downgradeupgrade_downgrade",upgrade_downgrade,original_service
+                original_service=original_service.from_package_id if original_service.from_package_id else original_service
+                extra_days=original_service.extra_days if original_service.from_package_id else 0
+                print"old_serviceold_serviceold_serviceold_serviceold_serviceold_service",extra_days,original_service
         old_free_trial_date=datetime.datetime.strptime(str(original_service.free_trial_date), "%Y-%m-%d")
         billing_date=datetime.datetime.strptime(str(date_inv), "%Y-%m-%d")
         unit_price = policy_brw.product_id.list_price
@@ -548,13 +606,13 @@ class res_partner_policy(osv.osv):
             lines  = self.invoice_line_up_down(cr,uid,policy_brw,unit_price,context)
             invoice_lines += lines
 
-        if (upgrade_downgrade and 'down' in upgrade_downgrade.lower()) and  ((old_free_trial_date > start_dt_current_service) or (old_free_trial_date<billing_date and (original_service.extra_days and original_service.extra_days>0))):
+        if (upgrade_downgrade and 'down' in upgrade_downgrade.lower()) and  ((original_service.extra_days and original_service.extra_days>0)):
             context['name'] = policy_brw.product_id.name+'(Downgrade Adjustment Charges)'
             lines  = self.invoice_line_up_down(cr,uid,policy_brw,unit_price,context)
             invoice_lines += lines
         #Extra Charges :
         if extra_charges > 0.0:
-            if ((upgrade_downgrade and 'down' in upgrade_downgrade.lower()) and (original_service.last_amount_charged>0.00 and old_free_trial_date<=start_dt_current_service and (not original_service.extra_days))):
+            if ((upgrade_downgrade and 'down' in upgrade_downgrade.lower()) and (original_service.last_amount_charged>0.00 and (not original_service.extra_days))):
                 extra_charges=unit_price-extra_charges
                 inv_line_desc=policy_brw.product_id.name+'(with previous month adjustments)'
             else:
@@ -562,10 +620,14 @@ class res_partner_policy(osv.osv):
             context['name'] = inv_line_desc
             lines  = self.invoice_line_up_down(cr,uid,policy_brw,extra_charges,context)
             invoice_lines += lines
-        if (original_service.extra_days and original_service.extra_days>0) and (old_free_trial_date < start_dt_current_service):
-            extra_days_old=start_dt_current_service-old_free_trial_date
-            days=366 if calendar.isleap(date_inv.year) else 365
-            extra_charges_old=(original_service.product_id.list_price*12/days)*int(extra_days_old.days)
+        print"invoice_linesinvoice_linesinvoice_lines",invoice_lines
+        if (original_service.extra_days and original_service.extra_days>0) and ((old_free_trial_date < start_dt_current_service)):
+            cancel_date=datetime.datetime.strptime(str(original_service.cancel_date), "%Y-%m-%d")
+            extra_days_old=cancel_date-old_free_trial_date
+#            days=calendar.monthrange(date_inv.year,date_inv.month)[1]
+#            days=366 if calendar.isleap(date_inv.year) else 365
+            extra_charges_old=(original_service.product_id.list_price/days)*int(extra_days_old.days)
+            print"extra_charges_oldextra_charges_oldextra_charges_oldextra_charges_old",extra_charges_old,original_service.product_id.list_price,extra_days_old,original_service.extra_days
             context['name'] = original_service.product_id.name + '(Extra Charges of Previous Service)'
             context['new_pacakge_id'] = original_service.product_id
             lines  = self.invoice_line_up_down(cr,uid,original_service,extra_charges_old,context)
