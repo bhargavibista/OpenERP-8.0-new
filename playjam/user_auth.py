@@ -768,13 +768,13 @@ class device_history(models.Model):
 
     
     def write(self,ids,vals,context=None):
-        cr._cnx.set_isolation_level(ISOLATION_LEVEL_READ_COMMITTED)
+#        cr._cnx.set_isolation_level(ISOLATION_LEVEL_READ_COMMITTED)
         res=super(device_history,self).write(cr,uid,ids,vals,context)
         return res
 
     
     def create(self,vals,context=None):
-        cr._cnx.set_isolation_level(ISOLATION_LEVEL_READ_COMMITTED)
+#        cr._cnx.set_isolation_level(ISOLATION_LEVEL_READ_COMMITTED)
         res=super(device_history,self).create(cr,uid,vals,context)
         return res
 device_history()
