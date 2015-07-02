@@ -318,6 +318,8 @@ class account_invoice(models.Model):
         return lines
         
     ########*
+    gift_card_no = fields.Char()
+    processed_by = fields.Selection([('wallet','Wallet'),('authorize','Authorize'),('giftcard','GiftCard')],string="Processed By",readonly=True)
     recurring = fields.Boolean('Recurring Payment')
     credit_id = fields.Many2one('credit.service',string="Service Credit ID",help="Date on which next Payment will be generated.")
     next_billing_date = fields.Datetime('Next Billing Date',select=True, help="Date on which next Payment will be generated.")
@@ -409,6 +411,7 @@ class account_invoice_line(osv.osv):
         res,cox_sales_channels = [],''
         tax_obj = self.pool.get('account.tax')
         cur_obj = self.pool.get('res.currency')
+        policy_object=self.pool.get('res.partner.policy')        
         if context is None:
             context = {}
         invoice_obj = self.pool.get('account.invoice')
@@ -417,6 +420,7 @@ class account_invoice_line(osv.osv):
         inv_type = inv.type
         return_order = self.pool.get('return.order')
         so_obj = self.pool.get('sale.order')
+        so_line_obj = self.pool.get('sale.order.line')#Preeti for Product Configuration
         search_sale =  so_obj.search(cr,uid,[('name','=',inv.origin)])
         if search_sale:
             cox_sales_channels = so_obj.browse(cr,uid,search_sale[-1]).cox_sales_channels
@@ -429,15 +433,25 @@ class account_invoice_line(osv.osv):
                 else:
                     cr.execute("select id from sale_order_line where parent_so_line_id in (select order_line_id from sale_order_line_invoice_rel where invoice_id = %s)"%(line.id))
                     child_so_line_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
-                    print"child_so_line_ids",child_so_line_ids
+                if line.product_id.free_trail_days>0:
+                    context['free_trail_days']=line.product_id.free_trail_days
             elif inv_type == 'out_refund':
                 return_ref = (inv.return_ref.split("/") if inv.return_ref else  False)
                 if return_ref:
                     return_ref = return_ref[0]
                     return_id = return_order.search(cr,uid,[('name','ilike',return_ref)])
                     if return_id:
-                        sale_order_id = return_order.browse(cr,uid,return_id[0]).linked_sale_order
-                        cr.execute("select id from account_invoice where (recurring=False or recurring is Null) and id in (select invoice_id from sale_order_invoice_rel where order_id in %s)",(tuple([sale_order_id.id]),))
+                        #Start code Preeti for RMA
+                        if return_order.browse(cr,uid,return_id[0]).linked_sale_order:
+                            sale_order_id = return_order.browse(cr,uid,return_id[0]).linked_sale_order
+                            cr.execute("select id from account_invoice where (recurring=False or recurring is Null) and id in (select invoice_id from sale_order_invoice_rel where order_id in %s)",(tuple([sale_order_id.id]),))
+                        else:                            
+                            return_brw = return_order.browse(cr,uid,return_id[0])
+                            policy_id =return_brw.service_id
+                            policy_brw=policy_object.browse(cr,uid,policy_id.id)
+                            linked_sale_id=policy_brw.sale_id                                       
+                            cr.execute("select id from account_invoice where (recurring=False or recurring is Null) and id in (select invoice_id from sale_order_invoice_rel where order_id in %s)",(tuple([linked_sale_id]),))
+                        #End code Preeti for RMA
                         invoice_id = cr.fetchone()
                         if invoice_id:
                             date_invoice =invoice_obj.browse(cr,uid,invoice_id[0]).date_invoice
@@ -496,6 +510,13 @@ class account_invoice_line(osv.osv):
                 account_id = so_line_id_brw.product_id.property_account_income.id
             else:
                 account_id = so_line_id_brw.product_id.categ_id.property_account_income_categ.id
+             ########### code to pass prepaid account in sales journal entry for service
+            if so_line_id_brw.product_id.type=='service' and context.get('free_trail_days',False)>0:
+                if so_line_id_brw.product_id.property_account_line_prepaid_revenue.id:
+                    account_id = so_line_id_brw.product_id.property_account_line_prepaid_revenue.id
+                else:
+                    account_id = so_line_id_brw.product_id.categ_id.property_account_line_prepaid_revenue_categ.id
+	    print"acoyntttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt",account_id,so_line_id_brw.product_id
             return {
             'type':'src',
             'name': so_line_id_brw.name.split('\n')[0][:64],
@@ -507,6 +528,7 @@ class account_invoice_line(osv.osv):
             'uos_id':so_line_id_brw.product_uom.id,
             'account_analytic_id':False,
             'taxes':so_line_id_brw.tax_id,
+            'invoice_line_id':line.id
             }
         else:
         #Endes here
@@ -521,6 +543,7 @@ class account_invoice_line(osv.osv):
             'uos_id':line.uos_id.id,
             'account_analytic_id':line.account_analytic_id.id,
             'taxes':line.invoice_line_tax_id,
+            'invoice_line_id':line.id
             }
 account_invoice_line()
 
