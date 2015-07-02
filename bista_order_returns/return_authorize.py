@@ -34,6 +34,6 @@ class return_order(osv.osv):
         if cc_number:
             vals.update({'cc_number':cc_number})
         if vals:
-            self.write(cr,uid,[ids],vals)
+            self.write(cr,uid,ids,vals)# changed [ids] to ids---Preeti for RMA
         return True
 return_order()
