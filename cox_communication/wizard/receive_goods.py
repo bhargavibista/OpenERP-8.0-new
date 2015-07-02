@@ -19,7 +19,7 @@ class receive_goods(osv.osv_memory):
             obj_self = return_obj.browse(cr,uid,context.get('active_id'))
             no_days_passed =  obj_self.no_days_passed
 	    if not no_days_passed:
-		no_days_passed = return_obj.no_days_passed(cr,uid,obj_self.linked_sale_order,context)	
+		no_days_passed = return_obj.no_of_days_passed(cr,uid,obj_self.linked_sale_order,context)	
             if obj_self.receive:
                 raise osv.except_osv(_('Warning !'),_('Goods are already received'))
             if not obj_self.receive and obj_self.return_type == 'car_return':

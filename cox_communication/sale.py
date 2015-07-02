@@ -661,7 +661,7 @@ class sale_order(osv.osv):
             ('ecommerce', 'Ecommerce'),
             ('retail', 'Retail'),
             ('amazon', 'Amazon'),
-            ('playjam','Playjam'),
+            #('playjam','Playjam'),
 	    ('tru', 'TRU'),
 	    ('playjam','Playjam'),
             ], 'Sales Channels'),
@@ -1303,9 +1303,9 @@ class sale_order(osv.osv):
                 print"value",value
                 if sale_id_brw.cox_sales_channels != 'amazon':
                     cr.execute('update res_partner set %s where id=%s'%(value,partner_id))
-                    cr.commit()
+                    #cr.commit()
             self.calculate_extra_days(cr,uid,partner_id,billing_date)
-            partner_obj.cal_next_billing_amount(cr,uid,partner_id)
+            partner_obj.cal_next_billing_amount(cr,uid,partner_id)#cox gen2 changes changed the function name
         return True
 
     def calculate_extra_days(self,cr,uid,partner_id,billing_date):
@@ -1585,7 +1585,14 @@ class sale_order(osv.osv):
                         if inv_line_id:
                             cr.execute('insert into sale_order_line_invoice_rel (order_line_id,invoice_id) values (%s,%s)', (sale_line_id, inv_line_id))
                     context['customer_profile_id'] = partner_id_obj.customer_profile_id
-                    returnval=invoice.charge_customer_recurring_or_etf(cr,uid,[res],context)
+                    if not context.get('giftcard',False):
+                        returnval=invoice.charge_customer_recurring_or_etf(cr,uid,[res],context)
+#                        gift card else part
+                    else:
+                        wf_service = netsvc.LocalService("workflow")
+                        wf_service.trg_validate(uid, 'account.invoice', res, 'invoice_open', cr)
+                        returnval = invoice.make_payment_of_invoice(cr, uid, [res], context=context)
+                        invoice.write(cr,uid,res,{'procesesd_by':'giftcard'})
                 for sale_id in sale_ids:
                     cr.execute('insert into sale_order_invoice_rel (order_id,invoice_id) values (%s,%s)', (sale_id, res))
             if returnval:
@@ -1916,6 +1923,7 @@ class sale_order(osv.osv):
     def _transform_one_resource(self, cr, uid, external_session, convertion_type, resource, mapping, mapping_id,
                      mapping_line_filter_ids=None, parent_data=None, previous_result=None, defaults=None, context=None):
         location_id = False
+        exp_date=''
         if not context: context={}
         vals = super(sale_order, self)._transform_one_resource(cr, uid, external_session, convertion_type, resource,
                             mapping, mapping_id, mapping_line_filter_ids=mapping_line_filter_ids, parent_data=parent_data,
@@ -1949,7 +1957,7 @@ class sale_order(osv.osv):
             #if payment_info.get('method','') == 'authorizenetcim':
             if payment_info.get('authorizenetcim_customer_id'):
                     payment_profile_data = {payment_info.get('cc_last4',''):payment_info.get('authorizenetcim_payment_id')}
-                    self.pool.get('res.partner').cust_profile_payment(cr,uid,vals.get('partner_id'),payment_info.get('authorizenetcim_customer_id'),payment_profile_data,context)
+                    self.pool.get('res.partner').cust_profile_payment(cr,uid,vals.get('partner_id'),payment_info.get('authorizenetcim_customer_id'),payment_profile_data,exp_date,context)
 		    cust_id_obj=self.pool.get('res.partner').browse(cr,uid,vals.get('partner_id'))
                     if cust_id_obj.ref:
                         mag_profile_id = external_session.connection.call('sales_order.magento_Authorize_profile',[cust_id_obj.ref,payment_info.get('authorizenetcim_customer_id')])
@@ -2326,56 +2334,94 @@ schedular_function()
 class cancel_service(osv.osv):
     _name = 'cancel.service'
  
-    def cancel_service(self,cr,uid,service_id,billing_date,credit_line,context={}):
+    #  Start code Preeti for RMA
+    #  Start code Preeti for RMA
+    
+    def cancel_service(self,cr,uid,ids,service_id,billing_date,credit_line,context={}):
+        print"cancel serviceeeeeeeeeeeeeeeeeee"
 	res,main_reason,cancellation_reason = {},'',''
 	return_obj= self.pool.get('return.order')
+        user_auth_obj = self.pool.get('user.auth')
+        return_object=return_obj.browse(cr,uid,ids[0])        
+        reason_id = return_object.return_reason.id
 	if context is None: context={}
-	main_reason = context.get('cancellation_reason','')
+        main_reason = self.pool.get('reasons.title').browse(cr,uid,reason_id).name
         if credit_line:
-            service_name = credit_line.name
-	    main_reason = credit_line.notes	
+            service_name = credit_line.name	
         else:
             service_name = service_id.service_name
 	if main_reason:
             additional_info = {'source':'COX','cancel_return_reason':main_reason}
             cancellation_reason = self.pool.get('return.order').additional_info(cr,uid,additional_info)
-#        today=datetime.now()
-#        today=datetime.strptime(today, "%Y-%m-%d")
         if not billing_date:
-            cr.execute("update res_partner_policy set active_service=False,cancel_date=%s,no_recurring=False,additional_info=%s,return_cancel_reason=%s where id=%s",(time.strftime('%Y-%m-%d'),cancellation_reason,main_reason,service_id.id))
-            res['state'] = 'done'
+            #TODO call Rental API
+#             user_id=partner_id[0]
+            user_id = return_object.partner_id.id
+            app_id=service_id.product_id.app_id
+#            app_id=108    
+#                                    app_id=284
+            today = date.today().strftime('%Y-%m-%d')
+            cancel_time=time.strftime('%Y-%m-%d')
+            print "user_id---------",user_id
+            print "app_id---------",app_id
+            print "expiry_epoch---------",today
+            expiry_epoch=time.mktime(datetime.strptime(str(cancel_time), "%Y-%m-%d").timetuple())
+            print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch,type(expiry_epoch),int(expiry_epoch)
+            expiry_epoch=expiry_epoch+3600.0
+            print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
+            old_policy_result = user_auth_obj.rental_playjam(cr,uid,user_id,app_id,expiry_epoch)
+            print "voucher_return----------",old_policy_result
+            result=4113
+#                    if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
+                #4113 is the result response value for successfull rental update
+            if result==4113:
+                cr.execute("update res_partner_policy set active_service=False,cancel_date=%s,no_recurring=False,additional_info=%s,return_cancel_reason=%s where id=%s",(time.strftime('%Y-%m-%d'),cancellation_reason,main_reason,service_id.id))
+                res['state'] = 'done'
             return res
-        #if main_reason=='Opt Out for Recurring Billing.':
-            #free_trial_date=datetime.strptime(str(service_id.free_trial_date), "%Y-%m-%d")
-            #cancellation_date=free_trial_date+relativedelta(days=1)
-        #else:
-            #cancellation_date = billing_date
+        
+        if (context and context.get('immediate_cancel')):
+            print "Context=======> ", context.get('immediate_cancel')
+            cancellation_date = date.today().strftime('%Y-%m-%d')
+        else:
+            cancellation_date = billing_date
         if service_id.free_trial_date:
- #           free_trial_date=datetime.strptime(service_id.free_trial_date, "%Y-%m-%d")
-#            if (today < free_trial_date) or (context and context.get('refund_cancel_service')) or (time.strftime('%Y-%m-%d') >= billing_date) :
+                print"hereeeeeeeeeeeeeeeee"
 		if (context and context.get('refund_cancel_service')) or (time.strftime('%Y-%m-%d') >= billing_date) or (context and context.get('immediate_cancel')):
-#		if (context and context.get('refund_cancel_service')):
-			if (context and  (context.get('refund_cancel_service') or (context.get('active_model')=='credit.service'))) or (context and context.get('immediate_cancel')):
-	                	cr.execute("update res_partner_policy set active_service=False,cancel_date=%s,additional_info=%s,no_recurring=False,return_cancel_reason=%s where id=%s",(time.strftime('%Y-%m-%d'),cancellation_reason,main_reason,service_id.id))
-			else:
-				if (not service_id.return_date):
-	                            cr.execute("update res_partner_policy set active_service=False,return_date=%s,additional_info=%s,no_recurring=False,return_cancel_reason=%s where id=%s",(time.strftime('%Y-%m-%d'),cancellation_reason,main_reason,service_id.id))
-#                self.log(cr,uid,service_id.id,"Service %s is Cancelled"%(service_name))
-                	res['state'] = 'done'
-                	return_obj.update_billing_date(cr,uid,service_id.agmnt_partner.id,billing_date,service_id.sale_line_id)
+                        user_id = return_object.partner_id.id
+                        app_id=service_id.product_id.app_id
+                        today = date.today().strftime('%Y-%m-%d')
+                        cancel_time=time.strftime('%Y-%m-%d')
+                        print "user_id---------",user_id
+                        print "app_id---------",app_id
+                        print "expiry_epoch---------",today
+#                        expiry_epoch=time.mktime(datetime.strptime(str(cancel_time), "%Y-%m-%d").timetuple())
+                        expiry_epoch=time.mktime(datetime.now().timetuple())
+                        print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch,type(expiry_epoch),int(expiry_epoch)
+                        expiry_epoch=expiry_epoch+3600.0
+                        print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
+                        old_policy_result = user_auth_obj.rental_playjam(cr,uid,user_id,app_id,expiry_epoch)
+                        print "voucher_return----------",old_policy_result
+                        if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
+                            if (context and  (context.get('refund_cancel_service') or (context.get('active_model')=='credit.service'))) or (context and context.get('immediate_cancel')):
+                                cr.execute("update res_partner_policy set active_service=False,cancel_date=%s,additional_info=%s,no_recurring=False,return_cancel_reason=%s where id=%s",(time.strftime('%Y-%m-%d'),cancellation_reason,main_reason,service_id.id))
+                                return_obj.update_billing_date(cr,uid,service_id.agmnt_partner.id,billing_date,service_id.sale_line_id)
+                            else:
+                                if (not service_id.return_date):
+                                    cr.execute("update res_partner_policy set active_service=False,return_date=%s,additional_info=%s,no_recurring=False,return_cancel_reason=%s where id=%s",(time.strftime('%Y-%m-%d'),cancellation_reason,main_reason,service_id.id))
+                                    return_obj.update_billing_date(cr,uid,service_id.agmnt_partner.id,billing_date,service_id.sale_line_id)
+                                    res['state'] = 'done'
+                                    return_obj.update_billing_date(cr,uid,service_id.agmnt_partner.id,billing_date,service_id.sale_line_id)
 			return res
-		#       future cancel date if the service canceled is in free trial 
             	elif service_id.free_trial_date>=billing_date or time.strftime('%Y-%m-%d')<service_id.free_trial_date:
                 	free_trial_date=datetime.strptime(service_id.free_trial_date, "%Y-%m-%d")
                 	cancellation_date= free_trial_date + relativedelta(days=1)
-#       no option above then cancel date for service is billing date
             	else:
                 	cancellation_date = billing_date
+                print"str(cancellation_date)",str(cancellation_date)
+#                cancellation_date = datetime.strptime(str(cancellation_date), "%Y-%m-%d").date()
             	res['state'] = 'done'
         search_id = self.search(cr,uid,[('sale_id','=',service_id.sale_id),('sale_line_id','=',service_id.sale_line_id),('partner_policy_id','=',service_id.id)])
         if search_id:
-        #        cancellation_date = self.browse(cr,uid,search_id[0]).cancellation_date
-#                self.log(cr,uid,service_id.id,"Service %s Will be Cancelled on %s"%(service_name,cancellation_date))
                 return {}
 	if (not service_id.cancel_date):
 	        self.create(cr,uid,{'service_name':service_name,
@@ -2383,15 +2429,18 @@ class cancel_service(osv.osv):
                 'sale_line_id': service_id.sale_line_id,
                 'partner_policy_id': service_id.id,
                 'cancellation_date': cancellation_date,
-  #              'cancellation_reason': (credit_line.notes if credit_line else ''),
 		'cancellation_reason': main_reason,
                 'cancelled': False
-                })
-		cr.execute("update res_partner_policy set cancel_date=%s,additional_info=%s,no_recurring=False,return_cancel_reason=%s where id=%s",(cancellation_date,cancellation_reason,main_reason,service_id.id))	
-		res['state'] = 'done'
-		#return_obj.update_billing_date(cr,uid,service_id.agmnt_partner.id,billing_date,service_id.sale_line_id) 	
-#            self.log(cr,uid,service_id.id,"Service %s Will be Cancelled on %s"%(service_name,cancellation_date))
+                })        
+
+                cr.execute("update res_partner_policy set cancel_date=%s,additional_info=%s,no_recurring=False,return_cancel_reason=%s where id=%s",(cancellation_date,cancellation_reason,main_reason,service_id.id))	
+                res['state'] = 'done'
+
         return res
+    
+
+    #End code preeti for RMA
+    #End code preeti for RMA
 	
     def cancellation_of_service(self,cr,uid,ids,context={}):
         today=datetime.now()
@@ -2399,32 +2448,47 @@ class cancel_service(osv.osv):
         search_rec = self.search(cr,uid,[('cancellation_date','<=',current_date),('cancelled','=',False)])
         final_dict,service_to_cancel = {},[]
 	return_obj = self.pool.get('return.order')
+        user_auth_obj = self.pool.get('user.auth')
         if search_rec:
             for each_rec in self.browse(cr,uid,search_rec):
+#                need_to_update_data = []
                 if each_rec.sale_id and each_rec.sale_line_id:
-                    need_to_update_data = []
+                    user_id = each_rec.partner_policy_id.agmnt_partner.id
+                    app_id= each_rec.partner_policy_id.product_id.app_id 
+                    today = date.today().strftime('%Y-%m-%d')
+                    cancel_time=time.strftime('%Y-%m-%d')
+                    print "user_id---------",user_id
+                    print "app_id---------",app_id
+                    print "expiry_epoch---------",today
+                    expiry_epoch=time.mktime(datetime.strptime(str(cancel_time), "%Y-%m-%d").timetuple())
+                    print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch,type(expiry_epoch),int(expiry_epoch)
+                    expiry_epoch=expiry_epoch+3600.0
+                    print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
+                    old_policy_result = user_auth_obj.rental_playjam(cr,uid,user_id,app_id,expiry_epoch)
+                    print "voucher_return----------",old_policy_result
+                    if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
 		    #Code to write cancellation data and marking service as deactive
-                    additional_info = {'source':'COX','cancel_return_reason':each_rec.cancellation_reason}
-                    cancellation_data = return_obj.additional_info(cr,uid,additional_info)
-                    cr.execute("update res_partner_policy set active_service=False,cancel_date=%s,additional_info=%s,return_cancel_reason=%s where id=%s",(current_date,cancellation_data,each_rec.cancellation_reason,each_rec.partner_policy_id.id))
-                    #  code to update billing date during cancelation of service
-                    return_obj.update_billing_date(cr,uid,each_rec.partner_policy_id.agmnt_partner.id,each_rec.partner_policy_id.agmnt_partner.billing_date,each_rec.sale_line_id)
-                    ######################
-                    service_to_cancel.append(each_rec.id)
-                    if each_rec.sale_id.magento_so_id:
-                        data={}
-                        data = {'customer_id':each_rec.sale_id.partner_id.ref,
-                        'order_id':each_rec.sale_id.magento_so_id}
-                        if 'mag' not in each_rec.sale_id.name:
-                            data.update({'product_id': each_rec.sale_line_id.product_id.magento_product_id})
-                        if data:
-                            need_to_update_data.append(data)
-                        if not each_rec.sale_id.shop_id.referential_id.id in final_dict.iterkeys():
-                            final_dict[each_rec.sale_id.shop_id.referential_id.id] = need_to_update_data
-                        else:
-                            value = final_dict[each_rec.sale_id.shop_id.referential_id.id]
-                            new_value = value + need_to_update_data
-                            final_dict[each_rec.sale_id.shop_id.referential_id.id] = new_value
+                        additional_info = {'source':'COX','cancel_return_reason':each_rec.cancellation_reason}
+                        cancellation_data = return_obj.additional_info(cr,uid,additional_info)
+                        cr.execute("update res_partner_policy set active_service=False,cancel_date=%s,additional_info=%s,return_cancel_reason=%s where id=%s",(current_date,cancellation_data,each_rec.cancellation_reason,each_rec.partner_policy_id.id))
+                        #  code to update billing date during cancelation of service
+                        return_obj.update_billing_date(cr,uid,each_rec.partner_policy_id.agmnt_partner.id,each_rec.partner_policy_id.agmnt_partner.billing_date,each_rec.sale_line_id)
+                        ######################
+                        service_to_cancel.append(each_rec.id)
+                    #if each_rec.sale_id.magento_so_id:
+                     #   data={}
+                      #  data = {'customer_id':each_rec.sale_id.partner_id.ref,
+                       # 'order_id':each_rec.sale_id.magento_so_id}
+                        #if 'mag' not in each_rec.sale_id.name:
+                        #    data.update({'product_id': each_rec.sale_line_id.product_id.magento_product_id})
+                        #if data:
+                        #    need_to_update_data.append(data)
+                        #if not each_rec.sale_id.shop_id.referential_id.id in final_dict.iterkeys():
+                         #   final_dict[each_rec.sale_id.shop_id.referential_id.id] = need_to_update_data
+                        #else:
+                         #   value = final_dict[each_rec.sale_id.shop_id.referential_id.id]
+                          #  new_value = value + need_to_update_data
+                           # final_dict[each_rec.sale_id.shop_id.referential_id.id] = new_value
         #print "final_dict",final_dict
         if service_to_cancel:
             self.write(cr,uid,service_to_cancel,{'cancelled':True})
@@ -2455,6 +2519,7 @@ class sub_components(osv.osv):
         'recurring_price':fields.float('Recurring Price'),
         'no_recurring':fields.boolean('No Recurring'),
      }
+##cox gen2 changes for sub_components product
     def need_procurement(self, cr, uid, ids, context=None):
         #when sale is installed only, there is no need to create procurements, that's only
         #further installed modules (sale_service, sale_stock) that will change this.

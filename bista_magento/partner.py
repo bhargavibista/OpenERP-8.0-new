@@ -67,7 +67,7 @@ class res_partner(models.Model):
     use_wallet = fields.Char(string='Use Wallet',size=100)
     
     
-    _sql_constraints = [('username_uniq', 'unique(u_name)', 'A partner already exists with this User Name')]
+    _sql_constraints = [('username_uniq', 'unique(name)', 'A partner already exists with this User Name')]
 
     def create(self,cr,uid, vals, context={}):
         print "password--233435--------------",vals.get('password')
@@ -772,7 +772,7 @@ class res_partner(models.Model):
 ######## Update Subscription API to upgrade/downgrade service by yogita
     def update_subscription(self,subscription_data,context=None):
 	print "subscription data-----",subscription_data
-        tmpl_brw = self.pool.get('product.template')
+        tmpl_obj = self.pool.get('product.template')
         if subscription_data and subscription_data.get('CustomerId',''):
             dict_exist = { 'CustomerId':subscription_data.get('CustomerId'),'NewProductId':subscription_data.get('NewProductId'),
             'StartDate':subscription_data.get('StartDate'),'OldProductId':subscription_data.get('OldProductId'),
@@ -810,157 +810,161 @@ class res_partner(models.Model):
             print new_pack_oe_id
             if not new_pack_oe_id:
                 return json.dumps({'body':{'code':False,'message':'New Product not found.'}})
-            try:
-                partner_brw = partner_obj.browse(request.cr,SUPERUSER_ID,partner_id[0])
-                if not partner_brw.customer_profile_id:
-                    return json.dumps({'body':{'code':False,'message':'Customer Payment Profile does not exist.'}})
-                if not partner_brw.playjam_exported:
-                    return json.dumps({'body':{'code':False,'message':'Customer Profile does not exist on playjam side.'}})
-            	request.cr.execute('select product_id from res_partner_policy where active_service=True and return_cancel_reason is null and agmnt_partner= %s'%partner_id[0])
-            	product_ids=filter(None, map(lambda x:x[0], request.cr.fetchall()))
-            	if product_ids and new_pack_oe_id[0] in product_ids:
-                    return json.dumps({'body':{'code':False,'message':'You can not Upgrade/Downgrade to the active subscription.'}})
-            	search_old_policy = partner_policy.search(request.cr,SUPERUSER_ID,[('product_id','=',old_pack_oe_id[0]),('active_service','=',True),('agmnt_partner','in',partner_id)])
+#            try:
+            partner_brw = partner_obj.browse(request.cr,SUPERUSER_ID,partner_id[0])
+            if not partner_brw.customer_profile_id:
+                return json.dumps({'body':{'code':False,'message':'Customer Payment Profile does not exist.'}})
+            if not partner_brw.playjam_exported:
+                return json.dumps({'body':{'code':False,'message':'Customer Profile does not exist on playjam side.'}})
+            request.cr.execute('select product_id from res_partner_policy where active_service=True and return_cancel_reason is null and agmnt_partner= %s'%partner_id[0])
+            product_ids=filter(None, map(lambda x:x[0], request.cr.fetchall()))
+            if product_ids and new_pack_oe_id[0] in product_ids:
+                return json.dumps({'body':{'code':False,'message':'You can not Upgrade/Downgrade to the active subscription.'}})
+            search_old_policy = partner_policy.search(request.cr,SUPERUSER_ID,[('product_id','=',old_pack_oe_id[0]),('active_service','=',True),('agmnt_partner','in',partner_id)])
 #                search_old_policy = partner_policy.search(request.cr,SUPERUSER_ID,[('active_service','=',True),('agmnt_partner','in',partner_id)])
-                print"search_old_policysearch_old_policysearch_old_policy",search_old_policy
-                if search_old_policy:
+            print"search_old_policysearch_old_policysearch_old_policy",search_old_policy
+            if search_old_policy:
 #                        new_pack_id = product_obj.search(request.cr,SUPERUSER_ID,[('default_code','=ilike',new_sku)])
-                    new_pack_oe_brw=product_obj.browse(request.cr,SUPERUSER_ID,new_pack_oe_id[0])
-                    print"new_pack_oe_brw",new_pack_oe_brw,new_pack_oe_brw.product_type,tmpl_brw.browse(request.cr,SUPERUSER_ID,new_pack_oe_brw.product_tmpl_id.id).product_type
-                    if new_pack_oe_brw.product_tmpl_id and tmpl_brw.browse(request.cr,SUPERUSER_ID,new_pack_oe_brw.product_tmpl_id.id).product_type!='service':
-                        return json.dumps({'body':{'code':False,'message':'You can Upgrade/Downgrade to the subscription only.'}})
+                new_pack_oe_brw=product_obj.browse(request.cr,SUPERUSER_ID,new_pack_oe_id[0])
+                print"new_pack_oe_brw",new_pack_oe_brw,new_pack_oe_brw.product_type,tmpl_obj.browse(request.cr,SUPERUSER_ID,new_pack_oe_brw.product_tmpl_id.id).product_type
+                if new_pack_oe_brw.product_tmpl_id and tmpl_obj.browse(request.cr,SUPERUSER_ID,new_pack_oe_brw.product_tmpl_id.id).product_type!='service':
+                    return json.dumps({'body':{'code':False,'message':'You can Upgrade/Downgrade to the subscription only.'}})
 #                            new_pack_oe_brw=product_obj.browse(request.cr,SUPERUSER_ID,new_pack_id[0])
-                    old_prod_categ,old_prod_categ_parent,free_trial_date,flag,source=[],[],'',False,''
-                    old_policy_brw = partner_policy.browse(request.cr,SUPERUSER_ID,search_old_policy[0])
-                    if old_policy_brw.from_package_id and old_policy_brw.extra_days>0:
-                        print"old_policy_brw.from_package_idold_policy_brw.from_package_idold_policy_brw.from_package_id",old_policy_brw.from_package_id,old_policy_brw.from_package_id.extra_days,old_policy_brw.extra_days
-                        return json.dumps({'body':{'code':False,'message':'Multiple Upgrade/Downgrade to the subscription is not allowed.' }})
+                old_prod_categ,old_prod_categ_parent,free_trial_date,flag,source=[],[],'',False,''
+                old_policy_brw = partner_policy.browse(request.cr,SUPERUSER_ID,search_old_policy[0])
+                print"old_policy_brw",old_policy_brw
+                if old_policy_brw.from_package_id and old_policy_brw.extra_days>0:
+                    print"old_policy_brw.from_package_idold_policy_brw.from_package_idold_policy_brw.from_package_id",old_policy_brw.from_package_id,old_policy_brw.from_package_id.extra_days,old_policy_brw.extra_days
+                    return json.dumps({'body':{'code':False,'message':'Multiple Upgrade/Downgrade to the subscription is not allowed.' }})
 #                    if new_pack_oe_brw.id==old_policy_brw.product_id.id:
 #                        return json.dumps({'body':{'code':False,'message':'You can not Upgrade/Downgrade to the same active subscription.'}})
-                    oe_categ_id=product_obj.browse(request.cr,SUPERUSER_ID,old_product_id).categ_id
-                    if oe_categ_id.parent_id:
-                        old_prod_categ_parent.append(oe_categ_id.parent_id.id)
-                    old_prod_categ.append(oe_categ_id.id)
-                    source='COX'
-                    billing_dt_obj = datetime.datetime.strptime(partner_brw.billing_date, '%Y-%m-%d').date()
-                    old_free_trial_date=datetime.datetime.strptime(old_policy_brw.free_trial_date, "%Y-%m-%d").date()
-                    if (old_free_trial_date>start_dt_current_service):
-                        if (start_dt_current_service.month==2 and billing_dt_obj.day in(31,30)) or (billing_dt_obj.day==31) :
-                            days_month=calendar.monthrange(start_dt_current_service.year,start_dt_current_service.month)[1]
-                            new_billing_date=str(start_dt_current_service.year)+'-'+str(start_dt_current_service.month)+'-'+str(days_month)
-                        else:
-                            new_billing_date=str(start_dt_current_service.year)+'-'+str(start_dt_current_service.month)+'-'+str(billing_dt_obj.day)
-                        new_billing_date=datetime.datetime.strptime(new_billing_date, "%Y-%m-%d").date()
+                oe_categ_id=product_obj.browse(request.cr,SUPERUSER_ID,old_product_id).categ_id
+                if oe_categ_id.parent_id:
+                    old_prod_categ_parent.append(oe_categ_id.parent_id.id)
+                old_prod_categ.append(oe_categ_id.id)
+                source='COX'
+                billing_dt_obj = datetime.datetime.strptime(partner_brw.billing_date, '%Y-%m-%d').date()
+                print"old_policy_brw.free_trial_date",old_policy_brw.free_trial_date
+                old_free_trial_date=datetime.datetime.strptime(old_policy_brw.free_trial_date, "%Y-%m-%d").date()
+                if (old_free_trial_date>start_dt_current_service):
+                    if (start_dt_current_service.month==2 and billing_dt_obj.day in(31,30)) or (billing_dt_obj.day==31) :
+                        days_month=calendar.monthrange(start_dt_current_service.year,start_dt_current_service.month)[1]
+                        new_billing_date=str(start_dt_current_service.year)+'-'+str(start_dt_current_service.month)+'-'+str(days_month)
+                    else:
+                        new_billing_date=str(start_dt_current_service.year)+'-'+str(start_dt_current_service.month)+'-'+str(billing_dt_obj.day)
+                    new_billing_date=datetime.datetime.strptime(new_billing_date, "%Y-%m-%d").date()
+                    print"new_billing_datenew_billing_datenew_billing_date",new_billing_date
+                    if start_dt_current_service>=new_billing_date:
+                        new_billing_date=new_billing_date + relativedelta(months=1)
                         print"new_billing_datenew_billing_datenew_billing_date",new_billing_date
-                        if start_dt_current_service>=new_billing_date:
-                            new_billing_date=new_billing_date + relativedelta(months=1)
-                            print"new_billing_datenew_billing_datenew_billing_date",new_billing_date
-                        if new_billing_date<billing_dt_obj:
-                            billing_dt_obj=new_billing_date
-                            free_trial_date=billing_dt_obj-relativedelta(days=1)
-                            flag=True
-                            print"billing_dt_objbilling_dt_obj--------------------------",billing_dt_obj
-                        elif start_dt_current_service<old_free_trial_date and old_free_trial_date>billing_dt_obj:
-                            free_trial_date=billing_dt_obj-relativedelta(days=1)
-                        else:
-                            free_trial_date=old_free_trial_date
-                    elif(old_free_trial_date<start_dt_current_service):
+                    if new_billing_date<billing_dt_obj:
+                        billing_dt_obj=new_billing_date
+                        free_trial_date=billing_dt_obj-relativedelta(days=1)
+                        flag=True
+                        print"billing_dt_objbilling_dt_obj--------------------------",billing_dt_obj
+                    elif start_dt_current_service<old_free_trial_date and old_free_trial_date>billing_dt_obj:
                         free_trial_date=billing_dt_obj-relativedelta(days=1)
                     else:
                         free_trial_date=old_free_trial_date
-                    free_trial_date=datetime.datetime.strptime(str(free_trial_date), "%Y-%m-%d").date()
+                elif(old_free_trial_date<start_dt_current_service):
+                    free_trial_date=billing_dt_obj-relativedelta(days=1)
+                else:
+                    free_trial_date=old_free_trial_date
+                free_trial_date=datetime.datetime.strptime(str(free_trial_date), "%Y-%m-%d").date()
 #                            new_pack_id = product_obj.search(request.cr,SUPERUSER_ID,[('default_code','=ilike',new_sku)])
 #                            new_pack_oe_brw=product_obj.browse(request.cr,SUPERUSER_ID,new_pack_id[0])
-                    new_prod_categ=new_pack_oe_brw.categ_id
-                    updown_service=''
-                    if new_prod_categ.parent_id:
-                        if (new_prod_categ.parent_id.id not in old_prod_categ_parent) and (new_prod_categ.parent_id.id not in old_prod_categ) and (new_prod_categ.id not in old_prod_categ_parent):
-                            return json.dumps({'body':{'code':False,'message':'You can not Upgrade/Downgrade to this service.'}})
-                        elif (new_prod_categ.parent_id.id in old_prod_categ_parent) or (new_prod_categ.id in old_prod_categ_parent):
-                            updown_service='upgrade'
-                        else:
-                            updown_service='downgrade'
-                    elif (not new_prod_categ.parent_id):
+                new_prod_categ=new_pack_oe_brw.categ_id
+                updown_service=''
+                if new_prod_categ.parent_id:
+                    if (new_prod_categ.parent_id.id not in old_prod_categ_parent) and (new_prod_categ.parent_id.id not in old_prod_categ) and (new_prod_categ.id not in old_prod_categ_parent):
+                        return json.dumps({'body':{'code':False,'message':'You can not Upgrade/Downgrade to this service.'}})
+                    elif (new_prod_categ.parent_id.id in old_prod_categ_parent) or (new_prod_categ.id in old_prod_categ_parent):
+                        updown_service='upgrade'
+                    else:
+                        updown_service='downgrade'
+                elif (not new_prod_categ.parent_id):
 #                                or (new_prod_categ.id in old_prod_categ_parent):
-                        if (new_prod_categ.id not in old_prod_categ_parent) or (new_prod_categ.id in old_prod_categ):
-                            return json.dumps({'body':{'code':False,'message':'You can not Upgrade/Downgrade to this service.'}})
-                        elif new_prod_categ.id in old_prod_categ_parent:
-                            updown_service='upgrade'
-                    if billing_dt_obj<start_dt_current_service:
-                        days_left =(billing_dt_obj+relativedelta(months=1)) - start_dt_current_service
-                    else:
-                        days_left = billing_dt_obj - start_dt_current_service
-                    #TODO call Rental API
-#                                    user_id='FLARE1124'
-                    print"billing_dt_objbilling_dt_objbilling_dt_objbilling_dt_obj",billing_dt_obj
-                    user_id=partner_id[0]
-                    app_id=old_policy_brw.product_id.app_id
-#                                    app_id=284
-                    print "user_id---------",user_id
-                    print "app_id---------",app_id
-                    print "expiry_epoch---------",start_date
-                    expiry_epoch=time.mktime(datetime.datetime.now(), "%Y-%m-%d").timetuple()
-                    print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch
-                    expiry_epoch1=(int(expiry_epoch)+3600)
-                    print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch1
-                    old_policy_result = user_auth_obj.rental_playjam(user_id,app_id,expiry_epoch1)
-                    print "voucher_return----------",old_policy_result
-                    if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
-                        #4113 is the result response value for successfull rental update
-                        additional_info = {'source':source,'cancel_return_reason':'downgrade'}
-                        cancel_reason = return_obj.additional_info(request.cr,SUPERUSER_ID,additional_info)
-                        request.cr.execute("update res_partner_policy set active_service = False,return_cancel_reason='downgrade',cancel_date=%s,additional_info=%s where id = %s",(start_date,cancel_reason,old_policy_brw.id))
-                        app_id=new_pack_oe_brw.app_id
-#                                    app_id=284
-                        expiry_epoch=time.mktime(datetime.datetime.strptime(str('2050-12-31'), "%Y-%m-%d").timetuple())
-			expiry_epoch=int(expiry_epoch)
-                        print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch122",expiry_epoch
-                        new_policy_result = user_auth_obj.rental_playjam(request.cr, SUPERUSER_ID, user_id, app_id, expiry_epoch)
-                        print "voucher_return-------------++++++++++++++",new_policy_result
-                        if ast.literal_eval(str(new_policy_result)).has_key('body') and ast.literal_eval(str(new_policy_result)).get('body')['result'] == 4113:
-                            #4113 is the result response value for successfull rental update
-                            policy_id=partner_policy.create(request.cr,SUPERUSER_ID,{
-                            'service_name':new_pack_oe_brw.name,
-                            'active_service':True,
-                            'sale_id': old_policy_brw.sale_id,
-                            'start_date': start_date,
-                            'agmnt_partner':partner_id[0],
-                            'product_id': new_pack_oe_brw.id,
-                            'from_package_id':old_policy_brw.id,
-                            'up_down_service':updown_service,
-                            'free_trial_date': free_trial_date if free_trial_date else False,
-                            'sale_line_id':old_policy_brw.sale_line_id,
-                            'extra_days': (days_left.days if days_left else 0),
-                            'sale_order':old_policy_brw.sale_order,
-                            'source':source,
-                            'no_recurring':False,
-                            })
-                            if flag==True:
-                                result1=partner_brw.write({'billing_date':billing_dt_obj})
-                            if from_openerp!=True:
-                                up_down_id=up_down_obj.create(request.cr,SUPERUSER_ID,{
-                                'partner_id':partner_id[0],
-                                'old_policy_id':old_policy_brw.id,
-                                'product_id':new_pack_oe_brw.id,
-                                'up_down_service':updown_service,
-                                'start_date':start_date,
-                                'free_trial_date':free_trial_date if free_trial_date else old_policy_brw.free_trial_date,
-                                'source':source,
-                                'state':'done',
-                                'new_policy_id':policy_id,
-                                })
-                                partner_policy.write(request.cr,SUPERUSER_ID,policy_id,{'up_down_id':up_down_id})
-                            partner_obj.cal_next_billing_amount(request.cr,SUPERUSER_ID,partner_id[0])
-                            if policy_id:
-                                return json.dumps({'body':{'code':True,'message':'Success'}})
-                        else:
-                           return json.dumps({'body':{'code':False,'message':'Failed to Create new service at Playjam End.'}})
-                    else:
-                        return json.dumps({'body':{'code':False,'message':'Failed to Cancel old service at Playjam End.'}})
+                    if (new_prod_categ.id not in old_prod_categ_parent) or (new_prod_categ.id in old_prod_categ):
+                        return json.dumps({'body':{'code':False,'message':'You can not Upgrade/Downgrade to this service.'}})
+                    elif new_prod_categ.id in old_prod_categ_parent:
+                        updown_service='upgrade'
+                if billing_dt_obj<start_dt_current_service:
+                    days_left =(billing_dt_obj+relativedelta(months=1)) - start_dt_current_service
                 else:
-                    return json.dumps({'body':{'code':False,'message':'Customer is not having active service.'}})
-            except Exception, e:
-                return json.dumps({'body':{'code':False,'message':str(e)}})
+                    days_left = billing_dt_obj - start_dt_current_service
+                #TODO call Rental API
+#                                    user_id='FLARE1124'
+                print"billing_dt_objbilling_dt_objbilling_dt_objbilling_dt_obj",billing_dt_obj
+                user_id=partner_id[0]
+                app_id=old_policy_brw.product_id.app_id
+#                                    app_id=284
+                print "user_id---------",user_id
+                print "app_id---------",app_id
+                print "expiry_epoch---------",start_date
+                print"datetime.datetime.today()",datetime.datetime.today()
+                today =  str(datetime.datetime.today()).split(' ')[0]
+                expiry_epoch=time.mktime(datetime.datetime.now().timetuple())
+                print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch
+                expiry_epoch1=(int(expiry_epoch)+3600)
+                print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch1
+                old_policy_result = user_auth_obj.rental_playjam(user_id,app_id,expiry_epoch1)
+                print "voucher_return----------",old_policy_result
+                if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
+                    #4113 is the result response value for successfull rental update
+                    additional_info = {'source':source,'cancel_return_reason':'downgrade'}
+                    cancel_reason = return_obj.additional_info(request.cr,SUPERUSER_ID,additional_info)
+                    request.cr.execute("update res_partner_policy set active_service = False,return_cancel_reason='downgrade',cancel_date=%s,additional_info=%s where id = %s",(start_date,cancel_reason,old_policy_brw.id))
+                    app_id=new_pack_oe_brw.app_id
+#                                    app_id=284
+                    expiry_epoch=time.mktime(datetime.datetime.strptime(str('2050-12-31'), "%Y-%m-%d").timetuple())
+                    expiry_epoch=int(expiry_epoch)
+                    print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch122",expiry_epoch
+                    new_policy_result = user_auth_obj.rental_playjam( user_id, app_id, expiry_epoch)
+                    print "voucher_return-------------++++++++++++++",new_policy_result
+                    if ast.literal_eval(str(new_policy_result)).has_key('body') and ast.literal_eval(str(new_policy_result)).get('body')['result'] == 4113:
+                        #4113 is the result response value for successfull rental update
+                        policy_id=partner_policy.create(request.cr,SUPERUSER_ID,{
+                        'service_name':new_pack_oe_brw.name,
+                        'active_service':True,
+                        'sale_id': old_policy_brw.sale_id,
+                        'start_date': start_date,
+                        'agmnt_partner':partner_id[0],
+                        'product_id': new_pack_oe_brw.id,
+                        'from_package_id':old_policy_brw.id,
+                        'up_down_service':updown_service,
+                        'free_trial_date': free_trial_date if free_trial_date else False,
+                        'sale_line_id':old_policy_brw.sale_line_id,
+                        'extra_days': (days_left.days if days_left else 0),
+                        'sale_order':old_policy_brw.sale_order,
+                        'source':source,
+                        'no_recurring':False,
+                        })
+                        if flag==True:
+                            result1=partner_brw.write({'billing_date':billing_dt_obj})
+                        if from_openerp!=True:
+                            up_down_id=up_down_obj.create(request.cr,SUPERUSER_ID,{
+                            'partner_id':partner_id[0],
+                            'old_policy_id':old_policy_brw.id,
+                            'product_id':new_pack_oe_brw.id,
+                            'up_down_service':updown_service,
+                            'start_date':start_date,
+                            'free_trial_date':free_trial_date if free_trial_date else old_policy_brw.free_trial_date,
+                            'source':source,
+                            'state':'done',
+                            'new_policy_id':policy_id,
+                            })
+                            partner_policy.write(request.cr,SUPERUSER_ID,policy_id,{'up_down_id':up_down_id})
+                        partner_obj.cal_next_billing_amount(request.cr,SUPERUSER_ID,partner_id[0])
+                        if policy_id:
+                            return json.dumps({'body':{'code':True,'message':'Success'}})
+                    else:
+                       return json.dumps({'body':{'code':False,'message':'Failed to Create new service at Playjam End.'}})
+                else:
+                    return json.dumps({'body':{'code':False,'message':'Failed to Cancel old service at Playjam End.'}})
+            else:
+                return json.dumps({'body':{'code':False,'message':'Customer is not having active service.'}})
+#            except Exception, e:
+#                return json.dumps({'body':{'code':False,'message':str(e)}})
 	return json.dumps({'body':{'code':False,'message':'Invalid Data'}})
 
     def create_update_customer(self,dict,context=None):

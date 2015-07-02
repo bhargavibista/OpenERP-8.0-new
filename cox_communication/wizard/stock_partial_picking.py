@@ -48,7 +48,7 @@ class stock_partial_picking(osv.osv_memory):
             if picking_id_brw.return_id and picking_id_brw.type == 'in':
                 return_obj.write(cr, uid,picking_id_brw.return_id.id, {'receive':True})
 		if picking_id_brw.return_id.return_type == 'car_return':
-			no_days_passed = return_obj.no_days_passed(cr,uid,picking_id_brw.return_id.linked_sale_order,context)
+			no_days_passed = return_obj.no_of_days_passed(cr,uid,picking_id_brw.return_id.linked_sale_order,context)
 	                context['return_id'] = picking_id_brw.return_id.id
 	                return_data = return_obj.flow_option_based_on_days(cr,uid,no_days_passed,context)
 	                if return_data:

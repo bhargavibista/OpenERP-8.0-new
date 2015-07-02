@@ -12,7 +12,7 @@ import openerp.netsvc as netsvc
 import datetime
 #from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
-from openerp.addons.base_external_referentials.external_osv import ExternalSession
+#from openerp.addons.base_external_referentials.external_osv import ExternalSession
 import time
 import ast
 
@@ -134,7 +134,8 @@ class charge_customer(osv.osv_memory):
                     tax_obj = self.pool.get('account.tax')
                     wf_service.trg_validate(uid, 'sale.order', active_id, 'order_confirm', cr)
                     email_to = sale_object.partner_id.emailid
-                    if sale_object.cox_sales_channels in ('retail','ecommerce'):
+                    if sale_object.cox_sales_channels in ('retail','ecommerce','tru','playjam'):
+			print "active id////////////////////////////////",active_id
                         cr.execute('select invoice_id from sale_order_invoice_rel where order_id=%s'%(active_id))
                         invoice_id=cr.fetchone()
                         print"invoice_id",invoice_id
@@ -311,6 +312,7 @@ class customer_profile_payment(osv.osv_memory):
                     if sale_object.cox_sales_channels in ('retail','ecommerce','tru','playjam'):
                         cr.execute('select invoice_id from sale_order_invoice_rel where order_id=%s'%(active_id))
                         invoice_id=cr.fetchone()
+			print "invoice id now//////////////////////////////////////////////",invoice_id
                         if invoice_id:
                             wf_service.trg_validate(uid, 'account.invoice', invoice_id[0], 'invoice_open', cr)
                             returnval = invoice_obj.make_payment_of_invoice(cr, uid, invoice_id, context=context)

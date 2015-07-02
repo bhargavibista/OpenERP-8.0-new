@@ -445,6 +445,7 @@ class account_invoice(models.Model):
             next_retry_date=datetime.datetime.strptime(next_try_date, "%Y-%m-%d")
             next_retry_date=next_retry_date+datetime.timedelta(weeks=1)
             if config_ids and customer_profile_id:
+		print "config ids//////////////////////////////",config_ids,customer_profile_id
                 config_obj = authorize_net_config.browse(cr,uid,config_ids[0])
                 cust_payment_profile_id = current_obj.customer_payment_profile_id
                 print"cust_payment_profile_idcust_payment_profile_idcust_payment_profile_id",cust_payment_profile_id
@@ -453,6 +454,7 @@ class account_invoice(models.Model):
                 amount=current_obj.amount_total
                 try:
                     capture_status = current_obj.capture_status
+		    print "cpature status///////////////////////////////////",capture_status
                     if not capture_status:
                         ccv=''
                         #context['recurring_billing'] =True
@@ -552,6 +554,7 @@ class account_tax(osv.osv):
     _inherit='account.tax'
 #    _columns = {
 #    'account_collected_id':fields.property(
+
 ##            'account.account',
 #            type='many2one',
 #            relation='account.account',

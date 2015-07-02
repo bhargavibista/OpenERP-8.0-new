@@ -15,13 +15,15 @@
                 </xpath>
                 <xpath expr="//field[@name='company_id']" position="after">
                    <field name="return_option"/>
+                   <field name="cancellation_type"/>
                </xpath>
 		<xpath expr="/form/group/group[1]/field[@name='source_location']" position="attributes">
                     <attribute name="widget">selection</attribute>
                     <attribute name="required">1</attribute>
                 </xpath>
 		<xpath expr="/form/group/group[1]/field[@name='return_type']" position="after">
-                    <field name="return_reason" required="1" domain="[('module','=','returns'),('active','=',True)]" attrs="{'invisible':[('state','!=','draft')]}" widget="selection"/>
+                    <field name="return_reason" required="1" domain="[('module','=','returns'),('active','=',True)]" attrs="{'invisible':[('state','!=','draft')]}" context= "{'return_reason': return_reason}" widget="selection"/><!--Preeti for RMA-->
+                    <field name="refund_against" attrs="{'invisible':[('return_type','!=','car_return')],'required':[('return_type','=','car_return')]}" on_change="onchange_refund_against(refund_against)"/><!--Preeti for RMA-->
                 </xpath>
 <!--                <xpath expr="/form/group/group[1]/field[@name='shop_id']" position="after">
                     <field name="return_reason" required="1" domain="[('module','=','returns'),('active','=',True)]" attrs="{'invisible':[('state','!=','draft')]}" widget="selection"/>
@@ -33,7 +35,7 @@
                     <!--<field name="return_reason" required="1" domain="[('module','=','returns'),('active','=',True)]" attrs="{'invisible':[('state','!=','draft')]}" widget="selection"/>-->
                     <field name="show_components" attrs="{'invisible':[('bundle_configuration','=',False)]}" on_change="onchange_show_components(show_components,order_line,return_type,linked_sale_order)"/>
 <!--                    <field name="generate_label" attrs="{'invisible':[('state','in',('progress','done'))]}"/>-->
-                    <field name="refund_type" on_change="onchange_refund_type(refund_type)" attrs="{'required':[('return_type','=','car_return')],'invisible':[('return_type','!=','car_return')]}"/>
+                    <!--<field name="refund_type" on_change="onchange_refund_type(refund_type)" attrs="{'required':[('return_type','=','car_return')],'invisible':[('return_type','!=','car_return')]}"/>-->
                     <field name="bundle_configuration" invisible="1"/>
                 </xpath>
                 <xpath expr="//button[@name='manual_invoice_return']" position="replace">
@@ -53,7 +55,7 @@
                   <button name="receive_confirm" string="Process Order" icon="gtk-go-forward" type="object" attrs="{'invisible':['|','|',('receive','=',True),('return_type','=','car_return'),('state','=','done')]}"/>
                    <button name="deliver_confirm" string="Deliver" icon="terp-gtk-go-back-ltr" type="object" attrs="{'invisible':['|','|',('receive','=',False),('delivered','=',True),('return_type','!=','exchange')]}"/>
                    <!--<button name="return_confirm" string="Receive" icon="gtk-apply" type="object" attrs="{'invisible':['|',('receive','=',True),'|',('return_type','=','exchange'),('device_returned','=',False)]}"/>-->
-                   <button name="return_confirm" string="Process Order" icon="gtk-apply" type="object" attrs="{'invisible':['|',('return_type','=','exchange'),('state','=','done')]}"/>
+                   <button name="process_order" string="Process Order" icon="gtk-apply" type="object" attrs="{'invisible':['|',('return_type','=','exchange'),('state','=','done')]}" context="{'credit_option': credit_option,'cancel_option': cancel_option,'refund_type': refund_type,'immediate_cancel':cancel_immediately,'device_option':device_option,'service_id': service_id,'order_line':order_line}"/><!--Preeti for RMA-->
 <!--                   <button name="charge_termintion_fees" string="Charge Termination Fees" icon="gtk-apply" type="object" attrs="{'invisible':['|',('need_to_charge','=',False),('state','!=','draft')]}"/>-->
 <!--                   <button name="cancel_service" string="Cancel Service" icon="gtk-apply" type="object" attrs="{'invisible':['|',('need_to_cancel','=',False),('state','=','done')]}"/>-->
                </xpath>
@@ -64,12 +66,34 @@
                 <!-- To add return type in the onchange function-->
                 <xpath expr="/form/group/group[2]/field[@name='linked_sale_order']" position="attributes">
                     <attribute name="on_change">onchange_sale_order(linked_sale_order,linked_serial_no,order_line,return_type,context)</attribute>
+                    <attribute name="attrs">{'invisible':[('refund_against','!=','sale_order'), ('return_type','!=','exchange')],'required':['|',('refund_against','=','sale_order'), ('return_type','=','exchange')]}</attribute>                    
                 </xpath>
                 <!-- To add onchange in return_type field-->
                 <xpath expr="/form/group/group[1]/field[@name='return_type']" position="attributes">
-                    <attribute name="on_change">onchange_sale_order(linked_sale_order,linked_serial_no,order_line,return_type,context)</attribute>
+                    <!--<attribute name="on_change">onchange_sale_order(linked_sale_order,linked_serial_no,order_line,return_type,context)</attribute>-->
+                    <attribute name="on_change">onchange_return_type(return_type)</attribute><!--Preeti for RMA-->
 		    <attribute name="context">{'r_type': True}</attribute>
                 </xpath>
+                <!--Start code preeti for RMA-->
+                <xpath expr="/form/group/group[2]/field[@name='linked_sale_order']" position="after">
+                  <group col="6" colspan="4">
+                  <newline/>
+                  <newline/>
+                  <field name="device_option" attrs="{'invisible':[('refund_against','!=','sale_order')],'required':[('refund_against','=','sale_order')]}"/>
+                  <newline/>
+                  <field name="credit_option" attrs="{'invisible':[('refund_against','!=','subscription')],'required':[('refund_against','=','subscription')]}" context="{'credit_option': credit_option}"/>
+                  <newline/>                
+                  <field name="service_id" attrs="{'invisible':[('refund_against','!=','subscription')],'required':[('refund_against','=','subscription')]}" context="{'service_id': service_id}" on_change="onchange_service_id(service_id,context)" domain="[('service_name','!=',False),('active_service','=',True)]"/>
+                  <newline/>
+                  <field name="refund_type" attrs="{'invisible':[('credit_option','!=','yes')], 'required':[('credit_option','=','yes')]}" context="{'refund_type': refund_type}" on_change="onchange_refund_type(refund_type)"/>                  
+                  <newline/>
+                  <field name="cancel_option" attrs="{'invisible':[('refund_against','!=','subscription')],'required':[('refund_against','=','subscription')]}" context="{'cancel_option': cancel_option}" on_change="onchange_cancel_option(service_id,cancel_option,context)"/>
+                  <newline/>
+                  <field name="cancel_immediately" attrs="{'invisible':[('cancel_option','!=','yes')]}" context="{'immediate_cancel': cancel_immediately}"/>                  
+                  <newline/>
+                  </group>
+                </xpath>
+                <!--End code preeti for RMA-->
                 <xpath expr="//group[@name='logistics']/field[@name='receive']" position="after">
                     <field name="email_sent" string="Label Sent" readonly="1" attrs="{'invisible':[('return_type','!=','exchange')]}"/>
                     <field name="receive" string="Received" readonly="1"/>
@@ -117,6 +141,9 @@
                 </xpath>
 		<xpath expr="/form/notebook/page[@string='Return Order']/field[@name='order_line']/form/notebook/page[@string='Order Line']/group/field[@name='price_unit']" position="attributes">
                     <attribute name="on_change">onchange_price_unit(price_unit,product_uom_qty,parent.refund_type,sale_line_id,context)</attribute>
+                </xpath>
+        <xpath expr="/form/notebook/page[@string='Return Order']/field[@name='order_line']/form/notebook/page[@string='Order Line']/group/field[@name='price_unit']" position="after">
+                    <field name="copy_unit_price" invisible="1"/>
                 </xpath>
 		<xpath expr="/form/notebook/page[@string='History']/field[@name='picking_ids']" position="replace">
                     <field colspan="4" name="picking_ids">
@@ -185,6 +212,8 @@
             <field name="arch" type="xml">
                 <xpath expr="/tree/field[@name='user_id']" position="after">
                     <field name="return_reason"/>
+                    <field name="refund_against" attrs="{'invisible':[('return_type','!=','car_return')],'required':[('return_type','=','car_return')]}"/>
+                    <field name="service_id"/>
                 </xpath>
             </field>
         </record>

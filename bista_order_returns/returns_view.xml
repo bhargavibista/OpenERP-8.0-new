@@ -48,7 +48,7 @@
                         </group>
                         <group col="6" colspan="4">
                             <field name="linked_serial_no" on_change="onchange_serial_no(linked_serial_no,name,linked_sale_order,actual_linked_order)" attrs="{'readonly':[('state','!=','draft')]}"/>
-                            <field name="linked_sale_order" on_change="onchange_sale_order(linked_sale_order,linked_serial_no,order_line)" domain="[('state','in',('done','progress'))]" required="1" options="{'limit': 7, 'create': false, 'create_edit': false ,'always_reload': True}"/>
+                            <field name="linked_sale_order" on_change="onchange_sale_order(linked_sale_order,linked_serial_no,order_line)" domain="[('state','in',('done','progress'))]" options="{'limit': 7, 'create': false, 'create_edit': false ,'always_reload': True}"/><!--Preeti for RMA removed required=1-->
                             <field name="actual_linked_order" invisible="1"/>
                             <button name="refresh_page" string="Refresh" states="draft" icon="gtk-apply" type="object"/>
                         </group>
