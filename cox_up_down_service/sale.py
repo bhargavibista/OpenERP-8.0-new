@@ -67,6 +67,8 @@ class sale_order_line(osv.osv):
         uos_id = _get_line_uom(line)
         fpos = line.order_id.fiscal_position or False
         account_id = self.pool.get('account.fiscal.position').map_account(cr, uid, fpos, account_id)
+        if context.get('giftcard',False):
+	    product_id_brw=line.product_id
         if not account_id:
             raise osv.except_osv(_('Error !'),
                         _('There is no income category account defined in default Properties for Product Category or Fiscal Position is not defined !'))
@@ -110,6 +112,8 @@ class sale_order(osv.osv):
                  ###########
 #                product_price = policy_brw.product_id.list_price
                 unit_price = product_price
+                if context.get('giftcard',False):
+                    unit_price=context.get('facevalue',False)
                 if policy_brw.up_down_service and policy_brw.extra_days:
                     invoice_lines+= policy_obj.service_tier_calculation(cr,uid,policy_brw,unit_price,date_inv,context)
                     cr.execute("update res_partner_policy set adv_paid=False,extra_days=0,next_billing_date= '%s' where id =%s"%(nextmonth,policy_brw.id))
@@ -123,7 +127,7 @@ class sale_order(osv.osv):
                             'line_id': policy_brw.sale_line_id
                             }
                     data.update({'price_unit':unit_price})
-                    if service_data.get('extra_days', 0)>0 :
+                    if service_data.get('extra_days', 0)>0  and not context.get('giftcard',False):
                         extra_days=service_data.get('extra_days')
                         days=calendar.monthrange(date_inv.year,date_inv.month)[1]
 #                        days=366 if calendar.isleap(date_inv.year) else 365
@@ -131,7 +135,12 @@ class sale_order(osv.osv):
                         partial_price=(unit_price/days)*int(extra_days)
                         data.update({'price_unit':partial_price})
                         policy_obj.write(cr,uid,service_data['policy_id'],{'extra_days':0,'adv_paid':True})
-                    vals = obj_sale_order_line._prepare_invoice_line_cox(cr, uid, line, False, data, context)
+                    if context.get('giftcard',False):
+                        account_id=context.get('account_id',False)
+                        print "account_idaccount_idaccount_id546t457578678",account_id
+                    else:
+                        account_id=False
+                    vals = obj_sale_order_line._prepare_invoice_line_cox(cr, uid, line, account_id, data, context)
                     if vals:
                         last_amount_charged=vals.get('price_unit',False)
                         print"last_amount_chargedlast_amount_chargedlast_amount_charged",last_amount_charged
@@ -184,12 +193,13 @@ class sale_order(osv.osv):
                     context['customer_profile_id'] = partner_id_obj.customer_profile_id
 		    check_trans=""
                     check_trans = self.pool.get("authorize.net.config").check_authorize_net(cr,uid,'account.invoice',res,context)
-                    if not check_trans:
+                    if not context.get('giftcard',False) and not check_trans:
                         returnval=invoice.charge_customer_recurring_or_etf(cr,uid,[res],context)
                     else:
                         wf_service = netsvc.LocalService("workflow")
                         wf_service.trg_validate(uid, 'account.invoice', res, 'invoice_open', cr)
                         returnval = invoice.make_payment_of_invoice(cr, uid, [res], context=context)
+                        invoice.write(cr,uid,res,{'procesesd_by':'giftcard'})
                 for sale_id in sale_ids:
                     cr.execute('insert into sale_order_invoice_rel (order_id,invoice_id) values (%s,%s)', (sale_id, res))
             if returnval:
