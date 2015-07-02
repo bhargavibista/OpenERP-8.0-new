@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_deliver_goods" model="ir.ui.view">
+            <field name="name">view.deliver.goods</field>
+            <field name="model">deliver.goods</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="">
+                    <group col="4" colspan="4">
+                        <newline/>
+                        <separator string="Are you doing Delivery Of Goods from Your current Location" colspan="8"/>
+                        <newline/>
+                        <button name="deliver_goods" string="Yes" type="object" icon="gtk-ok"/>
+                        <button name="no_deliver_goods" string="No" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_deliver_goods" model="ir.actions.act_window">
+            <field name="name">Goods Delivered</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">deliver.goods</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="view_deliver_goods"/>
+            <field name="target">new</field>
+        </record>
+<record id="view_deliver_goods_from_in" model="ir.ui.view">
+            <field name="name">view.deliver.goods.from.in</field>
+            <field name="model">deliver.goods</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="">
+                    <group col="4" colspan="4">
+                        <newline/>
+                        <separator string="Do you want to do Delivery of Goods" colspan="8"/>
+                        <newline/>
+                        <button name="no_deliver_goods" string="Yes" type="object" icon="gtk-ok"/>
+	</group>
+                </form>
+            </field>
+        </record>
+    </data>
+</openerp>

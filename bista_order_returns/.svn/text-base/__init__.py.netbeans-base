@@ -1,0 +1,10 @@
+# -*- coding: utf-8 -*-
+### DEfault value is not coming in stock picking create
+import wizard
+import returns
+import stock
+#import mrp_repair
+import sale
+import account_invoice
+import return_authorize
+import report

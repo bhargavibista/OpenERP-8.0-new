@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<openerp>
+    <data>
+        <act_window name="Authorize.Net Transactions"
+            res_model="profile.transaction"
+            src_model="sale.order"
+            view_mode="form"
+            target="new"
+            context="{'call_from':'wizard'}"
+            id="bista_authorize_net.authorize_net_transaction"/>
+        <act_window name="Authorize.Net Customer Profile"
+            res_model="customer.profile.payment.profile"
+            src_model="res.partner"
+            view_mode="form"
+            target="new"
+            context="{'call_from':'wizard'}"
+            id="bista_authorize_net.authorize_net_customer_profile"/>
+            <act_window name="Authorize.Net Transactions"
+            res_model="profile.transaction"
+            src_model="account.invoice"
+            view_mode="form"
+            target="new"
+            context="{'call_from':'wizard'}"
+            id="bista_authorize_net.authorize_net_transaction_invoice" />
+<!--            <delete model="ir.actions.act_window" id="bista_authorize_net.authorize_net_transaction_invoice"/>
+            <delete model="ir.actions.act_window" id="bista_authorize_net.authorize_net_transaction"/>
+-->
+
+            <!--<record model="ir.actions.act_window" id="bista_authorize_net.authorize_net_transaction_invoice">
+        <field eval="[(6,0,[ref('base.group_no_one')])]" name="groups_id"/>
+        </record>
+        <record model="ir.actions.act_window" id="bista_authorize_net.authorize_net_transaction">
+        <field eval="[(6,0,[ref('base.group_no_one')])]" name="groups_id"/>
+        </record>-->
+        
+        <!--COX GEN2-->
+<!--	<record id="action_cox_survey_answers" model="ir.actions.act_window">
+            <field name="name">Survey Answers</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">survey.response</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+        </record>
+        <menuitem action="action_cox_survey_answers" id="menu_cox_survey_answers" parent="survey.menu_surveys" sequence="4" groups="base.group_no_one"/>-->
+</data></openerp>

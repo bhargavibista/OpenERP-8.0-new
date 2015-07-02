@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+       <record id="view_repair_order_form_return" model="ir.ui.view">
+            <field name="name">view.repair.order.form.return</field>
+            <field name="model">mrp.repair</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="mrp_repair.view_repair_order_form" />
+            <field name="arch" type="xml">
+                <field name="address_id" position="after">
+                    <field name="sale_return_id"/>
+                    <field name="description_reason"/>
+                    <field name="failure_analysis"/>
+                    <field name="scheduled_date"/>
+                </field>
+                <button name="repair_confirm" position="before">
+                    <button name="action_non_repairable" states="draft" string="Non Repairable" type="object" icon="gtk-convert"/>
+                </button>
+                <button name="action_cancel_draft" position="replace">
+                    <button name="action_cancel_draft" type="object" icon="gtk-convert" string="Set to Draft" attrs="{'invisible':['|',('state','in',('draft','confirmed','ready','under_repair','2binvoiced','invoice_except','done','waiting_invoice')),('picking_id','!=',False)]}"/>
+                </button>
+                <button name="action_invoice_create" position="replace">
+
+                </button>
+            </field>
+       </record>
+
+       <record id="view_repair_order_tree_velodyne" model="ir.ui.view">
+            <field name="name">view.repair.order.tree.velodyne</field>
+            <field name="model">mrp.repair</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="mrp_repair.view_repair_order_tree" />
+            <field name="arch" type="xml">
+                <field name="move_id" position="after">
+                    <field name="sale_return_id"/>
+                </field>
+            </field>
+       </record>
+
+       <record id="view_repair_order_form_filter_velodyne" model="ir.ui.view">
+            <field name="name">view.repair.order.tree.velodyne</field>
+            <field name="model">mrp.repair</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="mrp_repair.view_repair_order_form_filter" />
+            <field name="arch" type="xml">
+                <field name="state" position="after">
+                    <field name="sale_return_id"/>
+                    
+                </field>
+            </field>
+       </record>
+
+
+     </data>
+</openerp>

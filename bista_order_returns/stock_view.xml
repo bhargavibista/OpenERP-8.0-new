@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+<!--       <record id="view_picking_in_form_rma_return" model="ir.ui.view">
+            <field name="name">view.picking.in.form.rma.return</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_picking_in_form" />
+            <field name="arch" type="xml">
+                <field name="backorder_id" position="after">
+                    <field name="rma_return"/>
+                </field>
+            </field>
+       </record>
+
+       <record id="view_picking_in_tree_return" model="ir.ui.view">
+            <field name="name">view.picking.in.tree.return</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.view_picking_in_tree" />
+            <field name="arch" type="xml">
+                <field name="origin" position="after">
+                    <field name="rma_return" select="1"/>
+                </field>
+            </field>
+       </record>
+
+
+       <record id="view_picking_out_form_rma_return" model="ir.ui.view">
+            <field name="name">view.picking.out.form.rma.return</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_picking_out_form" />
+            <field name="arch" type="xml">
+                <field name="backorder_id" position="after">
+                    <field name="rma_return"/>
+                </field>
+            </field>
+       </record>
+
+
+       <record id="view_picking_out_tree_return" model="ir.ui.view">
+            <field name="name">view.picking.out.tree.return</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.view_picking_out_tree" />
+            <field name="arch" type="xml">
+                <field name="origin" position="after">
+                    <field name="rma_return" select="1"/>
+                </field>
+            </field>
+       </record>-->
+
+
+
+       <record id="view_picking_form_rma_return" model="ir.ui.view">
+            <field name="name">view.picking.form.rma.return</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_picking_form" />
+            <field name="arch" type="xml">
+                <field name="backorder_id" position="after">
+                    <field name="rma_return"/>
+                </field>
+            </field>
+       </record>
+
+
+       <record id="vpicktree_return" model="ir.ui.view">
+            <field name="name">vpicktree.return</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.vpicktree" />
+            <field name="arch" type="xml">
+                <field name="origin" position="after">
+                    <field name="rma_return" select="1"/>
+                </field>
+            </field>
+       </record>
+
+        <!--<record id="view_picking_in_search_velodyne" model="ir.ui.view">
+            <field name="name">stock.picking.in.search.velodyne</field>
+            <field name="model">stock.picking</field>
+            <field name="type">search</field>
+             <field name="inherit_id" ref="stock.view_picking_in_search" />
+            <field name="arch" type="xml">
+                <field name="company_id" position="after">
+                    <field name ="rma_return"/>
+                    <field name ="date_done"/>
+                </field>
+            </field>
+        </record>-->
+
+       <!-- <record id="view_picking_internal_search_velodyne" model="ir.ui.view">
+            <field name="name">view.picking.internal.search.velodyne</field>
+            <field name="model">stock.picking</field>
+            <field name="type">search</field>
+             <field name="inherit_id" ref="stock.view_picking_internal_search" />
+            <field name="arch" type="xml">
+                <field name="company_id" position="after">
+                    <field name ="rma_return"/>
+                </field>
+            </field>
+        </record>-->
+
+        <!--<record id="view_picking_out_search_velodyne" model="ir.ui.view">
+            <field name="name">view.picking.out.search.velodyne</field>
+            <field name="model">stock.picking</field>
+            <field name="type">search</field>
+             <field name="inherit_id" ref="stock.view_picking_out_search" />
+            <field name="arch" type="xml">
+                <field name="company_id" position="after">
+                    <field name ="rma_return"/>
+                </field>
+            </field>
+        </record>-->
+
+
+     </data>
+</openerp>

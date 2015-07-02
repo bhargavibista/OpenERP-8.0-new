@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+        
+        
+<!--        project dashboard
+        
+        <record id="view_task_tree" model="ir.ui.view">
+            <field name="name">project.task.tree</field>
+            <field name="model">project.task</field>
+            <field eval="99" name="priority"/>
+            <field name="arch" type="xml">
+                <tree colors="red:date_deadline&lt;current_date;blue:date_deadline==current_date;black:date_deadline&gt;current_date" string="My Tasks">
+                    <field name="name"/>
+                    <field name="project_id"/>
+                    <field name="date_deadline"/>
+                    <field name="priority"/>
+                    <field name="planned_hours" widget="float_time"/>
+                    <field name="effective_hours" widget="float_time"/>
+                    <field name="progress" widget="progressbar"/>
+                    <field name="stage_id" invisible="context.get('set_visible',False)"/>
+                    <field name="state" invisible="1"/>  cox gen2
+                </tree>
+            </field>
+        </record>
+
+        <record id="my_open_tasks_action" model="ir.actions.act_window">
+            <field name="name">My Tasks</field>
+            <field name="res_model">project.task</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('user_id','=',uid),('state','not in',('cancel','done'))]</field>
+            <field name="view_id" ref="view_task_tree"/>
+        </record>
+        
+        <record id="view_task_history_graph" model="ir.ui.view">
+            <field name="name">project.task.history.cumulative.graph</field>
+            <field name="model">project.task.history.cumulative</field>
+            <field name="arch" type="xml">
+                 <field name="project_id"/> 
+                <graph string="Project Tasks" type="bar">
+                    <field name="date"/>
+                    <field name="planned_hours" operator="+"/>
+                    <field name="type_id" group="True"/>
+                </graph>
+            </field>
+        </record>
+        
+        <record id="action_view_task_history_cumulative" model="ir.actions.act_window">
+            <field name="name">Cumulative Flow</field>
+            <field name="res_model">project.task.history.cumulative</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">graph,tree</field>
+            <field name="view_id" ref="view_task_history_graph"/>
+            <field name="filter" eval="False"/>
+            <field name="context">{"search_default_open":1, "search_default_this_month": 1}</field>
+        </record>
+
+        <record id="board_project_form" model="ir.ui.view">
+            <field name="name">board.project.form</field>
+            <field name="model">board.board</field>
+            <field name="arch" type="xml">
+                <form string="My Board" version="7.0">
+                    <board style="2-1">
+                        <column>
+                            <action name="%(my_open_tasks_action)d" string="My Tasks"/>
+                        </column>
+                        <column>
+                            <action name="%(action_view_task_history_cumulative)d" string="Open Tasks"/>
+                        </column>
+                    </board>
+                </form>
+            </field>
+        </record>
+
+        <record id="open_board_project" model="ir.actions.act_window">
+            <field name="name">Project</field>
+            <field name="res_model">board.board</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="usage">menu</field>
+            <field name="view_id" ref="board_project_form"/>
+        </record>
+
+        <menuitem id="menu_project_dashboard"
+                  sequence="35"
+                  parent="base.menu_reporting_dashboard"
+                  action="open_board_project"/>-->
+        
+        <!--end project board-->
+<!--end-->
+        <menuitem name="Reporting"
+            id="base.menu_reporting"
+            groups="base.group_user,group_internal_operations,group_internal_operations_manager,group_warehouse_cox,group_support"
+            sequence="170"/>
+       <menuitem id="base.menu_reporting_dashboard" name="Dashboards" parent="base.menu_reporting" sequence="0"/>
+       <menuitem id="base.menu_reporting_config" name="Configuration" parent="base.menu_reporting" sequence="100" groups="base.group_system,group_internal_operations,group_internal_operations_manager,group_support"/>
+<!--       <menuitem id="menu_dashboard_sales"
+          sequence="15"
+          parent="base.menu_reporting_dashboard"
+          action="open_board_sales"
+          groups="base.group_sale_salesman,group_internal_operations,group_internal_operations_manager,group_support"/>-->
+
+           
+
+       
+        
+
+       <!-- <menuitem id="cox_reorder.menu_dashboard_replenish"
+                  sequence="15"
+                  parent="base.menu_reporting_dashboard"
+                  action="cox_reorder.open_board_replenish"
+                  groups="base.group_sale_salesman,group_internal_operations,group_internal_operations_manager,group_support"/>-->
+
+        
+
+        
+            <!--cox gen2 will do it afterward-->
+<!--        <menuitem id="stock.menu_board_warehouse"
+            parent="base.menu_reporting_dashboard"
+            action="stock.open_board_warehouse"
+            sequence="25"
+            groups="stock.group_stock_user,group_internal_operations,group_internal_operations_manager,group_support"/>-->
+  
+        
+
+    <menuitem id="account.menu_finance_reporting" name="Accounting" parent="base.menu_reporting" sequence="35"
+    groups="group_internal_operations,group_internal_operations_manager,group_support"/>
+
+
+    <menuitem id="base.next_id_64" name="Sales" parent="base.menu_reporting" sequence="1" groups="base.group_sale_manager,group_internal_operations,group_internal_operations_manager,group_support"/>
+    <menuitem action="sale.action_order_report_all" id="sale.menu_report_product_all" parent="base.next_id_64" sequence="10" groups="base.group_sale_manager,group_internal_operations,group_internal_operations_manager,group_support"/>
+
+    <menuitem name="Leads Analysis" id="crm.menu_report_crm_leads_tree"
+            groups="base.group_sale_manager,group_internal_operations,group_internal_operations_manager,group_support"
+            parent="base.next_id_64" action="crm.action_report_crm_lead" sequence="1"/>
+    <!--<menuitem name="Opportunities Analysis" id="crm.menu_report_crm_opportunities_tree"
+            parent="base.next_id_64" action="crm.action_report_crm_opportunity" sequence="5"/>-->
+    <menuitem name="Phone Calls Analysis"
+            groups="base.group_sale_salesman,group_internal_operations,group_internal_operations_manager,group_support"
+            action="crm.action_report_crm_phonecall"
+            id="crm.menu_report_crm_phonecalls_tree" parent="base.next_id_64" sequence="15"/>
+
+    <menuitem id="base.next_id_10" name="Survey" parent="base.menu_reporting" sequence="1" groups="base.group_survey_user,group_internal_operations,group_internal_operations_manager,group_support"/>
+<!--    <menuitem name="Print Surveys" id="survey.menu_print_survey_form" sequence="1"
+            action="survey.action_view_survey_print" parent="base.next_id_10"
+            groups="base.group_tool_manager,group_internal_operations,group_internal_operations_manager,group_support" icon="STOCK_PRINT"/>
+    <menuitem name="Surveys Statistics" action="survey.action_view_survey_print_statistics" id="survey.menu_print_survey_statistics"
+            parent="base.next_id_10" icon="STOCK_PRINT" groups="base.group_tool_manager,group_internal_operations,group_internal_operations_manager,group_support"/>
+     <menuitem name="Browse Answers" id="survey.menu_browse_survey_response"
+            action="survey.action_browse_survey_response" parent="base.next_id_10"
+            groups="base.group_tool_manager,group_internal_operations,group_internal_operations_manager,group_support" icon="STOCK_PRINT_PREVIEW"/>
+     <menuitem name="Surveys Answers" action="survey.action_view_survey_print_answer" id="survey.menu_print_survey_answer"
+            parent="base.next_id_10" icon="STOCK_PRINT" groups="base.group_tool_manager,group_internal_operations,group_internal_operations_manager,group_support"/>
+
+   <menuitem id="base.next_id_73" name="Purchase" parent="base.menu_reporting" sequence="10"
+        groups="purchase.group_purchase_manager,group_internal_operations,group_internal_operations_manager,group_support"/>-->
+
+    <menuitem
+        id="stock.next_id_61"
+        name="Warehouse"
+        sequence="15"
+        parent="base.menu_reporting"
+        groups="stock.group_stock_manager,group_internal_operations,group_internal_operations_manager,group_support"/>
+<!--cox gen2-->
+<!--    <menuitem id="magentoerpconnect.menu_magerp" name="Magento" icon="terp-sale"
+			web_icon="images/magento.png"
+                        web_icon_hover="images/magento-hover.png" sequence="61"
+                        groups="group_internal_operations,group_internal_operations_manager,group_support"/>-->
+
+   <menuitem action="account.action_account_treasury_report_all" id="account.menu_action_account_treasury_report_all"
+        parent="account.menu_finance_reporting"
+        groups="account.group_account_manager,group_internal_operations,group_internal_operations_manager,group_support"
+        sequence="2"/>
+    <menuitem action="account.action_account_entries_report_all" id="account.menu_action_account_entries_report_all"
+        parent="account.menu_finance_reporting"
+        groups="account.group_account_manager,group_internal_operations,group_internal_operations_manager,group_support"
+        sequence="2"/>
+    <!--cox gen2 start-->
+        <!--<menuitem id="audittrail.menu_audit" name="Audit" parent="base.menu_reporting" sequence="50" groups="base.group_system,group_internal_operations,group_internal_operations_manager,group_support"/>-->
+    <!--end-->       
+    <menuitem name="Settings" id="base.menu_administration" sequence="500"
+            groups="group_internal_operations_manager,group_support"/>
+    <menuitem action="base.action_res_company_tree" groups="base.group_multi_company,group_internal_operations,group_internal_operations_manager,group_support" id="base.menu_action_res_company_tree" parent="base.menu_res_company_global" sequence="16"/>
+    <menuitem
+           action="product.product_uom_categ_form_action" id="stock.menu_stock_uom_categ_form_action"
+           parent="stock.menu_stock_configuration" sequence="30"
+           groups="product.group_uom,group_warehouse_cox,group_retail_sales_manager,group_support,group_internal_operations,group_internal_operations_manager"/>
+       <menuitem
+           action="product.product_uom_form_action" id="stock.menu_stock_uom_form_action"
+           parent="stock.menu_stock_configuration" sequence="35"
+           groups="product.group_uom,group_warehouse_cox,group_retail_sales_manager,group_support,group_internal_operations,group_internal_operations_manager"/>
+       
+       
+              </data>
+
+</openerp>
+
+

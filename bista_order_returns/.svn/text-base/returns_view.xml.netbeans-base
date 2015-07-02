@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+      <record id="view_order_form_page_return" model="ir.ui.view">
+           <field name="name">view.order.form.page.return</field>
+           <field name="model">sale.order</field>
+           <field name="type">form</field>
+           <field name="inherit_id" ref="sale.view_order_form" />
+           <field name="arch" type="xml">
+           <xpath expr="/form/notebook/page[@string='History']" position="after">
+               <page string ="Return info">
+                   <field name="sale_return_ids"/>
+               </page>
+           </xpath>
+           </field>
+      </record>
+
+        <record id="view_sales_return_tree" model="ir.ui.view">
+            <field name="name">view.sales.return.tree</field>
+            <field name="model">return.order</field>
+            <field name="type">tree</field>
+            <field name="priority">2</field>
+            <field name="arch" type="xml">
+                <tree string="Return Orders" colors="grey:state=='cancel';blue:state in ('waiting_date','manual');red:state in ('invoice_except','shipping_except')">
+                    <field name="name"/>
+                    <field name="date_order"/>
+                    <field name="source_location"/>
+                    <field name="partner_id"/>
+                    <field name="linked_sale_order" select="1"/>
+<!--                    <field name="incoming_exchange"/>
+                    <field name="outgoing_exchange"/>-->
+                    <field name="user_id"/>
+                    <field name="return_type" select="1"/>
+<!--                    <field name="picked_rate" widget="progressbar"/>
+                    <field name="invoiced_rate" widget="progressbar"/>-->
+                    <field name="amount_untaxed" sum="Total Tax Excluded"/>
+                    <field name="amount_total" sum="Total Tax Included"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sales_return_form" model="ir.ui.view">
+            <field name="name">view.sales.return.form</field>
+            <field name="model">return.order</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Sales Return">
+                    <group col="6" colspan="4">
+                        <group col="4" colspan="4">
+                            <field name="name"/>
+                            <field name="date_order"/>
+                            <field name="shop_id" on_change="onchange_shop_id(shop_id)" widget="selection" groups="base.group_extended"/>
+                            <newline/>
+                            <field name="source_location" string="Destination Location" required="True"/>
+                            <field name="return_type" attrs="{'readonly':[('state','!=','draft')]}"/>
+<!--                            <field name="invoice_method" attrs="{'invisible':[('return_type','!=','non-warranty')]}"/>-->
+                            <!--<button name="import_tax" string="Taxes" type="object"/>-->
+                        </group>
+                        <group col="6" colspan="4">
+<!--                            <field name="invoiced"/>
+                            <field name="shipped"/>-->
+                            
+                            <field name="linked_serial_no" on_change="onchange_serial_no(linked_serial_no,name,linked_sale_order,actual_linked_order)" attrs="{'readonly':[('state','!=','draft')]}"/>
+<!--                            <button name="insert_return_lines" states="draft" string="Insert Return Line" icon="gtk-apply" type="object"/>-->
+                            <field name="linked_sale_order" widget="selection" on_change="onchange_sale_order(linked_sale_order,linked_serial_no,order_line)" domain="[('state','in',('done','progress'))]" required="1"/>
+<!--                            <field name="is_invoice_visible" />-->
+                            <field name="actual_linked_order" invisible="1"/>
+<!--                            <field name="do_both_move" attrs="{'readonly':[('state','!=','draft')]}"/>-->
+<!--                            <field name="ship_exchange_selection" attrs="{'readonly':[('state','!=','draft')],'required':[('return_type','=','exchange')],'invisible':[('return_type','!=','exchange')]}"/>-->
+                            <!--<field name="ship_exchange_selection"/>-->
+                            <button name="refresh_page" string="Refresh" states="draft" icon="gtk-apply" type="object"/>
+<!--                            <field name="user_id"/>-->
+<!--                            <field name="fiscal_position" invisible="1"/>-->
+<!--                            <field name="sale_id"/>
+                            <field name="cust_po"/>-->
+                        </group>
+                    </group>
+                    <notebook colspan="5">
+                        <page string="Return Order">
+                            <field name="partner_id"  options='{"quick_create": false}' on_change="onchange_partner_id(partner_id)" domain="[('customer','=',True)]" context="{'search_default_customer':1}" required="1"/>
+                            <field domain="[('partner_id','=',partner_id)]" name="customer_name" options='{"quick_create": false}'/>
+                            <field domain="[('partner_id','=',partner_id)]" name="partner_order_id" required="1" on_change="onchange_partner_order_id(partner_order_id, partner_invoice_id, partner_shipping_id)" options='{"quick_create": false}'/>
+                            <field domain="[('partner_id','=',partner_id)]" name="partner_invoice_id" required="1" groups="base.group_extended" options='{"quick_create": false}'/>
+                            <field domain="[('partner_id','=',partner_id)]" name="partner_shipping_id" required="1" groups="base.group_extended" options='{"quick_create": false}'/>
+                            <field domain="[('type','=','sale')]" name="pricelist_id" required="1" groups="base.group_extended" on_change="onchange_pricelist_id(pricelist_id,order_line)"/>
+                            <field name="project_id" context="{'partner_id':partner_id, 'contact_id':partner_order_id, 'pricelist_id':pricelist_id, 'default_name':name}" groups="analytic.group_analytic_accounting" domain="[('parent_id','!=',False)]"/>
+                            
+<!--                            <field name="payment_term"/>-->
+                            <newline/>
+                            <field colspan="4" name="order_line" nolabel="1" widget="one2many_list">
+                                <form string="Return Order Lines">
+                                    <notebook>
+                                        <page string="Order Line">
+                                        <group colspan="4" col="5">
+                                            <field colspan="3"
+                                                context="{'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'shop':parent.shop_id, 'uom':product_uom, 'linked_sale_order':parent.linked_sale_order}"
+                                                name="product_id" string="Product"
+                                                on_change="product_id_change(parent.pricelist_id,product_id,parent.linked_sale_order,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, False, True, parent.date_order, product_packaging, parent.fiscal_position, False,context)"/>
+                                            <field name="name"/>
+
+                                            <field
+                                                context="{'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'shop':parent.shop_id, 'uom':product_uom}"
+                                                name="product_uom_qty"
+                                                on_change="product_id_change(parent.pricelist_id,product_id,parent.linked_sale_order,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, False, False, parent.date_order, product_packaging, parent.fiscal_position, True, context)"/>
+                                            <field name="product_uom"
+                                                on_change="product_uom_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, False, False, parent.date_order, context)"
+                                                nolabel="1"/>
+                                            <field name="price_unit"/>
+                                           
+                                            <field groups="product.group_uos" name="product_uos_qty"/>
+                                            <field groups="product.group_uos" name="product_uos" nolabel="1"/>
+                                            <newline/>
+                                            <field name="product_packaging"
+                                                context="{'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'shop':parent.shop_id, 'uom':product_uom}" on_change="product_packaging_change(parent.pricelist_id, product_id, product_uom_qty, product_uom, parent.partner_id, product_packaging, True, context)"
+                                                domain="[('product_id','=',product_id)]" groups="base.group_extended"
+                                                colspan="3"/>
+                                            <field name="discount"/>
+                                            <field name="serial_no"/>
+                                            <field name="account_id"/>
+                                            <field name="guarantee_limit_ro"/>
+                                            <field name="description_reasons"/>
+                                            <field name="tax"/>
+<!--                                            <field name="scheduled_ship_date"/>-->
+                                            <separator colspan="5" string="Taxes"/>
+                                            <field colspan="5" name="tax_id" nolabel="1" domain="[('parent_id','=',False),('type_tax_use','&lt;&gt;','purchase')]"/>
+                                            <group colspan="5" col="5" groups="base.group_extended">
+                                                <separator colspan="5" string="States"/>
+                                                <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,done" statusbar_colors='{"exception":"red","cancel":"red"}'/>
+                                                <field name="invoiced"/>
+                                                <group attrs="{'invisible':[('invoiced','=',True)]}">
+                                                    <button colspan="1" name="%(sale.action_view_sale_order_line_make_invoice)d" states="confirmed" string="Make Invoices" type="action" icon="terp-document-new"/>
+                                                </group>
+                                            </group>
+                                        </group>
+                                        </page>
+                                        <page groups="base.group_extended" string="Extra Info">
+                                            <field name="type"/>
+                                            <field name="delay"/>
+                                            <field name="th_weight"/>
+                                            <field name="address_allotment_id"/>
+                                            <separator colspan="4" string="Properties"/>
+                                            <field name="property_ids" colspan="4" nolabel="1"/>
+                                        </page>
+                                        <page string="History" groups="base.group_extended">
+                                            <separator colspan="4" string="Invoice Lines"/>
+                                            <field colspan="4" name="invoice_lines" nolabel="1"/>
+                                            <separator colspan="4" string="Stock Moves"/>
+                                            <field colspan="4" name="move_ids" nolabel="1" widget="many2many"/>
+                                        </page>
+                                        <page string="Notes" groups="base.group_extended">
+                                            <separator colspan="5" string="Notes"/>
+                                            <field colspan="5" name="notes" nolabel="1"/>
+                                       </page>
+                                    </notebook>
+                                </form>
+                                <tree string="Sales Return Lines" >
+                                    <field colspan="4" name="product_id"/>
+                                    <field name="name"/>
+                                    <field name="product_uom_qty" string="Qty(UoM)"/>
+                                    <field name="product_uom" string="UoM"/>
+                                    <field groups="product.group_uos" name="product_uos_qty" string="Qty(UoS)"/>
+                                    <field groups="product.group_uos" name="product_uos" string="UoS"/>
+                                    <field name="serial_no"/>
+                                    <field name="account_id"/>
+                                    <field name="guarantee_limit_ro"/>
+                                    <field name="description_reasons"/>
+                                    <field name="discount"/>
+                                    <field name="price_unit"/>
+                                    <field name="price_subtotal"/>
+                                </tree>
+                            </field>
+                            <newline/>
+                            <group col="13" colspan="10">
+                                <field name="amount_untaxed" sum="Untaxed amount"/>
+                                <field name="amount_tax"/>
+                                <field name="amount_total"/>
+                                <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
+<!--                                <button name="%(sale.action_view_sale_advance_payment_inv)d" string="Advance Invoice" type="action" icon="gtk-execute" states="draft,manual" groups="base.group_extended"/>-->
+                            </group>
+                            <group col="17" colspan="4">
+                                <field name="state" widget="statusbar" statusbar_visible="draft,progress,done" statusbar_colors='{"shipping_except":"red","invoice_except":"red","waiting_date":"blue"}'/>
+<!--                                <button name="invoice_recreate" states="invoice_except" string="Recreate Invoice" icon="gtk-go-forward"/>
+                                <button name="invoice_corrected" states="invoice_except" string="Ignore Exception" icon="gtk-apply"/>
+                                <button name="ship_recreate" states="shipping_except" string="Recreate Packing" icon="gtk-ok"/>
+                                <button name="ship_corrected" states="shipping_except" string="Ignore Exception" icon="gtk-apply"/>
+                                <button name="action_cancel" states="manual,progress" string="Cancel Order" type="object" icon="gtk-cancel"/>
+                                <button name="%(sale.report_sale_order)d" string="Print Order" type="action" icon="gtk-print" states="waiting_date,manual,progress,done,shipping_except,invoice_except"/>-->
+                                <field name='manual_invoice_invisible' invisible="1"/>
+                                <button name="manual_invoice_return" string="Create Final Invoice(Refund)" icon="gtk-go-forward" type="object" attrs="{'invisible':[('manual_invoice_invisible','=',True)]}" />
+<!--                                <button name="ship_cancel" states="shipping_except" string="Cancel Order" icon="gtk-cancel" attrs="{'invisible':[('return_type','in',('exchange','repair'))]}"/>
+                                <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert"/>
+                                <button name="cancel" states="draft" string="Cancel Order" icon="gtk-cancel"/>
+                                <button name="invoice_cancel" states="invoice_except" string="Cancel Order" icon="gtk-cancel"/>-->
+<!--                                <button name="%(sale.report_sale_order)d" string="Print Quotation" type="action" icon="gtk-print" states="draft"/>
+                                <button name="order_confirm" states="draft" string="Confirm Order" icon="gtk-apply"/>-->
+                                <!--<field name="receive" invisible="True"/>-->
+                                <button name="return_confirm" string="Receive" icon="gtk-apply" type="object" attrs="{'invisible':[('receive','=',True)]}"/>
+<!--                                <button name="return_confirm" string="Receive" icon="gtk-apply" type="object"/>-->
+                                <!--<button name="recieve_confirm" states="draft" string="Recieve" icon="gtk-apply" type="object"/>-->
+                            </group>
+                        </page>
+                        <page string="Other Information">
+                            <group colspan="2" col="2" groups="base.group_extended" name="logistics">
+                                <separator string="Logistic" colspan="2"/>
+                                <field name="incoterm"/>
+<!--				<field name="exp_order_taker"/>
+                                <field name="exp_job_id"/>-->
+<!--                                <field name="picking_policy" required="True"/>-->
+<!--                                <field name="order_policy" on_change="shipping_policy_change(order_policy)"/>-->
+<!--                                <field name="invoice_quantity" attrs="{'readonly':[('order_policy','in',('prepaid','picking'))]}"/>-->
+<!--                                    <field name="carrier_id"/>-->
+                            </group>
+                            <group colspan="2" col="2">
+                                <separator string="References" colspan="2"/>
+                                <field name="user_id"/>
+                                <field groups="base.group_extended" name="origin"/>
+                            </group>
+                            <group colspan="2" col="2" groups="base.group_extended">
+                                <separator string="Conditions" colspan="2"/>
+                                <field name="payment_term" widget="selection"/>
+                                <field name="fiscal_position" widget="selection"/>
+                                <field name="company_id" widget="selection" groups="base.group_multi_company"/>
+                            </group>
+                            <group colspan="2" col="2" groups="base.group_extended">
+                                <separator string="Dates" colspan="2"/>
+                                <field name="create_date"/>
+                                <field name="date_confirm"/>
+                            </group>
+                            <separator colspan="4" string="Notes"/>
+                            <field colspan="4" name="note" nolabel="1"/>
+                        </page>
+                        <page string="History" groups="base.group_extended">
+                            <separator colspan="4" string="Invoices"/>
+                            <field colspan="4" name="invoice_ids" nolabel="1"/>
+                            <separator colspan="4" string="Packings"/>
+                            <field colspan="4" name="picking_ids" nolabel="1"/>
+<!--                            <separator colspan="4" string="Repairs" />
+                            <field name="mrp_repair_ids" nolabel="1">
+                                <tree string="Repairs order" colors="gray:state in ('done','cancel');black:state not in ('done','cancel');blue:state=='draft'">
+                                    <field name="name" select="1" />
+                                    <field name="product_id" select="1" />
+                                    <field name="move_id"/>
+                                    <field name="partner_id"/>
+                                    <field name="address_id"/>
+                                    <field name="company_id" groups="base.group_multi_company" invisible="1"/>
+                                    <field name="guarantee_limit"/>
+                                    <field name="state"/>
+                                    <button name="action_invoice_create" states="2binvoiced" string="Make Invoice" icon="gtk-apply" />
+                                </tree>
+                            </field>-->
+                        </page>
+                    </notebook>
+                </form>
+            </field>
+        </record>
+        <record id="sale_returns_search_form_view" model="ir.ui.view">
+            <field name="name">sale.returns.search.form.view</field>
+            <field name="model">return.order</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Sales Returns">
+                <field name="name"/>
+                <field name="source_location"/>
+                <field name="state"/>
+                <field name="linked_sale_order"/>
+                <field name="partner_id"/>
+                <field name="user_id"/>
+                <newline/>
+                <group expand="0" string="Group By" groups="base.group_extended">
+                       <filter string='Locations'  context="{'group_by' : 'source_location'}"/>
+                   </group>
+                </search>
+
+            </field>
+            </record>
+            
+        <record id="action_sales_return" model="ir.actions.act_window">
+           <field name="name">Sales Return</field>
+           <field name="type">ir.actions.act_window</field>
+           <field name="res_model">return.order</field>
+           <field name="view_type">form</field>
+           <field name="view_mode">tree,form</field>
+           <field name="view_id" ref="view_sales_return_tree"/>
+            <field name="search_view_id" ref="sale_returns_search_form_view"/>
+            <field name="context">{'search_default_user_id':uid}</field>
+           
+       </record>
+
+
+        <record id="action_sales_return_form" model="ir.actions.act_window.view">
+          <field eval="2" name="sequence"/>
+          <field name="view_mode">form</field>
+          <field name="view_id" ref="view_sales_return_form"/>
+          <field name="act_window_id" ref="action_sales_return"/>
+      </record>
+
+
+      <record id="action_sales_return_tree" model="ir.actions.act_window.view">
+          <field eval="1" name="sequence"/>
+          <field name="view_mode">tree</field>
+          <field name="view_id" ref="view_sales_return_tree"/>
+          <field name="act_window_id" ref="action_sales_return"/>
+      </record>
+      
+      <menuitem action="action_sales_return" id="menu_sale_return" parent="base.menu_sales" sequence="3" groups="base.group_sale_salesman,base.group_sale_manager"/>
+
+
+       <record id="return_description_form" model="ir.ui.view">
+            <field name="name">return.description.form</field>
+            <field name="model">return.description</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Return Description">
+                    <field name="name" select="1"/>
+                    <field name="return_reason" select="1"/>
+                </form>
+            </field>
+        </record>
+
+        <record id="return_description_tree" model="ir.ui.view">
+            <field name="name">return.description.tree</field>
+            <field name="model">return.description</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Return Description">
+                    <field name="name" select="1"/>
+                    <field name="return_reason" select="1"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="return_description" model="ir.actions.act_window">
+            <field name="name">Return Description</field>
+            <field name="res_model">return.description</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="return_description_form"/>
+            <field name="view_id" ref="return_description_tree"/>
+        </record>
+
+        <menuitem action="return_description"
+            id="menu_return_description" sequence="4"
+            parent="base.menu_sale_config_sales" />
+
+
+       <record id="failure_analysis_form" model="ir.ui.view">
+            <field name="name">failure.analysis.form</field>
+            <field name="model">failure.analysis</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Failure Analysis">
+                    <field name="name" select="1"/>
+                    <field name="code" select="1"/>
+                </form>
+            </field>
+        </record>
+
+
+        <record id="failure_analysis_tree" model="ir.ui.view">
+            <field name="name">failure.analysis.tree</field>
+            <field name="model">failure.analysis</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Failure Analysis">
+                    <field name="name"/>
+                    <field name="code" select="1"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="failure_analysis_action" model="ir.actions.act_window">
+            <field name="name">Failure Analysis</field>
+            <field name="res_model">failure.analysis</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+                <menuitem action="failure_analysis_action"
+            id="menu_failure_analysis"
+            parent="base.menu_sale_config_sales" />
+
+
+     </data>
+</openerp>

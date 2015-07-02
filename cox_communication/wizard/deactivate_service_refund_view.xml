@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<openerp>
+    <data>
+        <record id="view_diff_cc_refund" model="ir.ui.view">
+            <field name="name">view.diff.cc.refund</field>
+            <field name="model">refund.customer.payment</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="bista_order_returns.view_refund_customer" />
+            <field name="arch" type="xml">
+                <xpath expr="/form/group[1]" position="before">
+                    <separator string="Original Transaction Details"/>
+                </xpath>
+                <xpath expr="/form/group[1]/button[@name='refund_customer']" position="replace">
+                </xpath>
+                <xpath expr="/form/group[1]" position="after">
+                <field name="active_cc_number" readonly="1"/>
+                <field name="diff_cc_refund"/>
+                <newline/>
+                <group attrs="{'invisible':[('diff_cc_refund','=',False)]}">
+                <separator string="New Credit Card Information" />
+                </group>
+                <group col="4" colspan="4" >
+                <field name="refund_cc_number" attrs="{'invisible':[('diff_cc_refund','=',False)],'required':[('diff_cc_refund','=',True)]}"/>
+                <field name="refund_cc_expiration_date" attrs="{'invisible':[('diff_cc_refund','=',False)],'required':[('diff_cc_refund','=',True)]}"/>
+                </group>
+                <button name="refund_customer" string="Refund" type="object" icon="gtk-ok"/>
+                </xpath>
+                </field>
+        </record>
+	<record id="bista_order_returns.view_recieve_goods" model="ir.ui.view">
+            <field name="name">view.recieve.goods</field>
+            <field name="model">receive.goods</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="">
+                    <group col="4" colspan="4">
+                        <separator string="Will the customer be returning hardware?" colspan="8"/>
+                        <newline/>
+                        <field name="received" invisible="1"/>
+                        <button name="receive_goods" string="Yes - In Hand or Shipment Needed" type="object" icon="gtk-apply" attrs="{'invisible':[('received','=',False)]}"/>
+                        <button name="no_receive_goods" string="No - Hardware Will Not Be Returned" type="object" icon="gtk-cancel"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+    </data>
+</openerp>
+

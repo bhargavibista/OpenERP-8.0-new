@@ -1,0 +1,113 @@
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/coax_cox/!svn/ver/391/bista_order_returns
+END
+__init__.py
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/coax_cox/!svn/ver/65/bista_order_returns/__init__.py
+END
+mrp_repair.py
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/coax_cox/!svn/ver/129/bista_order_returns/mrp_repair.py
+END
+returns_sequence.xml
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/coax_cox/!svn/ver/46/bista_order_returns/returns_sequence.xml
+END
+returns.py
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/coax_cox/!svn/ver/416/bista_order_returns/returns.py
+END
+mrp_repair_view.xml
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/coax_cox/!svn/ver/46/bista_order_returns/mrp_repair_view.xml
+END
+returns_view.xml
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/coax_cox/!svn/ver/416/bista_order_returns/returns_view.xml
+END
+__openerp__.py
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/coax_cox/!svn/ver/65/bista_order_returns/__openerp__.py
+END
+account_invoice.py
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/coax_cox/!svn/ver/129/bista_order_returns/account_invoice.py
+END
+return_authorize.py
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/coax_cox/!svn/ver/194/bista_order_returns/return_authorize.py
+END
+account_invoice_view.xml
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/coax_cox/!svn/ver/65/bista_order_returns/account_invoice_view.xml
+END
+return_authorize_view.xml
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/coax_cox/!svn/ver/122/bista_order_returns/return_authorize_view.xml
+END
+transaction_wizard.xml
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/coax_cox/!svn/ver/46/bista_order_returns/transaction_wizard.xml
+END
+report_view.xml
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/coax_cox/!svn/ver/65/bista_order_returns/report_view.xml
+END
+.~lock.data.csv#
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/coax_cox/!svn/ver/46/bista_order_returns/.~lock.data.csv%23
+END
+stock.py
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/coax_cox/!svn/ver/198/bista_order_returns/stock.py
+END
+sale.py
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/coax_cox/!svn/ver/292/bista_order_returns/sale.py
+END
+stock_view.xml
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/coax_cox/!svn/ver/46/bista_order_returns/stock_view.xml
+END
+sale_view.xml
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/coax_cox/!svn/ver/65/bista_order_returns/sale_view.xml
+END

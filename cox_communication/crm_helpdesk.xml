@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="cox_crm_case_form_view_helpdesk" model="ir.ui.view">
+            <field name="name">COX CRM - Helpdesk Support Form</field>
+            <field name="model">crm.helpdesk</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="crm_helpdesk.crm_case_form_view_helpdesk" />
+            <field name="arch" type="xml">
+                <xpath expr="/form/sheet/notebook/page[@string='Extra Info']/group/group/field[@name='ref']" position="before" >
+                    <!--<group col='2' calspan='2'>-->
+                        <field name="vendor_ticket_nos"/>
+                        <newline/>
+                    <!--</group>-->
+                </xpath>
+                <xpath expr="/form/sheet/notebook/page[@string='General']/group/group/field[@name='channel_id']" position="replace" >
+                    <field name="channel_id" widget="selection"/>
+                </xpath>
+                <xpath expr="/form/sheet/notebook/page[@string='General']/group/group/field[@name='email_from']" position="after" >
+                    <field name="product_id" domain="[('sale_ok', '=', True)]"/>
+                </xpath>
+                <xpath expr="/form/sheet/notebook/page[@string='Extra Info']/group/group/field[@name='planned_cost']" position="replace" >
+                    <field name="planned_cost" invisible='1'/>
+                </xpath>
+                <xpath expr="/form/sheet/notebook/page[@string='Extra Info']/group/group[@string='Estimates']" position="replace" >
+                </xpath>
+                <xpath expr="/form/sheet/group/field[@name='name']" position="replace" >
+                    <field name="name" select="1" string="Title" required="1" domain="[('module','=','tech_supp')]"/>
+                </xpath>
+                <xpath expr="/form/sheet/notebook/page[@string='Extra Info']/group/group/field[@name='id']" position="replace" >
+                </xpath>
+                <xpath expr="/form/sheet/group/field[@name='name']" position="after" >
+                    <field name="reasons" required="1"/>
+                    <field name="id" select="1" string='Case No'/>
+                </xpath>
+                <xpath expr="//button[@name='case_escalate']" position="attributes" >
+                    <attribute name='invisible'>1</attribute>
+                </xpath>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="cox_crm_case_tree_view_helpdesk">
+            <field name="name">CRM - Helpdesk Support Tree</field>
+            <field name="model">crm.helpdesk</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="crm_helpdesk.crm_case_tree_view_helpdesk" />
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='name']" position="replace" >
+                    <field name="name" string="Title"/>
+                    <field name="reasons"/>
+                    <field name="id" string='Case No'/>
+                </xpath>
+            </field>
+        </record>
+        <record model="ir.ui.view" id="cox_crm_help_desk_search_view">
+            <field name="name">cox.crm.help.desk.search.view</field>
+            <field name="model">crm.helpdesk</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="crm_helpdesk.view_crm_case_helpdesk_filter" />
+            <field name="arch" type="xml">
+                <xpath expr="/search/field[@name='user_id']" position="after" >
+                    <field name="id" string='Case No'/>
+                </xpath>
+            </field>
+        </record>
+
+        <menuitem name="Leads" id="crm.menu_crm_leads" parent="base.menu_sales" sequence="3"
+           action="crm.crm_case_category_act_leads_all" groups="group_hide"/>
+
+       <menuitem name="Opportunities" id="crm.menu_crm_opportunities" parent="base.menu_sales" sequence="4"
+           action="crm.crm_case_category_act_oppor11"
+           groups="group_hide"/>
+
+       <menuitem id="base.menu_crm_config_lead" name="Leads &amp; Opportunities"
+           parent="base.menu_base_config" sequence="80" groups="group_hide"/>
+
+       <menuitem name="Helpdesk and Support" id="crm_helpdesk.menu_help_support_main"
+            parent="base.menu_aftersale" action="crm_helpdesk.crm_case_helpdesk_act111" sequence="2"
+            groups="base.group_sale_salesman,group_retail_sales_manager,group_retail_sales_associate,group_third_party_reseller,group_warehouse_cox,group_internal_operations_manager,group_internal_operations,group_support" />
+    </data>
+</openerp>

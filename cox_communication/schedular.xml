@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+<!-- Schedular to generate unprovision list -->
+        <record forcecreate="True" id="ir_cron_mail_unprovision_data" model="ir.cron">
+            <field name="name">Export Unprovision List</field>
+            <field eval="False" name="active"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">hours</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field eval="'schedular.function'" name="model"/>
+            <field eval="'sch_for_unprovision_list'" name="function"/>
+            <field eval="'()'" name="args"/>
+        </record>
+<!-- Schedular to generate recurring billing -->
+        <record forcecreate="True" id="ir_cron_scheduler_action_tube" model="ir.cron">
+            <field name="name">Run Recurring Billing scheduler</field>
+            <field eval="False" name="active"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field eval="'schedular.function'" name="model"/>
+            <field eval="'recurring_billing'" name="function"/>
+            <field eval="'()'" name="args"/>
+        </record>
+ <!-- Schedular to get the status whether agreement is accepted or not -->
+        <record forcecreate="True" id="ir_cron_scheduler_agreement_status" model="ir.cron">
+            <field name="name">Agreement Status</field>
+            <field eval="False" name="active"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">5</field>
+            <field name="interval_type">minutes</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field eval="'schedular.function'" name="model"/>
+            <field eval="'agreement_status'" name="function"/>
+            <field eval="'()'" name="args"/>
+        </record>
+ <!-- Schedular to send an email to the customer for EULA -->
+        <record forcecreate="True" id="ir_cron_eula_customer_call_center" model="ir.cron">
+            <field name="name">EULA Reminder</field>
+            <field eval="False" name="active"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field eval="'schedular.function'" name="model"/>
+            <field eval="'eula_reminder'" name="function"/>
+            <field eval="'()'" name="args"/>
+        </record>
+<!-- Schedular to send an email to the customer for Recurring Payment -->
+        <record forcecreate="True" id="ir_cron_recurring_payment_reminder" model="ir.cron">
+            <field name="name">Recurring Payment Reminder</field>
+            <field eval="False" name="active"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field eval="'schedular.function'" name="model"/>
+            <field eval="'recurring_payment_reminder'" name="function"/>
+            <field eval="'()'" name="args"/>
+        </record>
+  <!-- Schedular to charge the customer on weekly eceptions-->
+       <record forcecreate="True" id="ir_cron_recurring_payment_weekly_exceptions_billing" model="ir.cron">
+           <field name="name">Weekly Retry Payment Exceptions</field>
+           <field eval="False" name="active"/>
+           <field name="user_id" ref="base.user_root"/>
+           <field name="interval_number">1</field>
+           <field name="interval_type">days</field>
+           <field name="numbercall">-1</field>
+           <field eval="False" name="doall"/>
+           <field eval="'schedular.function'" name="model"/>
+           <field eval="'charge_weekly_exceptions'" name="function"/>
+           <field eval="'()'" name="args"/>
+       </record>
+ 
+ <!-- Schedular to get new Credit Cards from the Magento -->
+        <record forcecreate="True" id="ir_cron_check_new_cc" model="ir.cron">
+            <field name="name">Check Magento Credit Card and Deactivation of Services Flow</field>
+            <field eval="False" name="active"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">2</field>
+            <field name="interval_type">hours</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field eval="'schedular.function'" name="model"/>
+            <field eval="'check_new_cc'" name="function"/>
+            <field eval="'()'" name="args"/>
+        </record>
+        
+        <!-- Schedular to create delivery attachment for Vista -->
+        <record forcecreate="True" id="ir_cron_generate_vista_report" model="ir.cron">
+            <field name="name">Create Delivery Report for Vista</field>
+            <field eval="False" name="active"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field eval="'schedular.function'" name="model"/>
+            <field eval="'generate_vista_report'" name="function"/>
+            <field eval="'()'" name="args"/>
+        </record>
+        <!-- Schedular to Cancel Service -->
+        <record forcecreate="True" id="ir_cron_cancel_service" model="ir.cron">
+            <field name="name">Cancellation of Services</field>
+            <field eval="False" name="active"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field eval="'schedular.function'" name="model"/>
+            <field eval="'cancellation_of_service'" name="function"/>
+            <field eval="'()'" name="args"/>
+        </record>
+	<!-- Schedular For ETF Flow -->
+        <record forcecreate="True" id="ir_cron_etf_flow" model="ir.cron">
+            <field name="name">ETF flow</field>
+            <field eval="False" name="active"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field eval="'schedular.function'" name="model"/>
+            <field eval="'etf_workflow'" name="function"/>
+            <field eval="'()'" name="args"/>
+        </record>
+	<!-- Schedular For Cnacelling Service of Payment Exception -->
+        <record forcecreate="True" id="ir_cancellation_of_service" model="ir.cron">
+            <field name="name">Cancellation of Services for Payment Exception</field>
+            <field eval="False" name="active"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field eval="'schedular.function'" name="model"/>
+            <field eval="'cancel_service_not_paid'" name="function"/>
+            <field eval="'()'" name="args"/>
+        </record>
+        <!--Schedular For exporting partners log-->
+        <record forcecreate="True" id="ir_cron_export_partner_auth_log" model="ir.cron">
+            <field name="name">Export Partner Logs</field>
+            <field eval="False" name="active"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">2</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field eval="'schedular.function'" name="model"/>
+            <field eval="'export_auth_log'" name="function"/>
+            <field eval="'()'" name="args"/>
+        </record>
+<!--scheduler to cancel no_recurring policies-->
+       <record forcecreate="True" id="ir_cron_cancellation_for_no_recurring" model="ir.cron">
+            <field name="name">Cancellation of Services for No Recurring</field>
+            <field eval="False" name="active"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field eval="'schedular.function'" name="model"/>
+            <field eval="'cancellation_for_no_recurring'" name="function"/>
+            <field eval="'()'" name="args"/>
+        </record>
+        
+        <!-- Schedular to send an email to the customer CC expiration before 14 days-->
+        <record forcecreate="True" id="ir_cron_expiry_credit_card_check_14_days" model="ir.cron">
+            <field name="name">Check Credit Card Expiration for 14 Days</field>
+            <field eval="True" name="active"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field eval="'schedular.function'" name="model"/>
+            <field eval="'expiry_credit_card_check_14_days'" name="function"/>
+            <field eval="'()'" name="args"/>
+        </record>
+        
+       <!-- Schedular to send an email to the customer CC expiration before 7 days-->
+        <record forcecreate="True" id="ir_cron_expiry_credit_card_check_7_days" model="ir.cron">
+            <field name="name">Check Credit Card Expiration for 7 Days</field>
+            <field eval="True" name="active"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field eval="'schedular.function'" name="model"/>
+            <field eval="'expiry_credit_card_check_7_days'" name="function"/>
+            <field eval="'()'" name="args"/>
+        </record>
+    </data>
+</openerp>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_refund_customer" model="ir.ui.view">
+            <field name="name">view_refund_customer</field>
+            <field name="model">refund.customer.payment</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Charge Customer">
+                    <group col="4" colspan="4">
+                        <field name="cc_number"/>
+                        <field name="transaction_type"/>
+                        <field name="auth_transaction_id"/>
+                        <!--                      <button name="charge_customer" string="Charge Customer" type="object" icon="gtk-ok"/>-->
+                        <button name="refund_customer" string="Refund" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_charge_customer" model="ir.actions.act_window">
+            <field name="name">Refund Customer</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">refund.customer.payment</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="view_refund_customer"/>
+            <field name="target">new</field>
+        </record>
+    </data>
+</openerp>

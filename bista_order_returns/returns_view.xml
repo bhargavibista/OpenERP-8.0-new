@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_sales_return_tree" model="ir.ui.view">
+            <field name="name">view.sales.return.tree</field>
+            <field name="model">return.order</field>
+            <field name="type">tree</field>
+            <field name="priority">2</field>
+            <field name="arch" type="xml">
+                <tree string="Return Orders" colors="grey:state=='cancel';blue:state in ('waiting_date','manual');red:state in ('invoice_except','shipping_except')">
+                    <field name="name"/>
+                    <field name="date_order"/>
+                    <field name="source_location" string="Destination Location"/>
+                    <field name="partner_id"/>
+                    <field name="linked_sale_order" select="1"/>
+<!--                    <field name="incoming_exchange"/>
+                    <field name="outgoing_exchange"/>-->
+                    <field name="user_id"/>
+                    <field name="return_type" select="1"/>
+<!--                    <field name="picked_rate" widget="progressbar"/>
+                    <field name="invoiced_rate" widget="progressbar"/>-->
+                    <field name="amount_untaxed" sum="Total Tax Excluded"/>
+                    <field name="amount_total" sum="Total Tax Included"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sales_return_form" model="ir.ui.view">
+            <field name="name">view.sales.return.form</field>
+            <field name="model">return.order</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Sales Return" version="7.0">
+                    <header>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,progress,done" statusbar_colors='{"shipping_except":"red","invoice_except":"red","waiting_date":"blue"}'/>
+                    </header>
+                        <group col="6" colspan="4">
+                        <group col="4" colspan="4">
+                            <field name="name"/>
+                            <field name="date_order"/>
+                            <!--cox gen2 -->
+                            <!--<field name="shop_id" on_change="onchange_shop_id(shop_id)" widget="selection"/>-->
+                            <field name="warehouse_id" widget="selection"/>
+                            <newline/>
+                            <field name="source_location" string="Destination Location" required="True"/>
+                            <field name="return_type" attrs="{'readonly':[('state','!=','draft')]}"/>
+                        </group>
+                        <group col="6" colspan="4">
+                            <field name="linked_serial_no" on_change="onchange_serial_no(linked_serial_no,name,linked_sale_order,actual_linked_order)" attrs="{'readonly':[('state','!=','draft')]}"/>
+                            <field name="linked_sale_order" on_change="onchange_sale_order(linked_sale_order,linked_serial_no,order_line)" domain="[('state','in',('done','progress'))]" required="1" options="{'limit': 7, 'create': false, 'create_edit': false ,'always_reload': True}"/>
+                            <field name="actual_linked_order" invisible="1"/>
+                            <button name="refresh_page" string="Refresh" states="draft" icon="gtk-apply" type="object"/>
+                        </group>
+                        </group>
+                        <notebook colspan="5">
+                        <page string="Return Order">
+                            <group col="6" colspan="4">
+                            <group col="4" colspan="4">
+                            <field name="partner_id"  options='{"quick_create": false}' on_change="onchange_partner_id(partner_id)" domain="[('customer','=',True)]" context="{'search_default_customer':1}" required="1"/>
+                    	    <field name="fiscal_position" invisible="1"/>  	
+			    <field domain="[('type','=','sale')]" name="pricelist_id" required="1" on_change="onchange_pricelist_id(pricelist_id,order_line)"/>
+                            <!--<field domain="[('id','=',partner_id)]" name="partner_order_id" required="1" on_change="onchange_partner_order_id(partner_order_id, partner_invoice_id, partner_shipping_id)" options='{"quick_create": false}'/>-->
+                            <field domain="[('id','=',partner_id)]" name="partner_invoice_id" required="1"  options='{"quick_create": false}'/>
+                            <field domain="[('id','=',partner_id)]" name="partner_shipping_id" required="1" options='{"quick_create": false}'/>
+                            
+                            </group>
+                            </group>
+
+                            <newline/>
+                            <field colspan="4" name="order_line" nolabel="1" widget="one2many_list">
+                                <form string="Return Order Lines">
+                                    <notebook>
+                                        <page string="Order Line">
+                                        <group colspan="4" col="5">
+                                            <!--cox gen2 changed shop fields values in context to '' from parent.shop_id-->
+                                            <field colspan="3"
+                                                context="{'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'shop':'', 'uom':product_uom, 'linked_sale_order':parent.linked_sale_order}"  
+                                                name="product_id" string="Product"
+                                                on_change="product_id_change(parent.pricelist_id,product_id,parent.linked_sale_order,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, False, True, parent.date_order, product_packaging, parent.fiscal_position, False,context)"/>
+                                            <field name="name"/>
+
+                                            <field
+                                                context="{'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'shop':'', 'uom':product_uom}"
+                                                name="product_uom_qty"
+                                                on_change="product_id_change(parent.pricelist_id,product_id,parent.linked_sale_order,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, False, False, parent.date_order, product_packaging, parent.fiscal_position, True, context)"/>
+                                            <field name="product_uom"
+                                                on_change="product_uom_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, False, False, parent.date_order, context)"
+                                                nolabel="1"/>
+                                            <field name="price_unit"/>
+
+                                            <field groups="product.group_uos" name="product_uos_qty"/>
+                                            <field groups="product.group_uos" name="product_uos" nolabel="1"/>
+                                            <newline/>
+                                            <field name="product_packaging"
+                                                context="{'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'shop':'', 'uom':product_uom}" on_change="product_packaging_change(parent.pricelist_id, product_id, product_uom_qty, product_uom, parent.partner_id, product_packaging, True, context)"
+                                                domain="[('product_id','=',product_id)]" groups="base.group_extended"
+                                                colspan="3"/>
+                                            <field name="discount"/>
+                                            <field name="serial_no"/>
+                                            <field name="account_id"/>
+                                            <!--<field name="guarantee_limit_ro"/>-->
+                                            <!--<field name="description_reasons"/>-->
+                                            <field name="tax"/>
+<!--                                            <field name="scheduled_ship_date"/>-->
+                                            <separator colspan="5" string="Taxes"/>
+                                            <field colspan="5" name="tax_id" nolabel="1" domain="[('parent_id','=',False),('type_tax_use','&lt;&gt;','purchase')]"/>
+                                            <group colspan="5" col="5" groups="base.group_extended">
+                                                <separator colspan="5" string="States"/>
+                                                <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,done" statusbar_colors='{"exception":"red","cancel":"red"}'/>
+                                                <field name="invoiced"/>
+                                                <group attrs="{'invisible':[('invoiced','=',True)]}">
+                                                    <button colspan="1" name="%(sale.action_view_sale_order_line_make_invoice)d" states="confirmed" string="Make Invoices" type="action" icon="terp-document-new"/>
+                                                </group>
+                                            </group>
+                                        </group>
+                                        </page>
+                                        <page  string="Extra Info">
+                                            <field name="type"/>
+                                            <field name="delay"/>
+                                            <field name="th_weight"/>
+                                            <!--<field name="address_allotment_id"/>-->
+                                            <!--<separator colspan="4" string="Properties"/>-->
+                                            <!--<field name="property_ids" colspan="4" nolabel="1"/>-->
+                                        </page>
+                                        <!--<page string="History">
+                                            <separator colspan="4" string="Invoice Lines"/>
+                                            <field colspan="4" name="invoice_lines" nolabel="1"/>
+                                            <separator colspan="4" string="Stock Moves"/>
+                                            <field colspan="4" name="move_ids" nolabel="1" widget="many2many"/>
+                                        </page> -->
+                                        <page string="Notes">
+                                            <separator colspan="5" string="Notes"/>
+                                            <field colspan="5" name="notes" nolabel="1"/>
+                                       </page>
+                                    </notebook>
+                                </form>
+                                <tree string="Sales Return Lines" >
+                                    <field colspan="4" name="product_id"/>
+                                    <field name="name"/>
+                                    <field name="product_uom_qty" string="Qty(UoM)"/>
+                                    <field name="product_uom" string="UoM"/>
+                                    <field groups="product.group_uos" name="product_uos_qty" string="Qty(UoS)"/>
+                                    <field groups="product.group_uos" name="product_uos" string="UoS"/>
+                                    <field name="serial_no"/>
+                                    <field name="account_id"/>
+                                    <!--<field name="guarantee_limit_ro"/>-->
+                                    <!--<field name="description_reasons"/>-->
+                                    <field name="discount"/>
+                                    <field name="price_unit"/>
+                                    <field name="price_subtotal"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                            <newline/>
+                            <group  class="oe_subtotal_footer oe_right" colspan="4">
+                               <field name="amount_untaxed" sum="Untaxed amount"/>
+
+                               <field name="amount_tax"/>
+                               <div class="oe_subtotal_footer_separator oe_inline">
+                                   <label for="amount_total" />
+                                   <button name="button_dummy"
+                                       states="draft,sent" string="(update)" type="object" class="oe_edit_only oe_link"/>
+                               </div>
+                               <field name="amount_total" nolabel="1" class="oe_subtotal_footer_separator" widget='monetary' options="{'currency_field': 'currency_id'}"/>
+                           </group>
+                            <group col="17" colspan="4">
+                                <field name='manual_invoice_invisible' invisible="1"/>
+                                <button name="manual_invoice_return" string="Create Final Invoice(Refund)" icon="gtk-go-forward" type="object" attrs="{'invisible':[('manual_invoice_invisible','=',True)]}" />
+                                <button name="return_confirm" string="Receive" icon="gtk-apply" type="object" attrs="{'invisible':[('receive','=',True)]}"/>
+                            </group>
+                            </page>
+                            <page string="Other Information">
+                            <group colspan="2" col="2" groups="base.group_extended" name="logistics">
+                                <separator string="Logistic" colspan="2"/>
+                                <field name="receive"/>
+                            </group>
+                            <group colspan="2" col="2">
+                                <separator string="References" colspan="2"/>
+                                <field name="user_id"/>
+                                <field name="origin"/>
+                                <field name="company_id"/>
+                            </group>
+                            <group colspan="2" col="2" groups="base.group_extended">
+                                <separator string="Dates" colspan="2"/>
+                                <field name="create_date"/>
+                                <field name="date_confirm"/>
+                            </group>
+                            <separator colspan="4" string="Notes"/>
+                            <field colspan="4" name="note" nolabel="1"/>
+                        </page>
+                        <page string="History">
+                            <separator colspan="4" string="Invoices"/>
+                            <field colspan="4" name="invoice_ids" nolabel="1"/>
+                            <separator colspan="4" string="Packings"/>
+                            <field colspan="4" name="picking_ids" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </form>
+            </field>
+        </record>
+        <record id="sale_returns_search_form_view" model="ir.ui.view">
+            <field name="name">sale.returns.search.form.view</field>
+            <field name="model">return.order</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Sales Returns">
+                <field name="name"/>
+                <field name="source_location"/>
+                <field name="state"/>
+                <field name="linked_sale_order"/>
+                <field name="partner_id"/>
+                <field name="user_id"/>
+                <newline/>
+                <group expand="0" string="Group By" groups="base.group_extended">
+                       <filter string='Locations'  context="{'group_by' : 'source_location'}"/>
+                   </group>
+                </search>
+            </field>
+            </record>
+
+        <record id="action_sales_return" model="ir.actions.act_window">
+           <field name="name">Sales Return</field>
+           <field name="type">ir.actions.act_window</field>
+           <field name="res_model">return.order</field>
+           <field name="view_type">form</field>
+           <field name="view_mode">tree,form</field>
+           <field name="view_id" ref="view_sales_return_tree"/>
+            <field name="search_view_id" ref="sale_returns_search_form_view"/>
+            <field name="context">{'search_default_user_id':uid}</field>
+       </record>
+
+       <!-- <record id="action_sales_return_form" model="ir.actions.act_window.view">
+          <field eval="2" name="sequence"/>
+          <field name="view_mode">form</field>
+          <field name="view_id" ref="view_sales_return_form"/>
+          <field name="act_window_id" ref="action_sales_return"/>
+      </record>
+      <record id="action_sales_return_tree" model="ir.actions.act_window.view">
+          <field eval="1" name="sequence"/>
+          <field name="view_mode">tree</field>
+          <field name="view_id" ref="view_sales_return_tree"/>
+          <field name="act_window_id" ref="action_sales_return"/>
+      </record>-->
+      <menuitem action="action_sales_return" id="menu_sale_return" parent="base.menu_sales" sequence="3" groups="base.group_sale_salesman,base.group_sale_manager"/>
+     </data>
+</openerp>

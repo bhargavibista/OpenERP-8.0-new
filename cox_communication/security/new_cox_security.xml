@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<openerp>
+    <data>
+        <record id="group_retail_sales_associate" model="res.groups">
+            <field name="name">Retail Sales Associate</field>
+        </record>
+         <record id="group_retail_sales_manager" model="res.groups">
+            <field name="name">Retail Sales Manager</field>
+        </record>
+        <record id="group_support" model="res.groups">
+            <field name="name">Support</field>
+        </record>
+        <record id="group_internal_operations" model="res.groups">
+            <field name="name">Internal Operations</field>
+        </record>
+        <record id="group_internal_operations_manager" model="res.groups">
+            <field name="name">Internal Operations Manager</field>
+        </record>
+<!--        <record id="group_warehouse_manager_cox" model="res.groups">
+            <field name="name">Warehouse Manager</field>
+        </record>-->
+        <!--<record id="group_admin_cox" model="res.groups">
+            <field name="name">Administrator</field>
+        </record>
+-->
+        <record id="group_warehouse_cox" model="res.groups">
+            <field name="name">Warehouse COX</field>
+        </record>
+       <!-- <record id="group_warehouse_cox" model="res.groups">
+        <field name="name">Warehouse COX</field>
+        <field name="category_id" ref="base.module_category_warehouse_management"/>
+        <field name="implied_ids" eval="[(4, ref('group_warehouse_cox'))]"/>
+        <field name="users" eval="[(4, ref('base.user_root'))]"/>
+        </record>
+-->
+   <!--     <record model="ir.ui.menu" id="base.menu_base_config">
+        <field eval="[(4, ref('base.group_sale_manager'))]" name="groups_id"/>
+        </record>-->
+    </data>
+</openerp>

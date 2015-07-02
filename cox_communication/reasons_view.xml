@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record id="view_reasons_tree" model="ir.ui.view">
+            <field name="name">view.reasons.tree</field>
+            <field name="model">reasons.title</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Reasons">
+                    <field name="name" />
+                    <field name="module" />
+                </tree>
+            </field>
+        </record>
+        <record id="view_reasons_form" model="ir.ui.view">
+            <field name="name">view.reasons.form</field>
+            <field name="model">reasons.title</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Reasons">
+                    <group>
+                    <field name="name" required="1"/>
+                    <field name="module" required="1"/>
+                    <field name="active"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+        <record id="reasons_title_search" model="ir.ui.view">
+            <field name="name">reasons.title.search</field>
+            <field name="model">reasons.title</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Reasons">
+                    <field name="name" />
+                    <field name="module"/>
+                </search>
+            </field>
+        </record>
+        <record id="action_returns_reasons_master" model="ir.actions.act_window">
+            <field name="name">Reasons Master</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">reasons.title</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_reasons_tree"/>
+            <field name="search_view_id" ref="reasons_title_search"/>
+            <field name="domain">[('module','=','returns')]</field>
+        </record>
+        <record id="action_returns_helpdesk_master" model="ir.actions.act_window">
+            <field name="name">Reasons Master</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">reasons.title</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="view_reasons_tree"/>
+            <field name="search_view_id" ref="reasons_title_search"/>
+            <field name="domain">[('module','=','tech_supp')]</field>
+        </record>
+        <menuitem id="menu_reason_returns_master" name="Returns Reasons" parent="base.menu_base_config" action="action_returns_reasons_master" />
+        <menuitem id="menu_reason_helpdesk_master" name="Technical Support Reasons" parent="base.menu_base_config" action="action_returns_helpdesk_master"/>
+    </data>
+</openerp>

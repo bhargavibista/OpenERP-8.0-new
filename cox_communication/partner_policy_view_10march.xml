@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+         <record model="ir.ui.view" id="res_partner_policy_form">
+        <field name="name">res.partner.policy.form</field>
+        <field name="model">res.partner.policy</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Selected Service">
+                <group colspan="4" col="4">
+                <field name="product_id" readonly="1"/>
+                <field name="active_service"/>
+                <field name="sale_order" readonly="1"/>
+                <field name="start_date" readonly="1"/>
+                <!--<field name="next_billing_date"/>-->
+                <field name="end_date"/>
+                <!--<field name="payment_policy"/>-->
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    <record model="ir.ui.view" id="res_partner_policy_tree">
+        <field name="name">res.partner.policy.tree</field>
+        <field name="model">res.partner.policy</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree string="Selected Services" editable="bottom">
+                <field name="agmnt_partner" readonly="1"/>
+                <field name="service_name" readonly="1"/>
+                <!--<field name="product_id" readonly="1"/>-->
+                <field name="active_service" readonly="1" string="Active/Deactive"/>
+                <field name="sale_order" readonly="1" string="Order Number"/>
+                <field name="start_date" readonly="1"/>
+                <field name="free_trial_date" readonly="1" string="Free Trial Date"/>
+                <field name="cancel_date" readonly="1" string="Cancellation/Return Date" />
+            </tree>
+        </field>
+    </record>
+
+    <record model="ir.ui.view" id="res_partner_policy_search">
+        <field name="name">res.partner.policy.search</field>
+        <field name="model">res.partner.policy</field>
+        <field name="type">search</field>
+        <field name="arch" type="xml">
+            <search string="Customer Subscription">
+                <field name="agmnt_partner" />
+                <field name="service_name" />
+                <field name="active_service" />
+                <field name="sale_order" />
+                <field name="start_date" />
+                <field name="cancel_date"/>
+                <group expand="0" string="Group By...">
+                    <filter string="Customer" icon="terp-personal" domain="[]" context="{'group_by':'agmnt_partner'}"/>
+                    <filter string="Active/Deactive" icon="terp-personal" domain="[]" context="{'group_by':'active_service'}"/>
+                    <filter string="Cancellation Date" icon="terp-personal" domain="[]" context="{'group_by':'cancel_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+   <!--  <record id="action_agreement_policy_form" model="ir.actions.act_window">
+            <field name="name">Agreement</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.partner.policy</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="res_partner_policy_tree"/>
+        </record>-->
+
+        <record id="view_res_partner_policy_form" model="ir.ui.view">
+            <field name="name">view.res.partner.policy.form</field>
+            <field name="model">res.partner</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/sheet/notebook/page[@string='History']" position="after">
+                        <page string="Selected Services">
+                        <field name="agreement_policy" colspan="4" nolabel="1">
+                            <tree string="Selected Services" editable="bottom">
+                                <field name="product_id" readonly="1"/>
+                                <field name="active_service" readonly="1"/>
+                                <field name="sale_order" readonly="1"/>
+                                <field name="start_date" readonly="1"/>
+                                <field name="free_trial_date" readonly="1"/>
+                                <field name="cancel_date" string="Cancellation/Return Date" readonly="1"/>
+<!--                                <field name="extra_days" readonly="1"/>-->
+                            </tree>
+                        </field>
+                        </page>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        <record id="action_res_partner_policy" model="ir.actions.act_window">
+            <field name="name">Customer Subscriptions</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.partner.policy</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('sale_id','!=',False)]</field>
+            <field name="view_id" ref="res_partner_policy_tree"/>
+            <field name="search_view_id" ref="res_partner_policy_search"/>
+        </record>
+        <menuitem action="action_res_partner_policy" id="menu_customer_subscription" parent="base.menu_sales"/>
+        <!--groups="base.group_sale_manager,group_retail_sales_manager,group_retail_sales_associate" />-->
+
+    </data>
+</openerp>

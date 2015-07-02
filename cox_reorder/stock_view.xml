@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record model="ir.ui.view" id="stock_replenish_calendar">
+            <field name="name">stock.replenish.calendar</field>
+            <field name="model">stock.replenish</field>
+            <field name="priority" eval="2"/>
+            <field name="arch" type="xml">
+                <calendar string="Calendar View" date_start="min_date" date_stop="max_date" color="partner_id">
+                    <field name="origin"/>
+                    <field name="type"/>
+                    <field name="partner_id"/>
+                </calendar>
+            </field>
+        </record>
+
+        <record id="stock_replenish_tree" model="ir.ui.view">
+            <field name="name">stock.replenish.tree</field>
+            <field name="model">stock.replenish</field>
+            <field name="arch" type="xml">
+                <tree colors="blue:state == 'draft';grey:state == 'cancel';red:state not in ('cancel', 'done') and date &lt; current_date" string="Picking list">
+                    <field name="name"/>
+                    <field name="origin"/>
+                    <field name="date"/>
+                    <field name="min_date"/>
+		    <field name="linked_picking_id"/>
+<!--                    <field name="stock_journal_id" widget="selection"/> -->
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_replenish_form" model="ir.ui.view">
+            <field name="name">stock.replenish.form</field>
+            <field name="model">stock.replenish</field>
+            <field eval="12" name="priority"/>
+            <field name="arch" type="xml">
+                <form string="Replenish List" version="7.0">
+                <header>
+                    <button name="draft_confirm" states="draft" string="Confirm" type="object" class="oe_highlight" groups="base.group_user"/>
+                    <button name="button_cancel" states="assigned,confirmed,draft" string="Cancel Transfer" groups="base.group_user"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,approved,done" statusbar_colors='{"shipping_except":"red","invoice_except":"red","waiting_date":"blue"}'/>
+                </header>
+                <sheet>
+                    <h1>
+                        <field name="name" class="oe_inline" attrs="{'invisible': [('name','=','/')]}" readonly="1"/>
+                    </h1>
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+
+                            <!--<field name="invoice_state" string="Invoice Control" groups="account.group_account_invoice" attrs="{'invisible':[('invoice_state', '=', 'none')]}"/>-->
+                            <!--<field name="stock_journal_id" widget="selection" groups="account.group_account_user"/>-->  <!--cox gen2-->
+                            <field name="linked_picking_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="date"/>
+                            <field name="min_date" readonly="1" attrs="{'invisible': [('min_date','=',False)]}"/>
+                            <field name="origin" placeholder="e.g. PO0032" class="oe_inline"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Products">
+                            <field name="move_lines">
+                            <form string="Stock Moves">
+                                <sheet>
+                                    <group>
+                                        <group name="main_grp" string="Details">
+                                            <field name="product_id" on_change="onchange_product_id(product_id)"/>
+                                            <label for="product_qty"/>
+                                            <div>
+                                                <field name="product_qty"
+                                                    on_change="onchange_quantity(product_id, product_qty, product_uom)"
+                                                    class="oe_inline"/>
+                                                <field name="product_uom" groups="product.group_uom" class="oe_inline"/>
+                                            </div>
+                                            <field name="name"/>
+                                            <field name="company_id" groups="base.group_multi_company" widget="selection"/>
+                                        </group>
+                                        <group name="origin_grp" string="Origin">
+                                            <field name="origin"/>
+                                            <field name="picking_id" domain="[('type','=',type)]"/>
+                                             <!--<field name="type" on_change="onchange_move_type(type)"/>-->
+                                             <field name="type"/>
+                                            <field name="location_id" groups="stock.group_locations" domain="[('usage','=','internal')]"/>
+                                            <field name="create_date" groups="base.group_no_one"/>
+                                        </group>
+                                        <group name="destination_grp" string="Destination">
+                                            <field name="location_dest_id" groups="stock.group_locations" domain="[('usage','=','internal')]"/>
+<!--                                            <field name="partner_id" context="{'contact_display':'partner'}"
+                                                groups="stock.group_locations"/> -->
+                                            <field name="date_expected" on_change="onchange_date(date,date_expected)"/>
+                                            <field name="date"/>
+                                        </group>
+                                    </group>
+                                </sheet>
+                            </form>
+                            <tree string="Stock Moves">
+                                <field name="product_id"/>
+                                <field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom)"/>
+                                <field name="product_uom" string="Unit of Measure" groups="product.group_uom"/>
+                                <field name="location_id" groups="stock.group_locations"/>
+                                <field name="location_dest_id" groups="stock.group_locations"/>
+                                <field name="picking_id" invisible="1" />
+                                <field name="create_date" invisible="1" />
+                                <field name="date_expected" invisible="1" />
+                                <field name="state"/>
+                            </tree>
+                            </field>
+                            <field name="note" placeholder="Add an internal note..." class="oe_inline"/>
+                        </page>
+                        <page string="Additional Info">
+                            <group>
+                                <group>
+                                    <field name="move_type"/>
+                                    <field name="type" invisible="1"/>
+                                    <field name="auto_picking" groups="base.group_user"/>
+                                </group>
+                                <group>
+                                    <field name="company_id" groups="base.group_multi_company" widget="selection"/>
+                                    <field name="date_done" groups="base.group_no_one"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_stock_replenish_search" model="ir.ui.view">
+            <field name="name">stock.replenish.search</field>
+            <field name="model">stock.replenish</field>
+            <field name="arch" type="xml">
+                <search string="Stock Replenish List">
+                    <field name="name" string="Internal Picking List" filter_domain="['|',('name','ilike', self),('origin','ilike',self)]"/>
+                    <filter icon="terp-check" name="available" string="Ready" domain="[('state','=','draft')]" help="Assigned Internal Moves"/>
+                    <filter icon="terp-dialog-close" name="done" string="Done" domain="[('state','=','done')]" help="Pickings already processed"/>
+                    <field name="partner_id" filter_domain="[('partner_id','child_of',self)]"/>
+                    <field name="product_id"/>
+                    <!--<field name="stock_journal_id"/>-->  <!--cox gen2-->
+                    <group expand="0" string="Group By...">
+                        <filter string="Status" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+                        <filter string="Order Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date'}"/>
+                        <filter string="Expected Date" icon="terp-go-month" domain="[]"  context="{'group_by':'min_date'}"/>
+                        <filter string="Origin" icon="terp-gtk-jump-to-rtl" domain="[]" context="{'group_by':'origin'}"/>
+                        <!--<filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'stock_journal_id'}"/>-->  <!--cox gen2-->
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_replenish_tree" model="ir.actions.act_window">
+            <field name="name">Stock Replenish</field>
+            <field name="res_model">stock.replenish</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="context">{'contact_display': 'partner_address', 'search_default_available': 1}</field>
+            <field name="search_view_id" ref="view_stock_replenish_search"/>
+            <field name="help" type="html">
+              <p class="oe_view_nocontent_create">
+                Click to create an internal move request.
+              </p><p>
+                Most operations are prepared automatically by OpenERP according
+                to your preconfigured Replenish rules, but you can also record
+                manual stock movements.
+              </p>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_stock_replenish_tree_view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="stock_replenish_tree"/>
+            <field name="act_window_id" ref="action_replenish_tree"/>
+        </record>
+        <record model="ir.actions.act_window.view" id="action_view_replenish_form_view">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_replenish_form"/>
+            <field name="act_window_id" ref="action_replenish_tree"/>
+        </record>
+        <record id="action_stock_replenish_calendar" model="ir.actions.act_window.view">
+            <field eval="3" name="sequence"/>
+            <field name="view_mode">calendar</field>
+            <field name="view_id" ref="stock_replenish_calendar"/>
+            <field name="act_window_id" ref="action_replenish_tree"/>
+        </record>
+        <menuitem action="action_replenish_tree" id="menu_action_replenish_tree" parent="stock.menu_stock_warehouse_mgmt" sequence="3"/>
+
+<!-- ================================================================================ -->
+
+        <record id="view_stock_warehouse_replenish_tree" model="ir.ui.view">
+            <field name="name">stock.warehouse.replenish.tree</field>
+            <field name="model">stock.warehouse.replenish</field>
+            <field name="arch" type="xml">
+                <tree string="Replenish Rules">
+                    <field name="name"/>
+                    <field name="warehouse_id" groups="stock.group_locations"/>
+                    <field name="location_id" groups="stock.group_locations"/>
+                    <field name="product_id"/>
+                    <field name="product_uom" groups="product.group_uom"/>
+                    <field name="product_min_qty"/>
+                    <field name="product_max_qty"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="stock_warehouse_replenish_search">
+            <field name="name">stock.warehouse.replenish.search</field>
+            <field name="model">stock.warehouse.replenish</field>
+            <field name="arch" type="xml">
+                <search string="Replenish Rules Search">
+                    <field name="name" string="Replenish Rules"/>
+                    <field name="warehouse_id"/>
+                    <field name="location_id" groups="stock.group_locations"/>
+                    <field name="company_id" groups="base.group_multi_company"/>
+                    <field name="product_id"/>
+                    <group expand="0" string="Group By...">
+                        <filter string="Warehouse" icon="terp-go-home" domain="[]"  context="{'group_by':'warehouse_id'}"/>
+                        <filter string="Location" icon="terp-go-home" domain="[]" context="{'group_by':'location_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_stock_warehouse_replenish_form" model="ir.ui.view">
+            <field name="name">stock.warehouse.replenish.form</field>
+            <field name="model">stock.warehouse.replenish</field>
+            <field name="arch" type="xml">
+                <form string="Replenish Rules" version="7.0">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" />
+                                <field name="product_id" on_change="onchange_product_id(product_id)"/>
+                            </group>
+                            <group>
+                                <field name="warehouse_id" widget="selection" groups="stock.group_locations"/>
+                                <field name="product_uom" groups="product.group_uom"/>
+                                <field name="location_id" groups="stock.group_locations"/>
+                                <field name="company_id" groups="base.group_multi_company" widget="selection"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group string="Rules">
+                                <field name="product_min_qty" />
+                                <field name="product_max_qty" />
+                                <field name="qty_multiple" string="Quantity Multiple"/>
+                            </group>
+                            <group string="Misc">
+                                <field name="replenish_internal_id" readonly="1"/>
+                                <field name="active" />
+                                <!--<button name="run_replinsh_scheduler" type="object" string="Confirm"/>-->
+                            </group>
+                        </group>
+                        <group string="Internal Moves to Process">
+                            <field name="replenish_internal_draft_ids" nolabel="1"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_stock_warehouse_replenish_form" model="ir.actions.act_window">
+            <field name="name">Replenish Rules</field>
+            <field name="res_model">stock.warehouse.replenish</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="view_stock_warehouse_replenish_tree"/>
+            <field name="search_view_id" ref="stock_warehouse_replenish_search" />
+            <field name="help" type="html">
+              <p class="oe_view_nocontent_create">
+                Click to add a Replenish Rules.
+              </p><p>You can define your Replenish stock rules, so that OpenERP will automatically create draft Internal moves according to the stock level. Once the virtual stock of a product (= stock on hand minus all confirmed orders and reservations) is below the minimum quantity, OpenERP will generate a procurement request to increase the stock up to the maximum quantity.</p>
+            </field>
+        </record>
+        
+        <act_window
+            context="{'search_default_warehouse_id': active_id, 'default_warehouse_id': active_id}"
+            id="act_stock_warehouse_2_stock_warehouse_replenish"
+            name="Replenish Rules"
+            res_model="stock.warehouse.orderpoint"
+            src_model="stock.warehouse"
+            groups="stock.group_stock_user"/>
+
+        <menuitem action="action_stock_warehouse_replenish_form" id="menu_action_stock_warehouse_replenish_form" parent="stock.menu_stock_configuration" sequence="10"/>
+</data>
+</openerp>

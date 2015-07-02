@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+
+        <!--
+        Customer Invoice/Credit Memo
+        -->
+
+        <record id="view_account_invoice_form_avatax_inherit" model="ir.ui.view">
+           <field name="name">account.invoice.form.avatax.inherit</field>
+           <field name="model">account.invoice</field>
+           <field name="type">form</field>
+           <field name="inherit_id" ref="account.invoice_form"/>
+           <field name="arch" type="xml">
+                <field name="payment_term" position="after">
+                    <field name="invoice_doc_no" attrs="{'required': [('type','=','out_refund')],'invisible': [('type','!=','out_refund')]}"/>
+                </field>
+           </field>
+        </record>
+
+    </data>
+</openerp>

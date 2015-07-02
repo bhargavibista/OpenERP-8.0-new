@@ -1,0 +1,24 @@
+<openerp>
+    <data>
+         <record id="view_credit_service_refund" model="ir.ui.view">
+          <field name="name">view.credit.service.refund</field>
+          <field name="model">credit.service.refund</field>
+          <field name="type">form</field>
+          <field name="arch" type="xml">
+              <form string="Service Credit">
+                  <button name="cancel_service" string="Cancel Service" type="object" icon="terp-gtk-go-back-rtl"/>
+                  <button name="refund_cancel_service" string="Refund and Cancel Service" type="object" icon="terp-gtk-go-back-ltr"/>
+              </form>
+          </field>
+       </record>
+
+        <record id="action_credit_service_refund" model="ir.actions.act_window">
+            <field name="name">Service Credit Refund</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">credit.service.refund</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="view_credit_service_refund"/>
+            <field name="target">new</field>
+        </record>
+    </data>
+</openerp>

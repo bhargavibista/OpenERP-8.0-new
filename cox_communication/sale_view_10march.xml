@@ -1,0 +1,1294 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <menuitem name="Sales"
+            id="base.menu_base_partner"
+            groups="base.group_sale_salesman,base.group_sale_manager,group_retail_sales_manager,group_retail_sales_associate,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox,group_third_party_reseller"/>
+        <menuitem id="base.menu_sales" parent="base.menu_base_partner" name="Sales" sequence="1" 
+            groups="base.group_sale_salesman,base.group_sale_manager,group_retail_sales_manager,group_retail_sales_associate,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox,group_third_party_reseller"/>
+        
+        <!--<menuitem id="base.menu_invoiced" name="Invoicing" parent="base.menu_base_partner" sequence="5"
+            groups="base.group_sale_manager,group_retail_sales_manager,group_retail_sales_associate"/>-->
+        
+        <menuitem id="sale.menu_invoicing_sales_order_lines" parent="base.menu_invoiced" action="sale.action_order_line_tree2" sequence="10"
+        groups="sale.group_invoice_so_lines,group_retail_sales_manager,group_retail_sales_associate"/>
+        
+        <!--<menuitem id="base.menu_product" name="Products" parent="base.menu_base_partner" sequence="9"
+        groups="base.group_sale_manager,group_retail_sales_manager,group_retail_sales_associate"/>-->
+
+        <record id="view_order_form_inherit_cox_fields" model="ir.ui.view">
+            <field name="name">view.order.form.inherit.cox.fields</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <!--<xpath expr="/form" position="attributes">
+                    <attribute name="create">false</attribute>
+                </xpath>-->
+                <xpath expr="/form/sheet/group/group[2]" position="inside">
+                    <field name="call_center_pickup" on_change="onchange_call_center_pick_up(call_center_pickup)" attrs="{'invisible':[('order_type','=',True)]}"/>
+                </xpath>
+                <xpath expr="/form/sheet/group/group[2]/field[@name='pricelist_id']" position="attributes">
+                    <attribute name="widget">selection</attribute>
+                </xpath>
+                <xpath expr="/form/sheet/group/group[1]/field[@name='partner_id']" position="attributes">
+                    <attribute name="context">{'shop_id':shop_id}</attribute>
+                </xpath>
+                <!--To add field called provision by fanhattern-->
+                <!--<xpath expr="/form/sheet/group/group[2]/field[@name='client_order_ref']" position="after">-->
+                <xpath expr="/form/sheet/group" position="inside">
+                    <group>
+                        <field name="cox_sales_channels" readonly="1"/>
+                        <field name="location_id" string="Inventory Location" attrs="{'invisible':[('order_type','=',False)],'required':[('order_type','=',True)],'readonly':[('state','not in',('draft'))]}" widget="selection"/>
+                        <field name="prov_by_fanha"/>
+                    </group>
+                    <group>
+                        <field name="magento_so_id" readonly="1"/>
+                        <field name="order_type"  readonly="1" invisible="1"/>
+                        <field name="tracking_no"/>
+                        <field name="promo_code"/>
+                    </group>
+                </xpath>
+
+                <!--To add fields start date and end date -->
+                <xpath expr="//form[@string='Sales Order Lines']/group/group[1]/div/field[@name='product_uos']" position="after">
+                    <field name="hide_date" invisible="1"/>
+                </xpath>
+
+
+                <xpath expr="//form[@string='Sales Order Lines']/group/group[1]/div/field[@name='discount']" position="replace">
+                    <field name="discount" groups="base.group_erp_manager,base.group_system"/>
+                </xpath>
+                <xpath expr="//form[@string='Sales Order Lines']/group/group[1]/field[@name='price_unit']" position="replace">
+                    <field name="price_unit" invisible="1" groups="base.group_erp_manager,base.group_system,cox_communication.group_call_center"/>
+                </xpath>
+                <xpath expr="/form/header/button[@name='action_cancel']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <!--<xpath expr="/form/header/button[@name='ship_cancel']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>-->
+                <!--<xpath expr="/form/sheet/notebook/page[@string='Sales Order']/group[2]/button[@name='action_cancel_draft']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>-->
+                <!--To override functionality of order_confirm -->
+                <xpath expr="//button[@string='Confirm Sale']" position="replace">
+                    <button name="order_confirm" string="Confirm Order" icon="gtk-apply" invisible="True"/>
+                </xpath>
+                <!--Extra buttons are added for different purpose(see code)  -->
+                <xpath expr="//button[@string='Confirm Sale']" position="after">
+                    <button name="action_retail_agreement" string="Retail Agreement" type="object" icon="gtk-go-forward" attrs="{'invisible':['|',('order_type','=',False),'|',('agreement_approved','=',True),('state','=','cancel')]}"/>
+                    <button name="order_confirm_cox" type="object" string="Confirm Order" icon="gtk-apply" attrs="{'invisible':[('state','&lt;&gt;','draft')]}"/>
+                    <button name="action_process_deliver" string="Deliver" type="object" icon="gtk-go-forward" attrs="{'invisible':['|',('state','&lt;&gt;','progress'),('order_type','=',False)]}"/>
+                    <field name="agreement_approved" invisible="1"/>
+
+
+                </xpath>
+
+                <!--<xpath expr="/form/sheet/group/group[2]/field[@name='shop_id']" position="after">
+                    <field name="location_id" string="Inventory Location" attrs="{'invisible':[('order_type','=',False)],'required':[('order_type','=',True)],'readonly':[('state','not in',('draft'))]}"/>
+                    <field name="cox_sales_channels" readonly="1"/>
+                    <field name="magento_so_id" readonly="1"/>
+                </xpath>-->
+                <xpath expr="/form/sheet/group/group[2]/field[@name='shop_id']" position="attributes">
+                    <attribute name="string">Magento Store</attribute>
+                    <attribute name="domain">[('magento_shop','=',True)]</attribute>
+                    <attribute name="widget">selection</attribute>
+                </xpath>
+
+                <!-- Xpath to pass pick_up_or_not flag in the onchange of Product id-->
+                <xpath expr="//form[@string='Sales Order Lines']/group/group[1]/field[@name='product_id']" position="attributes">
+                    <attribute name="context"> {'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'shop':parent.shop_id, 'uom':product_uom,'partner_shipping_id':parent.partner_shipping_id,'partner_invoice_id':parent.partner_invoice_id,'search_default_filter_to_category':1,'call_center_pickup':parent.call_center_pickup}</attribute>
+                    <attribute name="required">True</attribute>
+                </xpath>
+                 <!--Xpath to make user id as readonly all the time -->
+               <!-- <xpath expr="/form/sheet/notebook/page[@string='Other Information']/group/group/[1]/field[@name='user_id']" position="attributes">
+                    <attribute name="readonly">1</attribute>
+                </xpath>-->
+
+                <xpath expr="/form/sheet/notebook" position="inside">
+                    <page string="History">
+                        <separator string="Invoices"/>
+                        <field name="invoice_ids"/>
+                        <separator string="Pickings"/>
+                        <field name="picking_ids"/>
+                    </page>
+
+                </xpath>
+
+            </field>
+        </record>
+	<record id="res_partner_view_buttons_inherit" model="ir.ui.view">
+          <field name="name">res.partner.view.buttons.inherit</field>
+          <field name="model">res.partner</field>
+          <field name="inherit_id" ref="sale.res_partner_view_buttons" />
+          <field eval="12" name="priority"/>
+          <field name="arch" type="xml">
+              <xpath expr="//button[@string='Quotations and Sales']" position="attributes">
+                   <attribute name="groups">cox_communication.group_support,cox_communication.group_internal_operations_manager,base.group_sale_salesman</attribute>
+              </xpath>
+          </field>
+          </record>
+
+        <record id="view_sale_order_exception_tree_cox" model="ir.ui.view">
+           <field name="name">view.sale.order.exception.tree.cox</field>
+           <field name="model">sale.order</field>
+           <field name="type">tree</field>
+           <field name="inherit_id" ref="sale_exceptions.view_order_tree"/>
+           <field name="arch" type="xml">
+               <xpath expr="//field[@name='main_exception_id']" position="attributes">
+                   <attribute name="invisible">1</attribute>
+               </xpath>
+           </field>
+      </record>
+
+         <record id="view_src_location_id" model="ir.ui.view">
+            <field name="name">view.src.location.id</field>
+            <field name="model">sale.order</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="sale.view_sales_order_filter" />
+            <field name="arch" type="xml">
+                <xpath expr="/search/group/filter[@string='Order Date']" position="after">
+                    <filter string="Locations" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'location_id'}"/>
+                </xpath>
+                <xpath expr="/search/filter[@string='To Invoice']" position="after">
+                    <filter string="EULA Signed and Not Shipped" icon="terp-stock_effects-object-colorize" domain="[('invoiced','=',True),('shipped','=',False)]"/>
+                    <filter icon="terp-check" string="Promo Code Orders" domain="[('promo_code','!=','')]" help="Orders containing Promo Codes"/>
+                    <filter string="EULA Signed" icon="terp-check" domain="[('agreement_approved','=',True)]"/>
+                </xpath>
+                <xpath expr="/search/field[@name='user_id']" position="after">
+                    <field name='promo_code'/>
+                </xpath>
+            </field>
+        </record>
+
+
+        <record id="view_sale_order_tree_cox_magentoid" model="ir.ui.view">
+            <field name="name">view.sale.order.tree.cox.magentoid</field>
+            <field name="model">sale.order</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="sale.view_order_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='name']" position="after">
+                    <field name="magento_so_id"/>
+                </xpath>
+		<xpath expr="/tree/field[@name='amount_total']" position="before">
+                    <field name="picked_rate" widget="progressbar"/>
+                    <field name="invoiced_rate" widget="progressbar"/>
+                <field name="amount_untaxed" sum="Total Tax Excluded"/>
+                </xpath>
+                <xpath expr="/tree/field[@name='amount_total']" position="after">
+                    <field name="promo_code"/>
+                    <field name="agreement_approved"/>
+                    <field name="auth_transaction_id"/>
+                </xpath>
+                <xpath expr="/tree[@string='Sales Orders']" position="attributes">
+                    <attribute name="colors">{grey:state =='cancel';blue:state in ('waiting_date','manual');red:state in ('invoice_except','shipping_except');brown:returns_status=='full_returns';goldenrod:returns_status=='partial_returns'}</attribute>
+                </xpath>
+                <xpath expr="/tree/field[@name='name']" position="after">
+                    <field name="location_id"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="action_order_form_retail_cox" model="ir.actions.act_window">
+            <field name="name">Retail Store</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field name="domain">[('cox_sales_channels','=','retail')]</field>
+            <field name="search_view_id" ref="sale.view_sales_order_filter"/>
+            <field name="context">{'default_order_type':True, 'default_cox_sales_channels':'retail','search_default_user_id':uid}</field>
+            <!--            <field name="context">{'default_order_type':True, 'default_cox_sales_channels':'retail'}</field>-->
+            <field name="help">Sales Orders help you manage quotations and orders from your customers. OpenERP suggests that you start by creating a quotation. Once it is confirmed, the quotation will be converted into a Sales Order. OpenERP can handle several types of products so that a sales order may trigger tasks, delivery orders, manufacturing orders, purchases and so on. Based on the configuration of the sales order, a draft invoice will be generated so that you just have to confirm it when you want to bill your customer.</field>
+        </record>
+<!--	<record id="action_order_form_retail_cox_tree" model="ir.actions.act_window.view">
+           <field eval="0" name="sequence"/>
+           <field name="view_mode">tree</field>
+           <field name="view_id" ref="view_sale_order_tree_cox_magentoid"/>
+           <field name="act_window_id" ref="action_order_form_retail_cox"/>
+       </record>
+       <record id="action_order_form_retail_cox_form" model="ir.actions.act_window.view">
+           <field eval="1" name="sequence"/>
+           <field name="view_mode">form</field>
+           <field name="view_id" ref="view_order_form_inherit_cox_fields"/>
+           <field name="act_window_id" ref="action_order_form_retail_cox"/>
+       </record> -->
+        <menuitem action="action_order_form_retail_cox" id="menu_sale_order_retail" parent="base.menu_sales" sequence="3" 
+            groups="group_retail_store,group_retail_sales_associate,group_retail_sales_manager,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox,group_third_party_reseller"/>
+
+        <!-- Record for the search for the ecommerce menu item -->
+        <record id="view_sales_order_search_ecommerce" model="ir.ui.view">
+            <field name="name">view.sales.order.search.ecommerce</field>
+            <field name="model">sale.order</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Sales Order">
+                    <filter icon="terp-document-new" string="Quotations" domain="[('state','=','draft')]" help="Sales Order that haven't yet been confirmed"/>
+                    <filter icon="terp-check" string="Sales" domain="[('state','in',('manual','progress'))]"/>
+                    <separator orientation="vertical"/>
+                    <filter icon="terp-dolar_ok!" string="To Invoice" domain="[('state','=','manual')]" help="Sales Order ready to be invoiced"/>
+                    <filter icon="terp-check" string="Promo Code Orders" domain="[('promo_code','!=','')]" help="Ecommerce orders containing Promo Codes"/>
+                    <filter string="EULA Signed" icon="terp-check" domain="[('agreement_approved','=',True)]"/>
+                    <separator orientation="vertical"/>
+                    <field name="name"
+                           filter_domain="['|', ('name','ilike',self),('client_order_ref','ilike',self)]"/>
+                    <field name="partner_id"/>
+                    <field name="user_id">
+                        <filter domain="[('user_id','=',uid)]" help="My Sale Orders" icon="terp-personal"/>
+                    </field>
+                    <field name='promo_code'/>
+                    <newline/>
+                    <group expand="0" string="Group By..." groups="base.group_extended">
+                        <filter string="Customer" icon="terp-personal" domain="[]" context="{'group_by':'partner_id'}"/>
+                        <filter string="Salesman" icon="terp-personal" domain="[]" context="{'group_by':'user_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Order Date" icon="terp-go-month" domain="[]" context="{'group_by':'date_order'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_order_ecommerce_tree" model="ir.ui.view">
+            <field name="name">view.order.ecommerce.tree</field>
+            <field name="model">sale.order</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Sales Orders" colors="grey:state=='cancel';blue:state in ('waiting_date','manual');red:state in ('invoice_except','shipping_except');brown:returns_status=='full_returns';goldenrod:returns_status=='partial_returns'" create="false">
+        		<field name="name" string="Order No."/>
+                    <field name="location_id"/>
+                    <field name="magento_so_id" string="Magento ID"/>
+                    <field name="date_order"/>
+                    <field name="partner_id"/>
+                    <field name="user_id"/>
+                    <field name="picked_rate" widget="progressbar"/>
+                    <field name="invoiced_rate" widget="progressbar" string="Invoiced"/>
+                    <field name="amount_untaxed" sum="Total Tax Excluded"/>
+                    <field name="amount_total" sum="Total Tax Included"/>
+                    <field name="promo_code"/>
+                    <field name="agreement_approved"/>
+                    <field name="auth_transaction_id"/>
+                    <field name="state"/>
+                    <field name="payment_method_id"/>
+                    <field name="returns_status" invisible="1"/>            
+	                </tree>
+            </field>
+        </record>
+
+
+        <record id="view_order_ecommerce_form_cox" model="ir.ui.view">
+            <field name="name">view.order.ecommerce.form.cox</field>
+            <field name="model">sale.order</field>
+            <field name="arch" type="xml">
+                <form string="Ecommerce" version="7.0" create="false">
+                    <header>
+                        <button name="invoice_recreate" states="invoice_except" string="Recreate Invoice" groups="base.group_user"/>
+                        <button name="invoice_corrected" states="invoice_except" string="Ignore Exception" groups="base.group_user"/>
+                        <button name="action_quotation_send" string="Send by Email" type="object" states="draft" class="oe_highlight" groups="base.group_user"/>
+                        <button name="action_quotation_send" string="Send by Email" type="object" states="sent" groups="base.group_user"/>
+                        <button name="print_quotation" string="Print" type="object" states="draft" class="oe_highlight" groups="base.group_user"/>
+                        <button name="print_quotation" string="Print" type="object" states="sent" groups="base.group_user"/>
+                        <button name="order_confirm_cox" type="object" string="Confirm Order" icon="gtk-apply" attrs="{'invisible':[('state','&lt;&gt;','draft')]}"/>
+                        <button name="action_retail_agreement" string="Retail Agreement" type="object" icon="gtk-go-forward" attrs="{'invisible':['|',('order_type','=',False),'|',('agreement_approved','=',True),('state','=','cancel')]}"/>
+                        <button name="order_confirm_cox" type="object" string="Confirm Order" icon="gtk-apply" attrs="{'invisible':[('state','&lt;&gt;','draft')]}"/>
+                        <button name="action_process_deliver" string="Deliver" type="object" icon="gtk-go-forward" attrs="{'invisible':['|',('state','&lt;&gt;','progress'),('order_type','=',False)]}"/>
+                        <field name="agreement_approved" invisible="1"/>
+                        <button name="action_view_invoice" string="View Invoice" type="object" class="oe_highlight"
+                            attrs="{'invisible': [('invoice_exists', '=', False)]}" groups="base.group_user"/>
+                        <button name="%(sale.action_view_sale_advance_payment_inv)d" string="Create Invoice"
+                            type="action" states="manual" class="oe_highlight" groups="base.group_user"/>
+                        <button name="copy_quotation" states="cancel" string="New Copy of Quotation" type="object"/>
+                        <button name="cancel" states="draft,sent" string="Cancel Quotation" groups="base.group_user"/>
+                        <button name="action_cancel" states="manual,progress" string="Cancel Order" type="object" groups="base.group_user" invisible="1"/>
+                        <button name="invoice_cancel" states="invoice_except" string="Cancel Order" groups="base.group_user"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,sent,invoiced,done" statusbar_colors='{"invoice_except":"red","waiting_date":"blue"}'/>
+                </header>
+                <sheet>
+                    <h1>
+                        <label string="Quotation " attrs="{'invisible': [('state','not in',('draft','sent'))]}"/>
+                        <label string="Sales Order " attrs="{'invisible': [('state','in',('draft','sent'))]}"/>
+                        <field name="name" class="oe_inline" readonly="1"/>
+                    </h1>
+                    <group>
+                        <group>
+                            <field name="partner_id" on_change="onchange_partner_id(partner_id, context)" domain="[('customer','=',True)]" context="{'search_default_customer':1, 'show_address': 1,'shop_id':shop_id}" options='{"always_reload": True}'/>
+                            <field name="partner_invoice_id" groups="sale.group_delivery_invoice_address" context="{'default_type':'invoice'}"/>
+                            <field name="partner_shipping_id" groups="sale.group_delivery_invoice_address" context="{'default_type':'delivery'}"/>
+                            <field name="project_id" context="{'partner_id':partner_invoice_id, 'default_pricelist_id':pricelist_id, 'default_name':name, 'default_type': 'contract'}" groups="sale.group_analytic_accounting" domain="[('type','in',['view','normal','contract'])]"/>
+                        </group>
+                        <group>
+                            <field name="date_order"/>
+                            <field name="shop_id" groups="base.group_no_one" on_change="onchange_shop_id(shop_id, context)" widget="selection" domain="[('magento_shop','=',True)]"/>
+                            <field name="client_order_ref"/>
+                            <field domain="[('type','=','sale')]" name="pricelist_id" groups="product.group_sale_pricelist" on_change="onchange_pricelist_id(pricelist_id,order_line)" widget="selection"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group>
+                        <field name="cox_sales_channels" readonly="1"/>
+                        <field name="location_id" string="Inventory Location" attrs="{'invisible':[('order_type','=',False)],'required':[('order_type','=',True)],'readonly':[('state','not in',('draft'))]}" widget="selection"/>
+                        <field name="prov_by_fanha"/>
+                        </group>
+
+                    <group>
+                        <field name="magento_so_id" readonly="1"/>
+                        <field name="order_type"  readonly="1" invisible="1"/>
+                        <field name="tracking_no"/>
+                        <field name="promo_code"/>
+                    </group>
+                    </group>
+                    <notebook>
+                        <page string="Order Lines">
+                            <field name="order_line">
+                                <form string="Sales Order Lines" version="7.0">
+                                    <header groups="base.group_user">
+                                        <button name="%(sale.action_view_sale_order_line_make_invoice)d" states="confirmed" string="Invoice" type="action" icon="terp-document-new"/>
+                                        <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,done" statusbar_colors='{"exception":"red","cancel":"red"}'/>
+                                    </header>
+                                    <group>
+                                        <group>
+                                            <field name="state" invisible="1" />
+                                            <field name="product_id" required="1"
+                                                context="{'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'shop':parent.shop_id, 'uom':product_uom}"
+                                                groups="base.group_user"
+                                                on_change="product_id_change(parent.pricelist_id, product_id, product_uom_qty, product_uom, product_uos_qty, product_uos, name, parent.partner_id, False, True, parent.date_order, False, parent.fiscal_position, False, context)"/>
+                                            <label for="product_uom_qty"/>
+                                            <div>
+                                                <field
+                                                    context="{'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'shop':parent.shop_id, 'uom':product_uom}"
+                                                    name="product_uom_qty" class="oe_inline"
+                                                    on_change="product_id_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, False, False, parent.date_order, False, parent.fiscal_position, True, context)"/>
+                                                <field name="product_uom" groups="product.group_uom" class="oe_inline oe_no_button"
+
+                                                    on_change="product_uom_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, False, False, parent.date_order, context)"/>
+                                            </div>
+                                            <label for="product_uos_qty" groups="product.group_uos"/>
+                                            <div groups="product.group_uos">
+                                                <field name="product_uos_qty" class="oe_inline"/>
+                                                <field name="product_uos" options='{"no_open": True}' class="oe_inline"/>
+                                            </div>
+                                            <field name="price_unit"/>
+                                            <label for="discount" groups="sale.group_discount_per_so_line"/>
+                                            <div name="discount" groups="sale.group_discount_per_so_line">
+                                                <field name="discount" class="oe_inline"/>
+                                            </div>
+                                        </group>
+                                        <group>
+                                            <field name="tax_id" widget="many2many_tags" domain="[('parent_id','=',False),('type_tax_use','&lt;&gt;','purchase')]"/>
+                                            <field name="type"/>
+                                            <field name="th_weight"/>
+                                             we should put a config wizard for these two fields
+                                            <field name="address_allotment_id"/>
+                                        </group>
+                                    </group>
+                                    <label for="name"/>
+                                    <field name="name"/>
+                                    <div groups="base.group_no_one">
+                                        <!--<label for="invoice_lines"/>
+                                        <field name="invoice_lines"/>
+                                        <label for="so_line_item_set_ids"/>
+                                        <field name="so_line_item_set_ids" nolabel="1"/>-->
+                                        <label for="sub_components"/>
+                                        <field name="sub_components" nolabel="1"/>
+                                    </div>
+                                </form>
+                                <tree string="Sales Order Lines">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="state" invisible="1"/>
+                                    <field name="th_weight" invisible="1"/>
+                                    <field name="product_id"
+                                        context="{'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'shop':parent.shop_id, 'uom':product_uom}"
+                                        groups="base.group_user"
+                                        on_change="product_id_change(parent.pricelist_id, product_id, product_uom_qty, product_uom, product_uos_qty, product_uos, name, parent.partner_id, False, True, parent.date_order, False, parent.fiscal_position, False, context)"/>
+                                    <field name="name"/>
+                                    <field name="product_uom_qty"
+                                        context="{'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'shop':parent.shop_id, 'uom':product_uom}"
+                                        on_change="product_id_change(parent.pricelist_id, product_id, product_uom_qty, product_uom, product_uos_qty, product_uos, name, parent.partner_id, False, False, parent.date_order, False, parent.fiscal_position, True, context)"/>
+                                    <field name="product_uom"
+                                        on_change="product_uom_change(parent.pricelist_id, product_id, product_uom_qty, product_uom, product_uos_qty, product_uos, name, parent.partner_id, False, False, parent.date_order, context)"
+                                        groups="product.group_uom" options='{"no_open": True}'/>
+                                    <field name="product_uos_qty" groups="product.group_uos" invisible="1"/>
+                                    <field name="product_uos" string="UoS" groups="product.group_uos" invisible="1"/>
+                                    <field name="tax_id" widget="many2many_tags" domain="[('parent_id','=',False),('type_tax_use','&lt;&gt;','purchase')]"/>
+                                    <field name="price_unit"/>
+                                    <field name="discount" groups="sale.group_discount_per_so_line"/>
+                                    <field name="price_subtotal"/>
+                                </tree>
+                            </field>
+                            <group class="oe_subtotal_footer oe_right" colspan="2" name="sale_total">
+                                <field name="amount_untaxed" widget='monetary' options="{'currency_field': 'currency_id'}"/>
+                                <field name="amount_tax" widget='monetary' options="{'currency_field': 'currency_id'}"/>
+                                <div class="oe_subtotal_footer_separator oe_inline">
+                                    <label for="amount_total" />
+                                    <button name="button_dummy"
+                                        states="draft,sent" string="(update)" type="object" class="oe_edit_only oe_link"/>
+                                </div>
+                                <field name="amount_total" nolabel="1" class="oe_subtotal_footer_separator" widget='monetary' options="{'currency_field': 'currency_id'}"/>
+                            </group>
+                            <div class="oe_clear"/>
+                            <field name="note" class="oe_inline" placeholder="Terms and conditions..."/>
+                        </page>
+                        <page string="Other Information" groups="base.group_user">
+                            <group>
+                                <group name="sales_person" groups="base.group_user">
+                                    <field name="user_id"/>
+                                    <field groups="base.group_no_one" name="origin"/>
+                                </group>
+                                <group name="sale_pay">
+                                    <field name="payment_term" widget="selection"/>
+                                    <field name="fiscal_position" widget="selection"/>
+                                    <field name="company_id" widget="selection" groups="base.group_multi_company"/>
+                                </group>
+                                <group>
+                                    <field name="invoiced"/>
+                                    <field name="invoice_exists" invisible="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                    <page string="History">
+                        <separator string="Invoices"/>
+                        <field name="invoice_ids"/>
+                        <separator string="Packings"/>
+                        <field name="picking_ids"/>
+                    </page>
+                    <page string ="Return info" position="inside">
+                        <field name="sale_return_ids" nolabel="1"/>
+                    </page>
+                    <page string="Authorize.Net Payment">
+                        <separator string="Transaction Response Fields" colspan="8"/>
+                        <group colspan="3" col="6" >
+                            <field name="auth_transaction_id"/>
+                            <field name="authorization_code"/>
+                            <field name="customer_payment_profile_id"/>
+                            </group>
+                            <newline/>
+                          <separator string="Response Message" colspan="8"/>
+                          <group>
+                            <field name="auth_respmsg" colspan="8"  nolabel="1"/>
+                            </group>
+                     </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers" groups="base.group_user"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_order_for_ecommerce_cox" model="ir.actions.act_window">
+            <field name="name">Ecommerce</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field name="domain">[('cox_sales_channels','=','ecommerce')]</field>
+            <field name="search_view_id" ref="view_sales_order_search_ecommerce"/>
+            <field name="view_id" ref="view_order_ecommerce_tree"/>
+            <field name="context">{'default_cox_sales_channels':'ecommerce'}</field>
+        </record>
+
+        <record id="action_ecommerce_view1_cox" model="ir.actions.act_window.view">
+           <field eval="10" name="sequence"/>
+           <field name="view_mode">tree</field>
+           <field name="view_id" ref="view_order_ecommerce_tree"/>
+           <field name="act_window_id" ref="action_order_for_ecommerce_cox"/>
+       </record>
+       <record id="action_ecommerce_view2_cox_second" model="ir.actions.act_window.view">
+           <field eval="12" name="sequence"/>
+           <field name="view_mode">form</field>
+           <field name="view_id" ref="view_order_ecommerce_form_cox"/>
+           <field name="act_window_id" ref="action_order_for_ecommerce_cox"/>
+       </record>
+
+        <menuitem action="action_order_for_ecommerce_cox" id="menu_sale_order_ecommerce" parent="base.menu_sales" sequence="4" 
+            groups="base.group_sale_manager,stock.group_stock_manager,group_call_center,group_retail_sales_associate,group_retail_sales_manager,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox"/>
+        <!-- Action window for the Agreement-->
+<!--<act_window name="Retail Agreement"
+                    res_model="retail.agreement"
+                    src_model="sale.order"
+                    view_mode="form"
+                    target="new"
+                    key2="client_action_multi"
+                    groups="base.group_extended"
+                    id="action_retail_shop_agreement"/>-->
+
+        <!-- Action to see only sales order -->
+        <record id="sale.action_order_form" model="ir.actions.act_window">
+            <field name="name">Call Center</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field name="domain">[('cox_sales_channels','=','call_center')]</field>
+            <field name="search_view_id" ref="sale.view_sales_order_filter"/>
+            <field name="context">{'default_cox_sales_channels':'call_center','search_default_user_id':uid}</field>
+            <!--            <field name="context">{'default_cox_sales_channels':'call_center'}</field>-->
+        </record>
+<!--	<record id="action_order_form_first" model="ir.actions.act_window.view">
+           <field eval="0" name="sequence"/>
+           <field name="view_mode">tree</field>
+           <field name="view_id" ref="view_sale_order_tree_cox_magentoid"/>
+           <field name="act_window_id" ref="sale.action_order_form"/>
+       </record>
+       <record id="action_order_form_second" model="ir.actions.act_window.view">
+           <field eval="1" name="sequence"/>
+           <field name="view_mode">form</field>
+           <field name="view_id" ref="view_order_form_inherit_cox_fields"/>
+           <field name="act_window_id" ref="sale.action_order_form"/>
+       </record> -->
+        <menuitem action="sale.action_order_form" id="sale.menu_sale_order" string="Call Center" parent="base.menu_sales" sequence="2" 
+        groups="base.group_sale_salesman,base.group_sale_manager,group_call_center,group_retail_sales_associate,group_retail_sales_manager,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox"/>
+        <!-- Menuitem is inherited because want to show it to only Retail user-->
+        <menuitem action="bista_order_returns.action_sales_return" id="bista_order_returns.menu_sale_return" parent="base.menu_sales" sequence="5" groups="base.group_sale_salesman,base.group_sale_manager,group_retail_store"/>
+
+        <!-- Record adding promo_code field instead of need_to_update field -->
+        <record id="view_promo_code_tree" model="ir.ui.view">
+            <field name="name">view.promo.code.tree</field>
+            <field name="model">sale.order</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="base_sale_multichannels.base_sale_multichannel_view_order_tree" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='need_to_update']" position="replace">
+                    <field name="returns_status" invisible="1"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_sale_magentosearch_replace_cox" model="ir.ui.view">
+            <field name="name">view.sale.magento.search.replace.cox</field>
+            <field name="model">sale.order</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="magentoerpconnect.view_sale_magentosearch"/>
+            <field name="arch" type="xml">
+                <xpath expr="//filter[@string='Magento Orders']" position="replace">
+                </xpath>
+            </field>
+        </record>
+        <!--<record id="view_sale_replace_invalid_add_search" model="ir.ui.view">
+            <field name="name">view.sale.replace.invalid.add.search</field>
+            <field name="model">sale.order</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="bista_shipping.view_sales_order_filter_inherit1"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='invalid_addr']" position="replace">
+                </xpath>
+            </field>
+        </record>-->
+
+        <!-- Added this record to hide leads and opprtunities menus   -->
+        <record model="ir.ui.menu" id="crm.menu_crm_case_opp">
+            <field eval="[(6,0,[ref('group_hide')])]" name="groups_id"/>
+        </record>
+        <record model="ir.ui.menu" id="crm.menu_crm_case_categ0_act_leads">
+            <field eval="[(6,0,[ref('group_hide')])]" name="groups_id"/>
+        </record>
+
+
+        <!-- To display all sale orders    -->
+
+        <record id="view_sales_order_search_all_orders" model="ir.ui.view">
+            <field name="name">view.sales.order.search.all.orders</field>
+            <field name="model">sale.order</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Sales Order">
+                    <separator orientation="vertical"/>
+                    <filter icon="terp-check" string="Call Center" domain="[('cox_sales_channels','=','call_center')]" help="Call Center Orders"/>
+                    <filter icon="terp-check" string="Retail Store" domain="[('cox_sales_channels','=','retail')]" help="Retail Store Orders"/>
+                    <filter icon="terp-check" string="Ecommerce" domain="[('cox_sales_channels','=','ecommerce')]" help="Ecoomerce Orders"/>
+                    <separator orientation="vertical"/>
+                    <field name="name"
+                           filter_domain="['|', ('name','ilike',self),('client_order_ref','ilike',self)]"/>
+                    <field name="partner_id"/>
+                    <field name="user_id">
+                        <filter domain="[('user_id','=',uid)]" help="My Sale Orders" icon="terp-personal"/>
+                    </field>
+                    <newline/>
+                    <group expand="0" string="Group By...">
+                        <filter string="Customer" icon="terp-personal" domain="[]" context="{'group_by':'partner_id'}"/>
+                        <filter string="Salesman" icon="terp-personal" domain="[]" context="{'group_by':'user_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Order Date" icon="terp-go-month" domain="[]" context="{'group_by':'date_order'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Location" icon="gtk-home" domain="[]" context="{'group_by':'location_id'}"/>
+			<separator orientation="vertical"/>
+                        <filter string="Sales Channels" icon="gtk-home" domain="[]" context="{'group_by':'cox_sales_channels'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_order_all_sales_order_tree" model="ir.ui.view">
+           <field name="name">view.order.all.sales.order.tree</field>
+           <field name="model">sale.order</field>
+           <field name="type">tree</field>
+           <field name="arch" type="xml">
+               <tree string="Sales Orders" colors="grey:state=='cancel';blue:state in ('waiting_date','manual');red:state in ('invoice_except','shipping_except');brown:returns_status=='full_returns';goldenrod:returns_status=='partial_returns'" create="false" edit="false" delete="false">
+                   
+                   <field name="name" string="Order Number"/>
+		    <field name="cox_sales_channels" string="Sales Channel"/>
+                    <field name="location_id"/>
+                    <field name="magento_so_id" string="Magento ID"/>
+                    <field name="date_order"/>
+                    <field name="partner_id"/>
+                    <field name="user_id"/>
+                    <field name="picked_rate" widget="progressbar"/>
+                    <field name="invoiced_rate" widget="progressbar" string="Invoiced"/>
+                    <field name="amount_untaxed" sum="Total Tax Excluded"/>
+                    <field name="amount_total" sum="Total Tax Included"/>
+                    <field name="promo_code"/>
+                    <field name="agreement_approved"/>
+                    <field name="auth_transaction_id"/>
+                    <field name="state"/>
+                    <!--<field name="payment_method_id"/>-->
+                    <field name="returns_status" invisible="1"/>
+               </tree>
+           </field>
+       </record>
+
+       <record id="view_order_all_sales_order_form_cox" model="ir.ui.view">
+            <field name="name">view.all.sale.order.form.cox</field>
+            <field name="model">sale.order</field>
+            <field name="arch" type="xml">
+                <form string="Sales Order" version="7.0" create="false" edit="false" delete="false">
+                    <header>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,sent,invoiced,done" statusbar_colors='{"invoice_except":"red","waiting_date":"blue"}'/>
+                </header>
+                <sheet>
+                    <h1>
+                        <label string="Quotation " attrs="{'invisible': [('state','not in',('draft','sent'))]}"/>
+                        <label string="Sales Order " attrs="{'invisible': [('state','in',('draft','sent'))]}"/>
+                        <field name="name" class="oe_inline" readonly="1"/>
+                    </h1>
+                    <group>
+                        <group>
+                            <field name="partner_id" on_change="onchange_partner_id(partner_id, context)" domain="[('customer','=',True)]" context="{'search_default_customer':1, 'show_address': 1}" options='{"always_reload": True}'/>
+                            <field name="partner_invoice_id" groups="sale.group_delivery_invoice_address" context="{'default_type':'invoice'}"/>
+                            <field name="partner_shipping_id" groups="sale.group_delivery_invoice_address" context="{'default_type':'delivery'}"/>
+                            <field name="project_id" context="{'partner_id':partner_invoice_id, 'default_pricelist_id':pricelist_id, 'default_name':name, 'default_type': 'contract'}" groups="sale.group_analytic_accounting" domain="[('type','in',['view','normal','contract'])]"/>
+                        </group>
+                        <group>
+                            <field name="date_order"/>
+                            <field name="shop_id" groups="base.group_no_one" on_change="onchange_shop_id(shop_id, context)" widget="selection"/>
+                            <field name="client_order_ref"/>
+                            <field domain="[('type','=','sale')]" name="pricelist_id" groups="product.group_sale_pricelist" on_change="onchange_pricelist_id(pricelist_id,order_line)" widget="selection"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Order Lines">
+                            <field name="order_line">
+                                <form string="Sales Order Lines" version="7.0">
+                                    <header groups="base.group_user">
+                                        <button name="%(sale.action_view_sale_order_line_make_invoice)d" states="confirmed" string="Invoice" type="action" icon="terp-document-new"/>
+                                        <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,done" statusbar_colors='{"exception":"red","cancel":"red"}'/>
+                                    </header>
+                                    <group>
+                                        <group>
+                                            <field name="state" invisible="1" />
+                                            <field name="product_id"
+                                                context="{'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'shop':parent.shop_id, 'uom':product_uom}"
+                                                groups="base.group_user"
+                                                on_change="product_id_change(parent.pricelist_id, product_id, product_uom_qty, product_uom, product_uos_qty, product_uos, name, parent.partner_id, False, True, parent.date_order, False, parent.fiscal_position, False, context)"/>
+                                            <label for="product_uom_qty"/>
+                                            <div>
+                                                <field
+                                                    context="{'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'shop':parent.shop_id, 'uom':product_uom}"
+                                                    name="product_uom_qty" class="oe_inline"
+                                                    on_change="product_id_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, False, False, parent.date_order, False, parent.fiscal_position, True, context)"/>
+                                                <field name="product_uom" groups="product.group_uom" class="oe_inline oe_no_button"
+
+                                                    on_change="product_uom_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, False, False, parent.date_order, context)"/>
+                                            </div>
+                                            <label for="product_uos_qty" groups="product.group_uos"/>
+                                            <div groups="product.group_uos">
+                                                <field name="product_uos_qty" class="oe_inline"/>
+                                                <field name="product_uos" options='{"no_open": True}' class="oe_inline"/>
+                                            </div>
+                                            <field name="price_unit"/>
+                                            <label for="discount" groups="sale.group_discount_per_so_line"/>
+                                            <div name="discount" groups="sale.group_discount_per_so_line">
+                                                <field name="discount" class="oe_inline"/> %%
+                                            </div>
+                                        </group>
+                                        <group>
+                                            <field name="tax_id" widget="many2many_tags" domain="[('parent_id','=',False),('type_tax_use','&lt;&gt;','purchase')]"/>
+                                            <field name="type"/>
+                                            <field name="th_weight"/>
+                                            <!-- we should put a config wizard for these two fields -->
+                                            <field name="address_allotment_id"/>
+                                        </group>
+                                    </group>
+                                    <label for="name"/>
+                                    <field name="name"/>
+                                    <div groups="base.group_no_one">
+                                        <!--<label for="invoice_lines"/>
+                                        <field name="invoice_lines"/>
+                                        <label for="so_line_item_set_ids"/>
+                                        <field name="so_line_item_set_ids" nolabel="1"/>-->
+                                        <label for="sub_components"/>
+                                        <field name="sub_components" nolabel="1"/>
+                                    </div>
+                                </form>
+                                <tree string="Sales Order Lines">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="state" invisible="1"/>
+                                    <field name="th_weight" invisible="1"/>
+                                    <field name="product_id"
+                                        context="{'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'shop':parent.shop_id, 'uom':product_uom}"
+                                        groups="base.group_user"
+                                        on_change="product_id_change(parent.pricelist_id, product_id, product_uom_qty, product_uom, product_uos_qty, product_uos, name, parent.partner_id, False, True, parent.date_order, False, parent.fiscal_position, False, context)"/>
+                                    <field name="name"/>
+                                    <field name="product_uom_qty"
+                                        context="{'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'shop':parent.shop_id, 'uom':product_uom}"
+                                        on_change="product_id_change(parent.pricelist_id, product_id, product_uom_qty, product_uom, product_uos_qty, product_uos, name, parent.partner_id, False, False, parent.date_order, False, parent.fiscal_position, True, context)"/>
+                                    <field name="product_uom"
+                                        on_change="product_uom_change(parent.pricelist_id, product_id, product_uom_qty, product_uom, product_uos_qty, product_uos, name, parent.partner_id, False, False, parent.date_order, context)"
+                                        groups="product.group_uom" options='{"no_open": True}'/>
+                                    <field name="product_uos_qty" groups="product.group_uos" invisible="1"/>
+                                    <field name="product_uos" string="UoS" groups="product.group_uos" invisible="1"/>
+                                    <field name="tax_id" widget="many2many_tags" domain="[('parent_id','=',False),('type_tax_use','&lt;&gt;','purchase')]"/>
+                                    <field name="price_unit"/>
+                                    <field name="discount" groups="sale.group_discount_per_so_line"/>
+                                    <field name="price_subtotal"/>
+                                </tree>
+                            </field>
+                            <!--<field name="so_line_item_set_ids" nolabel="1"/>-->
+                            <group class="oe_subtotal_footer oe_right" colspan="2" name="sale_total">
+                                <field name="amount_untaxed" widget='monetary' options="{'currency_field': 'currency_id'}"/>
+                                <field name="amount_tax" widget='monetary' options="{'currency_field': 'currency_id'}"/>
+                                <div class="oe_subtotal_footer_separator oe_inline">
+                                    <label for="amount_total" />
+                                    <button name="button_dummy"
+                                        states="draft,sent" string="(update)" type="object" class="oe_edit_only oe_link"/>
+                                </div>
+                                <field name="amount_total" nolabel="1" class="oe_subtotal_footer_separator" widget='monetary' options="{'currency_field': 'currency_id'}"/>
+                            </group>
+                            <div class="oe_clear"/>
+                            <field name="note" class="oe_inline" placeholder="Terms and conditions..."/>
+                        </page>
+                        <page string="Other Information" groups="base.group_user">
+                            <group>
+                                <group name="sales_person" groups="base.group_user">
+                                    <field name="user_id"/>
+                                    <field groups="base.group_no_one" name="origin"/>
+                                </group>
+                                <group name="sale_pay">
+                                    <field name="payment_term" widget="selection"/>
+                                    <field name="fiscal_position" widget="selection"/>
+                                    <field name="company_id" widget="selection" groups="base.group_multi_company"/>
+                                </group>
+                                <group>
+                                    <field name="invoiced"/>
+                                    <field name="invoice_exists" invisible="1"/>
+                                </group>
+                            </group>
+                        </page>
+                         <page string="History">
+                       <separator string="Invoices"/>
+                       <field name="invoice_ids"/>
+                       <separator string="Packings"/>
+                       <field name="picking_ids"/>
+                   </page>
+                   <page string ="Return info" position="inside">
+                       <field name="sale_return_ids" nolabel="1"/>
+                   </page>
+                   <page string="Authorize.Net Payment">
+                       <separator string="Transaction Response Fields" colspan="8"/>
+                       <group colspan="3" col="6" >
+                           <field name="auth_transaction_id"/>
+                           <field name="authorization_code"/>
+                           <field name="customer_payment_profile_id"/>
+                           </group>
+                           <newline/>
+                         <separator string="Response Message" colspan="8"/>
+                         <group>
+                           <field name="auth_respmsg" colspan="8"  nolabel="1"/>
+                           </group>
+                    </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers" groups="base.group_user"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+                </form>
+            </field>
+        </record>
+
+
+
+        <record id="action_order_form_all_orders" model="ir.actions.act_window">
+            <field name="name">All Sale Orders</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field name="search_view_id" ref="view_sales_order_search_all_orders"/>
+            <field name="view_id" ref="view_order_all_sales_order_tree"/>
+            <field name="context">{'nodelete':'1','nocreate':'1','noedit':'1'}</field>
+        </record>
+         <record id="action_all_sale_order_view1_cox" model="ir.actions.act_window.view">
+            <field eval="20" name="sequence"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_order_all_sales_order_tree"/>
+            <field name="act_window_id" ref="action_order_form_all_orders"/>
+        </record>
+        <record id="action_all_sale_order_view2_cox" model="ir.actions.act_window.view">
+            <field eval="22" name="sequence"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_order_all_sales_order_form_cox"/>
+            <field name="act_window_id" ref="action_order_form_all_orders"/>
+        </record>
+
+        <menuitem action="action_order_form_all_orders" id="menu_all_sale_orders" parent="base.menu_sales" sequence="1" 
+            groups="base.group_sale_salesman,base.group_sale_manager,group_call_center,group_retail_sales_associate,group_retail_sales_manager,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox"/>
+
+        <!--        To add website location field in Shop view
+        -->       <record id="view_website_location_shop" model="ir.ui.view">
+            <field name="name">view.website.location.shop</field>
+            <field name="model">sale.shop</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="sale.view_shop_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="/form/group/group[1]/field[@name='pricelist_id']" position="after">
+                    <field name="base_url"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_sale_order_form_bista_shipping_cox" model="ir.ui.view">
+            <field name="name">view.sale.order.form.bista.shipping.cox</field>
+            <field name="model">sale.order</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="bista_shipping.view_order_form_inherit_frm_bista_shp"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form/sheet/group/group[2]/field[@name='tracking_no']" position="replace">
+
+                </xpath>
+            </field>
+       </record>
+
+      <record id="view_sale_bundle_order_tree_cox_magentoid" model="ir.ui.view">
+            <field name="name">view.sale.bundle.order.tree.cox.magentoid</field>
+            <field name="model">sale.order</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="sale_bundle_product.sale_order_view_form_sale_bundle"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='so_line_item_set_ids']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//label[@string='Chosen Configuration']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+            </field>
+
+     </record>
+
+     <record id="view_sale_order_negotiated_shipping_cox" model="ir.ui.view">
+            <field name="name">view.sale.order.negotiated.shipping.cox</field>
+            <field name="model">sale.order</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="sale_weight.sale_weight_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='total_weight_net']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+           </field>
+
+      </record>
+      <record id="view_order_withcarrier_form_cox" model="ir.ui.view">
+            <field name="name">view.order.withcarrier.formshipping.cox</field>
+            <field name="model">sale.order</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="delivery.view_order_withcarrier_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//group/div/field[@name='carrier_id']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                 <xpath expr="//group/label[@for='carrier_id']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+           </field>
+
+      </record>
+
+      <menuitem id="sale.menu_sale_quotations"
+                action="sale.action_quotations" parent="base.menu_sales"
+                sequence="5" groups="group_hide"/>
+
+      <record id="view_sale_stock_cox" model="ir.ui.view">
+           <field name="name">view.sale.stock.cox</field>
+           <field name="model">sale.order</field>
+           <field name="type">form</field>
+           <field name="inherit_id" ref="sale_stock.view_order_form_inherit"/>
+           <field name="arch" type="xml">
+               <xpath expr="//field[@name='shop_id']" position="attributes">
+                   <attribute name="string">Magento Store</attribute>
+                   <attribute name="widget">selection</attribute>
+                   <attribute name="domain">[('magento_shop','=',True)]</attribute>
+                   <attribute name="context">{'cox_sales_channels':cox_sales_channels}</attribute>
+                   <attribute name="on_change">onchange_shop_id(shop_id, context)</attribute>
+               </xpath>
+               <xpath expr="//button[@string='View Delivery Order']" position="attributes">
+                   <attribute name="attrs">{'invisible': ['|','|','|',('picking_ids','=',False),('picking_ids','=',[]), ('state', 'in', ('progress','manual'))]}</attribute>
+               </xpath>
+               <!--To make product_id field as required in sale_order_line-->
+               <xpath expr="//field[@name='product_id']" position="attributes">
+			<attribute name="required">1</attribute>
+                   	<attribute name="context"> {'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'shop':parent.shop_id, 'uom':product_uom,'partner_shipping_id':parent.partner_shipping_id,'partner_invoice_id':parent.partner_invoice_id,'search_default_filter_to_category':1,'call_center_pickup':parent.call_center_pickup,'order_line':parent.order_line}</attribute>
+	                <attribute name="on_change">product_id_change(parent.pricelist_id, product_id, product_uom_qty, product_uom, product_uos_qty, product_uos, name, parent.partner_id, False, True, parent.date_order, False, parent.fiscal_position, False, context)</attribute>
+               </xpath>
+               <xpath expr="//label[@for='move_ids']" position="replace">
+               </xpath>
+               <xpath expr="//field[@name='move_ids']" position="replace">
+               </xpath>
+               <!--#######-->
+           </field>
+       </record>
+	<!-- Hide Payment Method field from the tree view from retail store-->
+       <record id="view_hide_payment_method" model="ir.ui.view">
+            <field name="name">view.hide.payment.method</field>
+            <field name="model">sale.order</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="sale_quick_payment.sale_order_view_tree" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='payment_method_id']" position="replace">
+                </xpath>
+            </field>
+        </record>
+	<record id="view_order_line_tree_cox" model="ir.ui.view">
+            <field name="name">sale.order.line.tree.cox</field>
+            <field name="model">sale.order.line</field>
+            <field name="arch" type="xml">
+                <tree string="Sales Order Lines" create="false" edit="false" delete="false">
+                    <field name="order_id"/>
+                    <field name="product_id" invisible="1"/>
+                    <field name="order_partner_id"/>
+                    <field name="name"/>
+                    <field name="product_uom_qty" string="Qty"/>
+                    <field name="product_uom" string="Unit of Measure" groups="product.group_uom"/>
+                    <field name="salesman_id"/>
+                    <field name="price_subtotal" sum="Total"/>
+                    <field name="state"/>
+                    <field name="start_date"/>
+                    <field name="invoiced"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_sale_order_line_cox" model="ir.actions.act_window">
+            <field name="name">Order Lines</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">sale.order.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field name="domain">[('state','=','done'),('order_id','!=',False)]</field>
+            <field name="view_id" ref="view_order_line_tree_cox"/>
+            <field name="context">{'nodelete':'1','nocreate':'1','noedit':'1'}</field>
+        </record>
+        <!--hiding dreate on Order Lines Form View-->
+        <record id="view_order_lines_cox" model="ir.ui.view">
+           <field name="name">view.order.lines.cox</field>
+           <field name="model">sale.order.line</field>
+           <field name="type">form</field>
+           <field name="inherit_id" ref="sale.view_order_line_form2" />
+           <field name="arch" type="xml">
+               <xpath expr="//form" position="attributes">
+                   <attribute name="create">0</attribute>
+                   <attribute name="edit">0</attribute>
+               </xpath>
+           </field>
+       </record>
+        <menuitem action="action_sale_order_line_cox" id="menu_sale_order_line_cox" parent="base.menu_sales" sequence="6" groups="group_retail_store,group_retail_sales_associate,group_retail_sales_manager,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox"/>
+
+	<!-- Record to make price field as readonly-->
+        <record id="view_readonly_sub_components" model="ir.ui.view">
+            <field name="name">view.readonly.sub.components</field>
+            <field name="model">sale.order</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="sub_product_combination.view_sale_order_line_child" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='sub_components']/form/group/field[@name='price']" position="attributes">
+                    <attribute name="readonly">1</attribute>
+                </xpath>
+		<xpath expr="//field[@name='sub_components']/form/group/field[@name='product_id']" position="attributes">
+                    <attribute name="readonly">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='sub_components']/form/group/field[@name='qty_uom']" position="attributes">
+                    <attribute name="readonly">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='sub_components']/form/group/field[@name='uom_id']" position="attributes">
+                    <attribute name="readonly">1</attribute>
+                </xpath>
+            </field>
+        </record>
+      <!--<delete id="sale.menu_sale_quotations" model="ir.actions.act_window"/>-->
+      <!-- Record for Amazon orders search view -->
+            <record id="view_sales_order_search_amazon_cox" model="ir.ui.view">
+            <field name="name">view.sales.order.search.amazon.cox</field>
+            <field name="model">sale.order</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Sales Order">
+                    <filter icon="terp-document-new" string="Quotations" domain="[('state','=','draft')]" help="Sales Order that haven't yet been confirmed"/>
+                    <filter icon="terp-check" string="Sales" domain="[('state','in',('manual','progress'))]"/>
+                    <separator orientation="vertical"/>
+                    <filter icon="terp-dolar_ok!" string="To Invoice" domain="[('state','=','manual')]" help="Sales Order ready to be invoiced"/>
+                    <separator orientation="vertical"/>
+                    <field name="name"
+                           filter_domain="['|', ('name','ilike',self),('client_order_ref','ilike',self)]"/>
+                    <field name="partner_id"/>
+                    <field name="user_id">
+                        <filter domain="[('user_id','=',uid)]" help="My Sale Orders" icon="terp-personal"/>
+                    </field>
+                    <newline/>
+                    <group expand="0" string="Group By..." groups="base.group_extended">
+                        <filter string="Customer" icon="terp-personal" domain="[]" context="{'group_by':'partner_id'}"/>
+                        <filter string="Salesman" icon="terp-personal" domain="[]" context="{'group_by':'user_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Order Date" icon="terp-go-month" domain="[]" context="{'group_by':'date_order'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+         <!--Record for amazon orders tree view -->
+        <record id="view_sales_order_tree_amazon_cox" model="ir.ui.view">
+            <field name="name">view.sales.order.tree.amazon.cox</field>
+            <field name="model">sale.order</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Sales Orders" colors="grey:state=='cancel';blue:state in ('waiting_date','manual');red:state in ('invoice_except','shipping_except');brown:returns_status=='full_returns';goldenrod:returns_status=='partial_returns'" >
+                    <field name="name" string="Order Number"/>
+                    <field name="location_id"/>
+                    <field name="date_order"/>
+                    <field name="partner_id"/>
+                    <field name="user_id"/>
+                    <field name="picked_rate" widget="progressbar"/>
+                    <field name="invoiced_rate" widget="progressbar" string="Invoiced"/>
+                    <field name="amount_untaxed" sum="Total Tax Excluded"/>
+                    <field name="amount_total" sum="Total Tax Included"/>
+                    <field name="state"/>
+                    <field name="returns_status" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+        <!--Record for amazon orders form view-->
+        <record id="view_sales_order_form_amazon_cox" model="ir.ui.view">
+            <field name="name">view.sales.order.form.amazon.cox</field>
+            <field name="model">sale.order</field>
+            <field name="arch" type="xml">
+                <form string="Amazon Order" version="7.0">
+                    <header>
+                        <button name="order_confirm_cox" type="object" string="Confirm Order" icon="gtk-apply" attrs="{'invisible':[('state','&lt;&gt;','draft')]}"/>
+                        <button name="action_view_invoice" string="View Invoice" type="object" class="oe_highlight"
+                            attrs="{'invisible': [('invoice_exists', '=', False)]}" groups="base.group_user"/>
+                        <button name="action_view_delivery" string="View Delivery Order" type="object" class="oe_highlight"
+                           attrs="{'invisible': ['|','|','|',('picking_ids','=',False),('picking_ids','=',[]), ('state', 'not in', ('progress','manual','done'))]}" groups="base.group_user"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,sent,invoiced,done" statusbar_colors='{"invoice_except":"red","waiting_date":"blue"}'/>
+                    </header>
+                    <sheet>
+                    <h1>
+                        <label string="Quotation " attrs="{'invisible': [('state','not in',('draft','sent'))]}"/>
+                        <label string="Sales Order " attrs="{'invisible': [('state','in',('draft','sent'))]}"/>
+                        <field name="name" class="oe_inline" readonly="1"/>
+                    </h1>
+                    <group>
+                        <group>
+                            <field name="partner_id" on_change="onchange_partner_id(partner_id, context)" domain="[('customer','=',True)]" context="{'search_default_customer':1, 'show_address': 1}" options='{"always_reload": True}'/>
+                            <field name="partner_invoice_id" groups="sale.group_delivery_invoice_address" context="{'default_type':'invoice'}"/>
+                            <field name="partner_shipping_id" groups="sale.group_delivery_invoice_address" context="{'default_type':'delivery'}"/>
+                            <field name="project_id" context="{'partner_id':partner_invoice_id, 'default_pricelist_id':pricelist_id, 'default_name':name, 'default_type': 'contract'}" groups="sale.group_analytic_accounting" domain="[('type','in',['view','normal','contract'])]"/>
+                        </group>
+                        <group>
+                            <field name="date_order"/>
+                            <field name="shop_id" groups="base.group_no_one" on_change="onchange_shop_id(shop_id, context)" widget="selection"/>
+                            <field name="client_order_ref"/>
+                            <field domain="[('type','=','sale')]" name="pricelist_id" groups="product.group_sale_pricelist" on_change="onchange_pricelist_id(pricelist_id,order_line)" widget="selection"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group>
+			<field name="location_id" string="Inventory Location" attrs="{'invisible':[('order_type','=',False)],'required':[('order_type','=',True)],'readonly':[('state','not in',('draft'))]}" widget="selection"/>    <!--Added by Preeti-->
+                        <field name="cox_sales_channels" />
+                        <field name="order_type" invisible="1"/>
+                    </group>
+                    </group>
+                    <notebook>
+                        <page string="Order Lines">
+                            <field name="order_line">
+                                <form string="Sales Order Lines" version="7.0">
+                                    <header groups="base.group_user">
+                                        <button name="%(sale.action_view_sale_order_line_make_invoice)d" states="confirmed" string="Invoice" type="action" icon="terp-document-new"/>
+                                        <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,done" statusbar_colors='{"exception":"red","cancel":"red"}'/>
+                                    </header>
+                                    <group>
+                                        <group>
+                                            <field name="state" invisible="1" />
+                                            <field name="product_id" required="1"
+                                                context="{'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'shop':parent.shop_id, 'uom':product_uom}"
+                                                groups="base.group_user"
+                                                on_change="product_id_change(parent.pricelist_id, product_id, product_uom_qty, product_uom, product_uos_qty, product_uos, name, parent.partner_id, False, True, parent.date_order, False, parent.fiscal_position, False, context)"/>
+                                            <label for="product_uom_qty"/>
+                                            <div>
+                                                <field
+                                                    context="{'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'shop':parent.shop_id, 'uom':product_uom}"
+                                                    name="product_uom_qty" class="oe_inline"
+                                                    on_change="product_id_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, False, False, parent.date_order, False, parent.fiscal_position, True, context)"/>
+                                                <field name="product_uom" groups="product.group_uom" class="oe_inline oe_no_button"
+
+                                                    on_change="product_uom_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, False, False, parent.date_order, context)"/>
+                                            </div>
+                                            <label for="product_uos_qty" groups="product.group_uos"/>
+                                            <div groups="product.group_uos">
+                                                <field name="product_uos_qty" class="oe_inline"/>
+                                                <field name="product_uos" options='{"no_open": True}' class="oe_inline"/>
+                                            </div>
+                                            <label for="discount" groups="sale.group_discount_per_so_line"/>
+                                            <div name="discount" groups="sale.group_discount_per_so_line">
+                                                <field name="discount" class="oe_inline"/>
+                                            </div>
+                                            <field name="price_unit" invisible="1"/>
+                                        </group>
+                                        <group>
+                                            <field name="tax_id" widget="many2many_tags" domain="[('parent_id','=',False),('type_tax_use','&lt;&gt;','purchase')]"/>
+                                            <field name="type"/>
+                                            <field name="th_weight"/>
+                                             we should put a config wizard for these two fields
+                                            <field name="address_allotment_id"/>
+                                        </group>
+                                    </group>
+                                    <label for="name"/>
+                                    <field name="name"/>
+                                    <div groups="base.group_no_one">
+                                        <!--<label for="invoice_lines"/>
+                                        <field name="invoice_lines"/>
+                                        <label for="so_line_item_set_ids"/>
+                                        <field name="so_line_item_set_ids" nolabel="1"/>-->
+                                        <label for="sub_components"/>
+                                        <field name="sub_components" nolabel="1">
+                                <form string="Sub Products">
+                                    <group>
+                                    <field name="product_id" readonly="1"/>
+                                    <field  name="qty_uom" readonly="1"/>
+                                    <field  name="uom_id" readonly="1"/>
+                                    <field  name="price" readonly="1"/>
+                                    </group>
+                                </form>
+                                <tree string="Sub Products">
+                                    <field name="product_id"/>
+                                    <field  name="qty_uom"/>
+                                    <field  name="uom_id"/>
+                                    <field  name="price"/>
+                                </tree>
+                            </field>
+                                    </div>
+                                </form>
+                                <tree string="Sales Order Lines">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="state" invisible="1"/>
+                                    <field name="th_weight" invisible="1"/>
+                                    <field name="product_id"
+                                        context="{'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'shop':parent.shop_id, 'uom':product_uom}"
+                                        groups="base.group_user"
+                                        on_change="product_id_change(parent.pricelist_id, product_id, product_uom_qty, product_uom, product_uos_qty, product_uos, name, parent.partner_id, False, True, parent.date_order, False, parent.fiscal_position, False, context)"/>
+                                    <field name="name"/>
+                                    <field name="product_uom_qty"
+                                        context="{'partner_id':parent.partner_id, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id, 'shop':parent.shop_id, 'uom':product_uom}"
+                                        on_change="product_id_change(parent.pricelist_id, product_id, product_uom_qty, product_uom, product_uos_qty, product_uos, name, parent.partner_id, False, False, parent.date_order, False, parent.fiscal_position, True, context)"/>
+                                    <field name="product_uom"
+                                        on_change="product_uom_change(parent.pricelist_id, product_id, product_uom_qty, product_uom, product_uos_qty, product_uos, name, parent.partner_id, False, False, parent.date_order, context)"
+                                        groups="product.group_uom" options='{"no_open": True}'/>
+                                    <field name="product_uos_qty" groups="product.group_uos" invisible="1"/>
+                                    <field name="product_uos" string="UoS" groups="product.group_uos" invisible="1"/>
+                                    <field name="tax_id" widget="many2many_tags" domain="[('parent_id','=',False),('type_tax_use','&lt;&gt;','purchase')]"/>
+                                    <field name="price_unit"/>
+                                    <field name="discount" groups="sale.group_discount_per_so_line"/>
+                                    <field name="price_subtotal"/>
+                                </tree>
+                            </field>
+                            <group class="oe_subtotal_footer oe_right" colspan="2" name="sale_total">
+                                <field name="amount_untaxed" widget='monetary' options="{'currency_field': 'currency_id'}"/>
+                                <field name="amount_tax" widget='monetary' options="{'currency_field': 'currency_id'}"/>
+                                <div class="oe_subtotal_footer_separator oe_inline">
+                                    <label for="amount_total" />
+                                    <button name="button_dummy"
+                                        states="draft,sent" string="(update)" type="object" class="oe_edit_only oe_link"/>
+                                </div>
+                                <field name="amount_total" nolabel="1" class="oe_subtotal_footer_separator" widget='monetary' options="{'currency_field': 'currency_id'}"/>
+                            </group>
+                            <div class="oe_clear"/>
+                            <field name="note" class="oe_inline" placeholder="Terms and conditions..."/>
+                        </page>
+                        <page string="Other Information" groups="base.group_user">
+                            <group>
+                                <group name="sales_person" groups="base.group_user">
+                                    <field name="user_id"/>
+                                    <field groups="base.group_no_one" name="origin"/>
+                                </group>
+                                <group name="sale_pay">
+                                    <field name="payment_term" widget="selection"/>
+                                    <field name="fiscal_position" widget="selection"/>
+                                    <field name="company_id" widget="selection" groups="base.group_multi_company"/>
+                                </group>
+                                <group>
+                                    <field name="invoiced"/>
+                                    <field name="invoice_exists" invisible="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                    <page string="History">
+                        <separator string="Invoices"/>
+                        <field name="invoice_ids"/>
+                        <separator string="Packings"/>
+                        <field name="picking_ids"/>
+                    </page>
+                    <page string ="Return info" position="inside">
+                        <field name="sale_return_ids" nolabel="1"/>
+                    </page>
+                    </notebook>
+                    </sheet>
+
+                 </form>
+            </field>
+        </record>
+<!--        Preeti changed name from Amazon Orders Third Party Orders. changed domain, context-->
+        <record id="action_order_for_amazon_cox" model="ir.actions.act_window">
+            <field name="name">Third Party Orders</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field name="domain">['|',('cox_sales_channels','=','amazon'),('cox_sales_channels','=','tru')]</field>
+            <field name="search_view_id" ref="view_sales_order_search_amazon_cox"/>
+            <field name="view_id" ref="view_sales_order_tree_amazon_cox"/>
+            <field name="context">{'search_default_user_id':uid,'default_order_type':True,'default_cox_sales_channels':'tru'}</field>
+        </record>
+
+        <record id="action_amazon_view_tree_cox" model="ir.actions.act_window.view">
+           <field eval="10" name="sequence"/>
+           <field name="view_mode">tree</field>
+           <field name="view_id" ref="view_sales_order_tree_amazon_cox"/>
+           <field name="act_window_id" ref="action_order_for_amazon_cox"/>
+       </record>
+       <record id="action_amazon_view_form_cox" model="ir.actions.act_window.view">
+           <field eval="12" name="sequence"/>
+           <field name="view_mode">form</field>
+           <field name="view_id" ref="view_sales_order_form_amazon_cox"/>
+           <field name="act_window_id" ref="action_order_for_amazon_cox"/>
+       </record>
+
+       <menuitem action="action_order_for_amazon_cox" id="menu_sale_order_amazon" parent="base.menu_sales" sequence="5" 
+                groups="base.group_sale_manager,stock.group_stock_manager,group_call_center,group_retail_sales_associate,group_retail_sales_manager,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox"/>
+    </data>
+</openerp>
+

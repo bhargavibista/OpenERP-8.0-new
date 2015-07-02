@@ -1,0 +1,59 @@
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/coax_cox/!svn/ver/139/barcode_scanning
+END
+__init__.py
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/coax_cox/!svn/ver/43/barcode_scanning/__init__.py
+END
+stock_serial_lot_view.xml
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/coax_cox/!svn/ver/43/barcode_scanning/stock_serial_lot_view.xml
+END
+stock.py
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/coax_cox/!svn/ver/199/barcode_scanning/stock.py
+END
+__openerp__.py
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/coax_cox/!svn/ver/43/barcode_scanning/__openerp__.py
+END
+stock_view_barcode.xml
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/coax_cox/!svn/ver/43/barcode_scanning/stock_view_barcode.xml
+END
+tr_barcode.py
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/coax_cox/!svn/ver/132/barcode_scanning/tr_barcode.py
+END
+stock_view.xml
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/coax_cox/!svn/ver/114/barcode_scanning/stock_view.xml
+END
+tr_barcode_view.xml
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/coax_cox/!svn/ver/43/barcode_scanning/tr_barcode_view.xml
+END
+stock_production_lot.py
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/coax_cox/!svn/ver/43/barcode_scanning/stock_production_lot.py
+END

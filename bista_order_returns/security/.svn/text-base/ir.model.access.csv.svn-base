@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_return_order_manager,return.order,model_return_order,base.group_sale_manager,1,1,1,1
+access_return_order_line_manager,return.order.line,model_return_order_line,base.group_sale_manager,1,1,1,1

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_flarewatch_users" model="ir.ui.view">
+            <field name="name">view.flarewatch.users</field>
+            <field name="model">flarewatch.customer</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="">
+                    <group col="4" colspan="4">
+                     <separator string="Flare Watch Customers" colspan="8"/>
+                        <group colspan="2">
+                        <field name="csv_file" string="Export" readonly="1" filename='name' required="True" attrs="{'invisible':[('name','=','')]}"/>
+                        </group>
+                    <field name="name" readonly="1" invisible="1" colspan="2" attrs="{'invisible':[('csv_file','=','')]}"/>
+                    <newline/>
+                    <button special="cancel" string="Cancel" icon="gtk-cancel"/>
+                    <button name="flarewatch_customer" string="Export" type="object" icon="gtk-apply"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_flare_watch_users" model="ir.actions.act_window">
+            <field name="name">Flare Watch Customers</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">flarewatch.customer</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="view_flarewatch_users"/>
+            <field name="target">new</field>
+        </record>
+
+        <act_window name="Flare Watch Customers"
+            res_model="flarewatch.customer"
+            src_model="res.partner"
+            view_mode="form"
+            target="new"
+            key2="client_action_multi"
+            id="action_flare_watch_users"/>
+    </data>
+</openerp>

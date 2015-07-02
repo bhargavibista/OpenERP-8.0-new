@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+      <!--
+      Product Tax Code
+    -->
+
+    <record id="view_product_tax_code_tree" model="ir.ui.view">
+            <field name="name">product.tax.code.tree</field>
+            <field name="model">product.tax.code</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Product Tax Code">
+                    <field name="name"/>
+                    <field name="description"/>
+                    <field name="type"/>
+                    <field name="company_id" groups="base.group_multi_company"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_product_tax_code_form" model="ir.ui.view">
+            <field name="name">product.tax.code.form</field>
+            <field name="model">product.tax.code</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Product Tax Code">
+                    <field name="name"/>
+                    <field name="company_id" groups="base.group_multi_company"/>
+                    <field name="description"/>
+                    <field name="type"/>
+                </form>
+            </field>
+        </record>
+
+
+    <record id="action_product_tax_code" model="ir.actions.act_window">
+            <field name="name">Product Tax Codes</field>
+            <field name="res_model">product.tax.code</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+    <menuitem action="action_product_tax_code" id="menu_product_tax_code" name="Product Tax Codes" parent="menu_avatax" sequence="29"/>
+
+    <!--
+    Product
+    -->
+
+    <record id="view_product_normal_form_avatax_inherit" model="ir.ui.view">
+            <field name="name">product.normal.form.avatax.inherit</field>
+            <field name="model">product.product</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_normal_form_view"/>
+            <field name="priority">30</field>
+            <field name="arch" type="xml">
+        <xpath expr="/form/sheet/notebook/page[@string='Accounting']/group[@name='properties']" position="inside">
+          <separator string="AvaTax Properties" colspan="4"/>
+          <group colspan="2" col="2">
+            <field name="tax_code_id"/>
+          </group>
+        </xpath>
+            </field>
+        </record>
+
+    <!--
+    Product Template
+        -->
+
+        <record id="view_product_template_form_avatax_inherit" model="ir.ui.view">
+            <field name="name">product.template.form.avatax.inherit</field>
+            <field name="model">product.template</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_template_form_view"/>
+            <field name="priority">30</field>
+            <field name="arch" type="xml">
+              <xpath expr="/form/sheet/notebook/page[@string='Accounting']" position="inside"> <!-- cox gen2 added sheet-->
+                <separator string="AvaTax Properties" colspan="4"/>
+                  <group colspan="2" col="2">
+                      <field name="tax_code_id"/>
+                  </group>
+                  <newline/>
+        </xpath>
+      </field>
+        </record>
+
+    <!--
+    Product Category
+    -->
+
+        <record id="view_product_category_form_avatax_inherit" model="ir.ui.view">
+            <field name="name">product.category.form.avatax.inherit</field>
+            <field name="model">product.category</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_category_form_view"/>
+            <field name="arch" type="xml">
+              <form position="inside">
+                <group col="2" colspan="2">
+                    <separator string="AvaTax Properties" colspan="2"/>
+                    <field name="tax_code_id"/>
+                </group>
+            </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

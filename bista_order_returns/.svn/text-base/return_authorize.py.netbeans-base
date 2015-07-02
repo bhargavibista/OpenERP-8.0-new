@@ -1,0 +1,65 @@
+##############################################################################
+#
+# Copyright (c) 2004 TINY SPRL. (http://tiny.be) All Rights Reserved.
+#                    Fabien Pinckaers <fp@tiny.Be>
+#
+# WARNING: This program as such is intended to be used by professional
+# programmers who take the whole responsability of assessing all potential
+# consequences resulting from its eventual inadequacies and bugs
+# End users who are looking for a ready-to-use solution with commercial
+# garantees and support are strongly adviced to contract a Free Software
+# Service Company
+#
+# This program is Free Software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+##############################################################################
+
+from osv import osv, fields
+import time
+from datetime import datetime, date
+#try:
+#    from quix.pay.gateway.authorizenet import AimGateway
+#    from quix.pay.transaction import CreditCard
+#except:
+#    pass
+class return_order(osv.osv):
+    _inherit = "return.order"
+    _columns = {
+            'cc_number':fields.char('CC Number',size=64,readonly=True),
+            'auth_transaction_id' :fields.char('Transaction ID', size=40,readonly=True),
+            'auth_respmsg' :fields.text('Response Message',readonly=True),
+            'customer_profile': fields.char('Customer Profile',size=64,readonly=True),
+            'customer_payment_profile_id': fields.char('Payment Profile ID',size=64,readonly=True)
+	}
+
+    def api_response(self,cr,uid,ids,response,customer_profile,payment_profile_id,cc_number,context={}):
+        split = response.split(',')
+        transaction_id = split[6]
+        transaction_message = split[3]
+        vals = {}
+        if transaction_message:
+            vals.update({'auth_respmsg':transaction_message})
+        if transaction_id:
+            vals.update({'auth_transaction_id':transaction_id})
+        if customer_profile:
+            vals.update({'customer_profile':customer_profile})
+        if payment_profile_id:
+            vals.update({'customer_payment_profile_id':payment_profile_id})
+        if cc_number:
+            vals.update({'cc_number':cc_number})
+        if vals:
+            self.write(cr,uid,[ids],vals)
+        return True
+return_order()

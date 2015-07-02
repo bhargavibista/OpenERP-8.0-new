@@ -1,0 +1,37 @@
+<openerp>
+    <data>
+        <record id="view_retail_agreement" model="ir.ui.view">
+            <field name="name">view.retail.agreement</field>
+            <field name="model">retail.agreement</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Payment Agreement">
+                    <separator string="Flare Play Terms and Conditions" colspan="8"/>
+                    <group>
+                    <!--<field name="flare_watch_agmt_chk" on_change="onchange_all_agreement(flare_watch_agmt_chk,fanhanttan_toa_agmt_chk,privacy_policy_agm_chk,fanhanttan_privacy_policy_agmt_chk,all_checked,context)"/>-->
+                        <field name="flare_watch_agmt_chk" string="Agree"/>
+                        <newline/>
+                        <field name="flare_watch_tou_agmt" colspan="8" nolabel="1"/>
+                    </group>
+                    <!--                        <newline/>
+                        <separator string="Fanhattan Terms of Agreement" colspan="8"/>
+                        <field name="fanhanttan_toa_agmt_chk" on_change="onchange_all_agreement(flare_watch_agmt_chk,fanhanttan_toa_agmt_chk,privacy_policy_agm_chk,fanhanttan_privacy_policy_agmt_chk,all_checked,context)"/>
+                        <newline/>
+                        <field name="fanhanttan_toa_agmt" colspan="8" nolabel="1"/>
+                        <newline/>
+                        <separator string=" Privacy Policy" colspan="8"/>
+                         <field name="privacy_policy_agm_chk" on_change="onchange_all_agreement(flare_watch_agmt_chk,fanhanttan_toa_agmt_chk,privacy_policy_agm_chk,fanhanttan_privacy_policy_agmt_chk,all_checked,context)"/>
+                         <newline/>
+                        <field name="privacy_policy_agmt" colspan="8" nolabel="1"/>
+                        <newline/>
+                        <separator string=" Fanhattan Privacy Policy" colspan="8"/>
+                        <field name="fanhanttan_privacy_policy_agmt_chk" on_change="onchange_all_agreement(flare_watch_agmt_chk,fanhanttan_toa_agmt_chk,privacy_policy_agm_chk,fanhanttan_privacy_policy_agmt_chk,all_checked,context)"/>
+                        <newline/>
+                        <field name="fanhanttan_privacy_policy_agmt" colspan="8" nolabel="1"/>-->
+                    <button name="accept_agreement" string="Accept" type="object" icon="gtk-execute" colspan="2"/>
+                    <button name="reject_agreement" string="Reject" type="object" icon="gtk-execute" colspan="2"/>
+                </form>
+            </field>
+        </record>
+    </data>
+</openerp>

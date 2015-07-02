@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record model="ir.ui.view" id="view_vista_report_form_cox">
+            <field name="name">view.vista.report.form.cox</field>
+            <field name="model">vista.report</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Vista Warehouse Report">
+                    <group colspan="4" col="4">
+                        <field name="name" readonly="True"/>
+                        <field name="create_date"/>
+                        <field name="datas" filename='name'/>
+                    </group>
+
+                </form>
+            </field>
+        </record>
+        <record model="ir.ui.view" id="view_vista_report_tree_cox">
+            <field name="name">view.vista.report.tree.cox</field>
+            <field name="model">vista.report</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Vista Warehouse Report">
+                    <field name="create_date"/>
+                    <field name="name"/>
+                </tree>
+            </field>
+        </record>
+        <record id="view_vista_report_search_cox" model="ir.ui.view">
+            <field name="name">view.vista.report.search.cox</field>
+            <field name="model">vista.report</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Vista Warehouse Report">
+                    <field name="name"/>
+                </search>
+            </field>
+        </record>
+        <record id="action_vista_report_cox" model="ir.actions.act_window">
+            <field name="name">Vista Warehouse Report</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">vista.report</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_vista_report_tree_cox"/>
+            <field name="search_view_id" ref="view_vista_report_search_cox"/>
+        </record>
+        <menuitem id="menu_vista_warehouse_mgmt" name="Vista Warehouse Management" parent="stock.menu_stock_root" sequence="2"/>
+        <menuitem action="action_vista_report_cox" id="menu_vista_warehouse_report" parent="menu_vista_warehouse_mgmt" sequence="1"/>
+
+    </data>
+</openerp>

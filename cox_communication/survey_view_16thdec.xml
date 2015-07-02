@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <menuitem name="Surveys" id="base.menu_tools" sequence="120" 
+            groups="base.group_tool_user,base.group_tool_manager,base.group_survey_user,group_retail_sales_manager,group_retail_sales_associate,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox,group_third_party_reseller"/>
+
+        <menuitem name="Surveys" id="survey.menu_surveys" parent="base.menu_tools" sequence="2"
+                groups="base.group_tool_user,base.group_tool_manager,base.group_survey_user,group_retail_sales_manager,group_retail_sales_associate,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox,group_third_party_reseller"/>
+
+        <menuitem name="Surveys" id="survey.menu_survey_form"
+            action="survey.action_survey_form1" parent="survey.menu_surveys"
+            groups="base.group_tool_manager,group_retail_sales_manager,group_retail_sales_associate,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox,group_third_party_reseller"
+            sequence="1"/>
+
+       <menuitem name="Survey Requests" id="survey.menu_survey_type_form1"
+            action="survey.action_survey_request_tree" parent="survey.menu_surveys"
+            groups="base.group_tool_manager,group_retail_sales_manager,group_retail_sales_associate,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox,group_third_party_reseller"
+            sequence="3"/>
+
+        <menuitem name="Survey Pages" id="survey.menu_survey_page_form1"
+            action="survey.action_survey_page_form" parent="survey.menu_surveys"
+            groups="base.group_no_one,group_retail_sales_manager,group_retail_sales_associate,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox,group_third_party_reseller"/>
+
+        <record id="survey_form_inherit" model="ir.ui.view">
+            <field name="name">survey.form.inherit</field>
+            <field name="model">survey</field>
+            <field name="inherit_id" ref="survey.survey_form" />
+            <field name="groups_id" eval="[(6,0, [ref('cox_communication.group_internal_operations'), ref('cox_communication.group_support'),ref('cox_communication.group_retail_sales_associate'),ref('cox_communication.group_retail_sales_manager'),ref('cox_communication.group_warehouse_cox'),ref('cox_communication.group_third_party_reseller')])]"/>
+            <field name="arch" type="xml">
+
+                <xpath expr="//form" position="attributes">
+                   <attribute name="edit">0</attribute>
+               </xpath>
+               <xpath expr="//form" position="attributes">
+                   <attribute name="create">0</attribute>
+               </xpath>
+               <xpath expr="//button[@string='Edit Survey']" position="attributes">
+                   <attribute name="invisible">1</attribute>
+               </xpath>
+
+                 </field>
+        </record>
+          <record id="survey_tree_inherit_cox" model="ir.ui.view">
+            <field name="name">survey.tree.inherit.cox</field>
+            <field name="model">survey</field>
+            <field name="inherit_id" ref="survey.survey_tree" />
+            <field name="groups_id" eval="[(6,0, [ref('cox_communication.group_internal_operations'), ref('cox_communication.group_support'),ref('cox_communication.group_retail_sales_associate'),ref('cox_communication.group_retail_sales_manager'),ref('cox_communication.group_warehouse_cox'),ref('cox_communication.group_third_party_reseller')])]"/>
+            <field name="arch" type="xml">
+
+               <xpath expr="//tree" position="attributes">
+                   <attribute name="create">0</attribute>
+               </xpath>
+                 </field>
+        </record>
+         <record id="survey_kanban_inherit_cox" model="ir.ui.view">
+            <field name="name">survey.kanban.inherit.cox</field>
+            <field name="model">survey</field>
+            <field name="inherit_id" ref="survey.view_survey_kanban" />
+            <field name="groups_id" eval="[(6,0, [ref('cox_communication.group_internal_operations'), ref('cox_communication.group_support'),ref('cox_communication.group_retail_sales_associate'),ref('cox_communication.group_retail_sales_manager'),ref('cox_communication.group_warehouse_cox'),ref('cox_communication.group_third_party_reseller')])]"/>
+            <field name="arch" type="xml">
+
+               <xpath expr="//kanban" position="attributes">
+                   <attribute name="create">0</attribute>
+               </xpath>
+               <xpath expr="//kanban" position="attributes">
+                   <attribute name="edit">0</attribute>
+               </xpath>
+                 </field>
+        </record>
+        <!--<record id="survey_tree_inherit" model="ir.ui.view">
+            <field name="name">survey.tree.inherit</field>
+            <field name="model">survey</field>
+            <field name="inherit_id" ref="survey.survey_tree" />
+            <field name="arch" type="xml">
+                <xpath expr="//tree" position="attributes">
+                   <attribute name="edit">0</attribute>
+               </xpath>
+                 </field>
+        </record>-->
+        <!--<record id="view_survey_kanban_inherit" model="ir.ui.view">
+            <field name="name">survey.kanban.inherit</field>
+            <field name="model">survey</field>
+            <field name="inherit_id" ref="survey.view_survey_kanban" />
+            <field name="arch" type="xml">
+                <xpath expr="//kanban" position="attributes">
+                   <attribute name="edit">0</attribute>
+               </xpath>
+                 </field>
+        </record>-->
+
+            </data>
+</openerp>
+
+

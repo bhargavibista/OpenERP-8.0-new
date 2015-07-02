@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+      <menuitem name="Warehouse"
+            id="stock.menu_stock_root"
+            groups="stock.group_stock_manager,stock.group_stock_user,group_vista_warehouse,group_retail_store,group_call_center"
+            sequence="70"/>
+     <menuitem id="stock.menu_stock_products_moves" name="Receive/Deliver Products" parent="stock.menu_stock_root" sequence="2"/>
+     <menuitem action="stock.action_picking_tree" id="stock.menu_action_picking_tree" parent="stock.menu_stock_warehouse_mgmt" sequence="3" groups="stock.group_stock_manager,stock.group_stock_user"/>
+    <!-- To hide button Force Availability -->
+     <menuitem action="sale_stock.outgoing_picking_list_to_invoice" id="sale_stock.menu_action_picking_list_to_invoice" parent="base.menu_invoiced" groups="sale_stock.group_invoice_deli_orders,group_retail_sales_manager,group_retail_sales_associate,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox,group_third_party_reseller" sequence="20"/>
+    <!-- To hide button Force Availability -->
+     <record model="ir.ui.view" id="view_picking_form_cox">
+            <field name="name">view.picking.form.cox</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="stock.view_picking_form" />
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <xpath expr="//button[@name='force_assign']" position="attributes">
+                       <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//button[@name='force_assign']" position="after">
+                       <button name="set_to_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-jump-to"/>
+                </xpath>
+                
+                <!--cox gen2-->
+<!--                <xpath expr="//field[@name='move_lines']/form/group/button[@name='action_cancel']" position="attributes">
+                       <attribute name="groups">base.group_sale_manager,stock.group_stock_manager</attribute>
+                </xpath>-->
+            </field>
+        </record>
+
+        <record id="view_picking_out_tree_packing_inherit_cox" model="ir.ui.view">
+            <field name="name">stock.picking.out.tree.packing.inherit.cox</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="barcode_scanning.view_picking_out_tree_packing_inherit"/>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <field name="shipping_process" position="replace"/>
+            </field>
+        </record>
+<!-- To remove shipping_process picking tree view in sales form-->
+        <record id="view_picking_out_tree_rmv_process" model="ir.ui.view">
+            <field name="name">stock.picking.out.tree.rmv.process</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="barcode_scanning.vpicktree_change"/>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <field name="shipping_process" position="replace"/>
+            </field>
+        </record>
+
+<!--        <record id="view_picking_out_tree_pickup_backoffice" model="ir.ui.view">
+            <field name="name">view.picking.out.tree.pickup.backoffice</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="stock.view_picking_out_tree"/>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='origin']" position="after">
+                    <field name="pick_up_back_office"/>
+                    </xpath>
+                </field>
+        </record>-->
+        
+        <!--cox gen2-->
+<!--        <record id="view_picking_out_tree_remove_return_ref" model="ir.ui.view">
+            <field name="name">view.picking.out.tree.remove.return.ref</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="bista_order_returns.view_picking_out_tree_return"/>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='rma_return']" position="replace">
+                    </xpath>
+                </field>
+        </record>-->
+        <record id="view_picking_out_search_filter_cox" model="ir.ui.view">
+           <field name="name">view.picking.out.search.filter.cox</field>
+           <field name="model">stock.picking</field>
+           <field name="inherit_id" ref="stock.view_picking_internal_search"/>
+           <field name="type">search</field>
+           <field name="arch" type="xml">
+                   <xpath expr="/search/filter[@name='to_invoice']" position="after">
+                       <separator orientation="vertical"/>
+                       <filter icon="terp-check" string="Play" domain="[('sale_id.shop_id.name','ilike','play')]" help="Flare Play Orders"/>
+                       <filter icon="terp-check" string="Retail DO" domain="[('sale_id.cox_sales_channels','=','retail')]" help="Retail DO"/>
+                      <filter icon="terp-check" string="Call Center DO" domain="[('sale_id.cox_sales_channels','=','call_center')]" help="Call Center DO"/>
+                      <filter icon="terp-check" string="Ecommerce DO" domain="[('sale_id.cox_sales_channels','=','ecommerce')]" help="Ecommerce DO"/>
+
+                   </xpath>
+               </field>
+       </record>
+<!-- Record to add pickup button in the Delivery order-->
+         <record model="ir.ui.view" id="view_in_store_pickup_delivery">
+           <field name="name">view.in.store.pickup.delivery</field>
+           <field name="model">stock.picking</field>
+           <field name="inherit_id" ref="stock.view_picking_form" />
+           <field name="type">form</field>
+           <field name="arch" type="xml">
+               <xpath expr="//field[@name='partner_id']" position="after">
+                   <field name="pick_up_back_office" invisible="1"/>
+                   <field name="shipping_rate" invisible="1"/>
+                   <field name="ship_date" invisible="1"/>
+                   <field name="total_boxes" invisible="1"/>
+                   <field name="no_of_prdct_units" invisible="1"/>
+               </xpath>
+               <xpath expr="/form/header//button[@name='do_enter_transfer_details']" position="after">
+                   <button name="in_store_pickup" string="Pick UP" type="object" attrs="{'invisible':['|',('pick_up_back_office','=',False),('state','not in',('assigned'))]}"/>
+               </xpath>
+               <xpath expr="/form/header//button[@name='do_enter_transfer_details']" position="attributes">
+                   <attribute name="attrs">{'invisible':['|',('pick_up_back_office','=',True),('state','not in',('assigned'))]}</attribute>
+                   <attribute name="states"></attribute>
+               </xpath>
+           </field>
+       </record>
+        <record id="view_picking_out_tree_pickup" model="ir.ui.view">
+            <field name="name">stock.picking.out.tree</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree colors="blue:state == 'draft';grey:state == 'cancel';red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Delivery Orders">
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="origin"/>
+                    <field name='pick_up_back_office'/>
+                    <field name="date"/>
+                    <field name="label_recvd"/>
+                    <field name="min_date"/>
+                    <field name="backorder_id" groups="base.group_extended"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+<!-- Action to create menu Item for Pick Up Store-->
+        <record id="pick_up_deliveries" model="ir.actions.act_window">
+            <field name="name">In Store Pick Up</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">stock.picking</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field name="domain">[('pick_up_back_office','=',True)]</field>
+            <field name="search_view_id" ref="stock.view_picking_internal_search"/>
+            <field name="view_id" ref="view_picking_out_tree_pickup"/>
+        </record>
+        <record id="action_picking_tree_out_view1_waiting_pickup_cox" model="ir.actions.act_window.view">
+            <field eval="1" name="sequence"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_picking_out_tree_pickup"/>
+            <field name="act_window_id" ref="pick_up_deliveries"/>
+        </record>
+        <record id="action_picking_tree_out_view2_waiting_cox" model="ir.actions.act_window.view">
+            <field eval="2" name="sequence"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="stock.view_picking_form"/>
+            <field name="act_window_id" ref="pick_up_deliveries"/>
+        </record>
+        <menuitem action="pick_up_deliveries" id="in_store_pick_up" parent="stock.menu_stock_warehouse_mgmt" groups="group_retail_store,group_call_center,stock.group_stock_manager"/>
+<!-- To make sale_id field as readonly in the stock view-->
+
+        <!--cox gen2-->
+<!--        <record model="ir.ui.view" id="view_stock_sale_id_cox">
+            <field name="name">view.stock.sale.id.cox</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="sale_stock.stock_picking_out_inherit_sale" />
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='sale_id']" position="attributes">
+                       <attribute name="readonly">1</attribute>
+                </xpath>
+            </field>
+        </record>-->
+<!--        <record model="ir.ui.view" id="view_set_to_draf_button">
+            <field name="name">view.set.to.draf.button</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="barcode_scanning.view_picking_out_form_scan1" />
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='stock_prod_lots']" position="after">
+                       <button name="set_to_draft" string="Set To Draft" type="object" states="cancel"/>
+                </xpath>
+            </field>
+        </record>-->
+
+<!--        <record id="trans_cancel_confirmed" model="workflow.transition">
+            <field name="act_from" ref="stock.act_confirmed"/>
+            <field name="act_to" ref="stock.act_cancel"/>
+            <field name="condition">test_assigned()</field>
+        </record>-->
+        <record model="ir.ui.view" id="view_move_form_cox">
+            <field name="name">view.move.form.cox</field>
+            <field name="model">stock.move</field>
+            <field name="inherit_id" ref="stock.view_move_form" />
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <xpath expr="//button[@name='action_done']" position="attributes">
+                       <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//button[@name='action_cancel']" position="attributes">
+                       <attribute name="invisible">1</attribute>
+                </xpath>
+		<xpath expr="//field[@name='location_id']" position="attributes">
+                       <attribute name="required">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='location_dest_id']" position="attributes">
+                       <attribute name="required">1</attribute>
+                </xpath>
+                <!--cox gen2-->	
+<!-- 		<xpath expr="/form/sheet/group/group[@string='Traceability']" position="attributes">
+                   <attribute name="groups">cox_communication.group_warehouse_cox,cox_communication.group_retail_sales_manager,cox_communication.group_support,cox_communication.group_internal_operations,cox_communication.group_internal_operations_manager,stock.group_tracking_lot</attribute>
+              </xpath>
+               <xpath expr="//label[@for='tracking_id']" position="attributes">
+                   <attribute name="groups">cox_communication.group_warehouse_cox,cox_communication.group_retail_sales_manager,cox_communication.group_support,cox_communication.group_internal_operations,cox_communication.group_internal_operations_manager,stock.group_tracking_lot</attribute>
+              </xpath>
+               <xpath expr="/form/sheet/group/group[4]/div[1]" position="attributes">
+                   <attribute name="groups">cox_communication.group_warehouse_cox,cox_communication.group_retail_sales_manager,cox_communication.group_support,cox_communication.group_internal_operations,cox_communication.group_internal_operations_manager,stock.group_tracking_lot</attribute>
+              </xpath>
+              <xpath expr="/form/sheet/group/group[4]/div[1]/button[@string='New Pack']" position="attributes">
+                   <attribute name="groups">cox_communication.group_warehouse_cox,cox_communication.group_retail_sales_manager,cox_communication.group_support,cox_communication.group_internal_operations,cox_communication.group_internal_operations_manager,product.group_stock_packaging</attribute>
+              </xpath>
+              <xpath expr="//label[@for='prodlot_id']" position="attributes">
+                   <attribute name="groups">cox_communication.group_warehouse_cox,cox_communication.group_retail_sales_manager,cox_communication.group_support,cox_communication.group_internal_operations,cox_communication.group_internal_operations_manager,stock.group_production_lot</attribute>
+              </xpath>
+               <xpath expr="/form/sheet/group/group[4]/div[2]" position="attributes">
+                <attribute name="groups">cox_communication.group_warehouse_cox,cox_communication.group_retail_sales_manager,cox_communication.group_support,cox_communication.group_internal_operations,cox_communication.group_internal_operations_manager,stock.group_production_lot</attribute>
+              </xpath>-->
+            </field>
+        </record>
+        
+        
+        <!--changes done for serial no assignment-->
+           <record id="view_production_lot_form_cox" model="ir.ui.view">
+            <field name="name">view.production.lot.form.cox</field>
+            <field name="model">stock.production.lot</field>
+            <field name="inherit_id" ref="stock.view_production_lot_form"/>
+            <field name="arch" type="xml">
+
+                
+<!--		<xpath expr="/form/notebook/page[@string='Stock Moves']" position="replace">
+                    <page string="Stock Moves">
+                        <field name="move_prod_lot_ids"/>
+                    </page>
+                </xpath>-->
+		<xpath expr="/form/notebook" position="inside">
+                    <page string="Stock Moves">
+                        <field name="move_prod_lot_ids"/>
+                    </page>
+                </xpath>
+                <field name="ref" position="after">
+                    <field name="qty_avail"/>
+                    <field name="location_id"/> 
+                </field>
+		</field>
+        </record>
+        
+        <record model="ir.ui.view" id="view_move_tree_cox">
+            <field name="name">view.move.tree.cox</field>
+            <field name="model">stock.move</field>
+            <field name="inherit_id" ref="stock.view_move_tree_receipt_picking" /> <!--cox gen2-->
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <xpath expr="/tree/button[@name='action_done']" position="attributes">
+                       <attribute name="invisible">1</attribute>
+                </xpath>
+		
+            </field>
+        </record>
+        <!-- Record to add return_location check box in the location view-->
+        <record model="ir.ui.view" id="view_return_location_form">
+            <field name="name">view.return.location.form</field>
+            <field name="model">stock.location</field>
+            <field name="inherit_id" ref="stock.view_location_form" />
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <xpath expr="/form/group/group/field[@name='scrap_location']" position="after">
+                      <field name="return_location"/>
+                </xpath>
+
+            </field>
+        </record>
+<!--        <menuitem action="bista_shipping.action_view_track_shipping_wizard" id="bista_shipping.menu_track_shipping" parent="stock.menu_stock_warehouse_mgmt" sequence="5" string="Track Shpiing" groups="base.group_sale_manager,stock.group_stock_manager"/>-->
+         <!-- Added this record to add domain in internal location in serach view -->
+        <record id="view_location_search_inherited1" model="ir.ui.view">
+            <field name="name">stock.location.search.inherited1</field>
+            <field name="model">stock.location</field>
+            <field name="inherit_id" ref="stock.view_location_search" />
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <xpath expr="/search/filter[@name='in_location']" position="attributes">
+                       <attribute name="domain">[('usage', '=', 'internal'),('scrap_location','=',False)]</attribute>
+                </xpath>
+            </field>
+        </record>
+
+       <!--Added by saziya-->
+        <record model="ir.ui.view" id="view_move_tree_view_cox_inherit">
+            <field name="name">view.move.tree.view.cox.inherit</field>
+            <field name="model">stock.move</field>
+            <field name="inherit_id" ref="stock.view_move_picking_tree"/>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='location_id']" position="attributes">
+                       <attribute name="invisible">0</attribute>
+                </xpath>
+               
+            </field>
+        </record>
+
+        <!--<record id="view_order_form_inherit_delivery_button_cox" model="ir.ui.view">
+           <field name="name">view_order_form_inherit_delivery_button_cox</field>
+           <field name="model">sale.order</field>
+           <field name="type">form</field>
+           <field name="inherit_id" ref="sale_stock.view_order_form_inherit"/>
+           <field name="arch" type="xml">
+               <xpath expr="//button[@string='View Delivery Order']" position="attributes">
+                   <attribute name="attrs">{'invisible': ['|','|','|',('picking_ids','=',False),('picking_ids','=',[]), ('state', 'not in', ('progress','manual'))]}</attribute>
+               </xpath>
+           </field>
+      </record>-->
+
+      <record model="ir.ui.view" id="view_move_tree_view_cox_inherit">
+            <field name="name">view.move.tree.view.cox.inherit</field>
+            <field name="model">stock.move</field>
+            <field name="inherit_id" ref="stock.view_move_picking_tree"/>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='location_id']" position="replace">
+                </xpath>
+                <xpath expr="/tree/field[@name='location_dest_id']" position="before">
+                       <field name="location_id" groups="stock.group_locations"/>
+                </xpath>
+            </field>
+        </record>
+	<!-- Button to Show Associated Serial Numbers in the Partner View-->
+        <record id="res_partner_serial_number_view" model="ir.ui.view">
+            <field name="name">res.partner.serial_number.view</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form" />
+            <field name="priority" eval="20"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[@name='buttons']" position="inside">
+                    <button name="show_serial_number" type="object" string="Serial Numbers"
+                         attrs="{'invisible': [('customer', '=', False)]}"/>
+                </xpath>
+            </field>
+        </record>
+        
+        <record id="view_picking_form_inherit" model="ir.ui.view">
+           <field name="name">stock.picking.form.inherit</field>
+           <field name="model">stock.picking</field>
+           <field name="inherit_id" ref="stock.view_picking_form" />
+           <field eval="12" name="priority"/>
+           <field name="arch" type="xml">
+               <xpath expr="/form/header/field[@name='state']" position="replace">
+                   <field name="state" widget="statusbar" statusbar_visible="draft,assigned,shipping,done" statusbar_colors='{"shipping_except":"red","invoice_except":"red","waiting_date":"blue"}'/>
+               </xpath>
+               <xpath expr="/form/header/button[@name='action_cancel']" position="before"> <!--cox gen2 changed button name-->
+                   <button name="shipment_receive" states="shipping" string="Receive" type="object" class="oe_highlight" groups="base.group_user"/>
+               </xpath>
+               <xpath expr="//field[@name='partner_id']" position="after">
+                   <field name="no_of_prdct_units" invisible="1"/>
+                  <field name="total_boxes" invisible="1"/>
+               </xpath>
+           </field>
+		</record>
+                <!--cox gen2-->
+<!--	 <record id="stock_partial_picking_form_inherit" model="ir.ui.view">
+          <field name="name">stock.partial.picking.form.inherit</field>
+          <field name="model">stock.partial.picking</field>
+          <field name="inherit_id" ref="stock.stock_partial_picking_form" />
+          <field eval="12" name="priority"/>
+          <field name="arch" type="xml">
+              <xpath expr="/form/field[@name='move_ids']/tree/field[@name='prodlot_id']" position="attributes">
+                   <attribute name="groups">cox_communication.group_warehouse_cox,cox_communication.group_retail_sales_manager,cox_communication.group_support,cox_communication.group_internal_operations,cox_communication.group_internal_operations_manager,stock.group_production_lot</attribute>
+              </xpath>
+          </field>
+          </record>-->
+	 <menuitem id="bista_shipping.menu_shipping_service" name="Shipping Service Management" parent="stock.menu_stock_configuration" sequence="1" groups="bista_shipping.grp_shipping_manager,stock.group_stock_manager"/>
+       <menuitem id="bista_shipping.menu_fedex_setting" name="Fedex Settings" parent="bista_shipping.menu_shipping_service" action="bista_shipping.shipping_fedex_action" />
+
+      <menuitem action="stock.action_production_lot_form" id="stock.menu_action_production_lot_form"
+           parent="stock.menu_traceability" groups="stock.group_production_lot,group_warehouse_cox,group_retail_sales_manager,group_support,group_internal_operations,group_internal_operations_manager"
+           sequence="1"/>
+      <menuitem id="stock.menu_traceability" name="Traceability" parent="stock.menu_stock_root"
+           sequence="3"
+           groups="stock.group_stock_manager,stock.group_stock_user,base.group_erp_manager,group_warehouse_cox,group_retail_sales_manager,group_support,group_internal_operations,group_internal_operations_manager"/>
+
+    </data>
+</openerp>

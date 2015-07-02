@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+      <record id="view_account_invoice_form_return" model="ir.ui.view">
+           <field name="name">view.account.invoice.form.return</field>
+           <field name="model">account.invoice</field>
+           <field name="type">form</field>
+           <field name="inherit_id" ref="account.invoice_form" />
+           <field name="arch" type="xml">
+               <xpath expr="/form/sheet/notebook/page[@string='Other Info']/group/group[2]/field[@name='name']" position="after">
+                   <field name ="return_ref"/>
+           </xpath>
+           </field>
+      </record>
+      
+
+            <!--wallet processing-->
+    <record id="view_voucher_authorize_net_inherited_view" model="ir.ui.view">
+        <field name="name">view.voucher.authorize.net.inherited.view</field>
+        <field name="model">account.voucher</field>
+        <field name="type">form</field>
+        <field name="inherit_id" ref="account_voucher.view_vendor_receipt_form"/>
+        <field name="arch" type="xml">
+                <xpath expr="/form/sheet/notebook/page[@string='Journal Items']" position="after" attrs="{'invisible': [('state','!=','posted')]}">
+                     <page string="Authorize.Net Payment" >
+                         <group colspan="3" col="6" >
+                        <field name="auth_transaction_id" />
+                        <field name="authorization_code"/>
+                        <field name="customer_payment_profile_id"/>
+                        <newline />
+                        <field name="auth_respmsg" />
+                       </group>
+                 </page>
+            </xpath>
+        </field>
+    </record>
+
+   </data>
+</openerp>

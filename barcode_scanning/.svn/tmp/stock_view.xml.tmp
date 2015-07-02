@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+        <record id="view_picking_form_prod_lot" model="ir.ui.view">
+            <field name="name">view.picking.form.prod.lot</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_picking_form" />
+            <field name="arch" type="xml">
+                <xpath expr="/form/notebook/page[@string='Products']/field[@name='move_lines']/form/group[4]/field[@name='prodlot_id']" position="replace">
+                    <field name="stock_prod_lots" string="Assigned Serial Numbers"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- changed sequence of delivery order-->
+<!--        <record id="stock.seq_picking_out" model="ir.sequence">
+            <field name="name">Picking OUT</field>
+            <field name="code">stock.picking.out</field>
+            <field name="prefix"></field>
+            <field name="padding">6</field>
+        </record>-->
+
+        <!-- incoming shipment-->
+        <record id="view_picking_in_tree_scan" model="ir.ui.view">
+            <field name="name">view.picking.in.tree.scan</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.view_picking_in_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="/form/notebook/page[@string='General Information']/field/tree/field[@name='product_qty']" position="after">
+                    <field name="received_qty"/>
+                </xpath>
+            </field>
+        </record>
+
+
+        <record id="view_picking_in_form_scanning1" model="ir.ui.view">
+            <field name="name">view.picking.in.form.scan</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_picking_in_form"/>
+            <field name="arch" type="xml">
+                <data>
+                <xpath expr="/form/notebook/page[@string='General Information']/field[@name='move_lines']/form[@string='Stock Moves']/group[1]/field[@name='product_qty']" position= "after">
+                    <field name="received_qty"/>
+                </xpath>
+                <xpath expr="/form/notebook/page[@string='General Information']/field[@name='move_lines']/form[@string='Stock Moves']/group[4]/field[@name='prodlot_id']" position="replace">
+                    <field name="stock_prod_lots" string="Assigned Serial Numbers"/>
+                </xpath>
+                 <xpath expr="/form/group/group[2]/field[@name='stock_journal_id']" position="after">
+                    <field name="scan_uid"/>
+                    <field name="scan_date"/>
+                </xpath>
+                <xpath expr="/form/notebook/page[@string='Notes']" position="inside">
+                    <field name="skip_barcode"/>
+                </xpath>
+                </data>
+            </field>
+        </record>
+
+        <record id="stock_picking_in_inherit_purchase_amex" model="ir.ui.view">
+            <field name="name">Incoming Picking Inherited Amex</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="purchase.stock_picking_in_inherit_purchase"/>
+            <field name="arch" type="xml">
+                <field name="address_id" position="attributes">
+                    <attribute name="attrs">{'required':[('purchase_id','=',False)]}</attribute>
+                </field>
+                <field name="purchase_id" position="after">
+                    <field name="dest_id" attrs="{'invisible':[('purchase_id','&lt;&gt;',False)],'required':[('purchase_id','=',False)]}"/>
+                    <group col="7" colspan="4" attrs="{'invisible':[('purchase_id','&lt;&gt;',False)]}">
+                    <button name="button_dummy" states="draft" string="Save and Continue Scanning" type="object" icon="gtk-execute"/>
+                    </group>
+                </field>
+            </field>
+        </record>
+
+         <!-- Shipping order/delivery-->
+
+        <record id="view_picking_out_tree_scan" model="ir.ui.view">
+            <field name="name">view.picking.out.tree.scan</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.view_picking_out_form"/>
+            <field name="arch" type="xml">
+		<xpath expr="//field[@name='date_done']" position="replace">
+                    <field name="ship_date"/>
+                </xpath>
+                <xpath expr="//field[@name='date']" position="after">
+                    <field name="date_done"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_picking_out_form_scan1" model="ir.ui.view">
+            <field name="name">view.picking.out.form.scan1</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_picking_out_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="/form/notebook/page[@string='Products']/field/form/group[1]/field[@name='product_qty']" position="after">
+                    <field name="received_qty"/>
+                </xpath>
+                <xpath expr="/form/notebook/page[@string='Products']/field/form/group[2]/field[@name='location_dest_id']" position="after">
+                    <field name="note"/>
+                </xpath>
+<!--                <xpath expr="/form/notebook/page[@string='Products']/group[1]/field[@name='state']" position="after">
+                    <button name="heidler_output_file_creation" string="Heidler Printout" type="object"/>
+                </xpath>-->
+                <xpath expr="/form/notebook/page[@string='Products']/field[@name='move_lines']/form/group[4]/field[@name='prodlot_id']" position="replace">
+                    <field name="stock_prod_lots" string="Assigned Serial Numbers"/>
+                </xpath>
+                <xpath expr="/form/notebook/page[@string='Notes']" position="inside">
+                    <field name="skip_barcode"/>
+                    <field name="scan_uid"/>
+                    <field name="scan_date"/>
+                </xpath>
+            </field>
+        </record>
+
+       
+        <!--Added for shipping workflow-->
+        <record id="view_picking_out_tree_packing_inherit" model="ir.ui.view">
+            <field name="name">stock.picking.out.tree.packing.inherit</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="stock.view_picking_out_tree"/>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <field name="backorder_id" position="attributes">
+                    <attribute name="attrs">{'width': '100'}</attribute>
+                </field>
+                <field name="state" position="after">
+                    <field name="shipping_process" width="150"/>
+                </field>
+            </field>
+        </record>
+
+        <!--
+        Adding the shipping process into picking tree view in sales form
+        -->
+        <record id="vpicktree_change" model="ir.ui.view">
+            <field name="name">vpicktree.change</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="stock.vpicktree" />
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <field name="backorder_id" position="attributes">
+                    <attribute name="attrs">{'width': '100'}</attribute>
+                </field>
+                    <field name="state" position="after">
+                         <field name="shipping_process" width="150"/>
+			<button name="split_delivery" string="Back Order" type="object"  icon="gtk-ok"/>
+                    </field>
+            </field>
+        </record>
+
+
+                <record id="view_delivery_carrier_form_amex" model="ir.ui.view">
+                    <field name="name">delivery.carrier.form.amex</field>
+                    <field name="model">delivery.carrier</field>
+                    <field name="type">form</field>
+                    <field name="inherit_id" ref="delivery.view_delivery_carrier_form"/>
+                    <field name="arch" type="xml">
+                    <field name="product_id" position="after">
+                        <field name="carrier_image" select="1"/>
+                        <field name="is_scan_tracking" select="1"/>
+                    </field>
+                    </field>
+                </record>
+
+
+    </data>
+</openerp>

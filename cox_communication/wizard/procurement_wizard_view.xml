@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record id="import_serial_wizard" model="ir.ui.view">
+                  <field name="name">import.serial.wizard</field>
+                  <field name="model">pre.import.serial</field>
+                  <field name="arch" type="xml">
+                      <form string="Warning" version="7.0">
+                          <separator string="Do you want to import csv to assign serial number"/>
+
+                          <button name="import_csv" string="Yes" type="object" icon="gtk-go-farword"/>
+                          <button name="scan" string="No" type="object" icon="gtk-cancel"/>
+
+
+                          <group>
+                              <field name="want_to_import" invisible="1"/>
+                              <button name="import_serial_number" string="Scan Multiple Quantity" type="object" attrs="{'invisible':[('want_to_import','=',False)]}"/>
+                          </group>
+                          <!--<footer>-->
+
+
+
+
+                          <!--</footer>-->
+                      </form>
+                  </field>
+        </record>
+    </data>
+</openerp>

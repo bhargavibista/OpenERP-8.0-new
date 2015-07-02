@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record id="view_res_partner_policy_form" model="ir.ui.view">
+                    <field name="name">view.res.partner.policy.form</field>
+                    <field name="model">res.partner</field>
+                    <field name="type">form</field>
+                    <field name="inherit_id" ref="base.view_partner_form"/>
+                    <field name="arch" type="xml">
+                        <data>
+                            <!--<xpath expr="//field[@name='website']" position="after">
+                                <field name="user_name"/>
+                                <field name="password"/>
+                                <field name="wal_bal"/>
+                                
+
+                            </xpath>-->
+
+                            <xpath expr="//notebook" position="inside">
+                                
+                                <page string='Magento'>
+                                <group>
+                                <field name="user_name"/>
+                                <field name="password"/>
+                                <!--<field name="wal_bal"/>-->
+                                <!--<button name="get_wallet_update" type="object" string="Update Wallet" />-->
+                                <field name="gender"/>
+                                <field name="dob"/>
+                                <field name="age_rating"/>
+                                <!--<field name="player_tag"/>-->
+                                <field name="game_profile_name"/>
+                                <field name="account_pin"/>
+                                <field name="use_wallet"/>
+                                </group>
+                                </page>
+                            </xpath>
+
+                        </data>
+                    </field>
+          </record>
+        </data>
+</openerp>

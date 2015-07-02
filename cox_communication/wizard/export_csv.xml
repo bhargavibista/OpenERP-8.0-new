@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record id="view_export_csv_wizard" model="ir.ui.view">
+            <field name="name">Export CSV</field>
+            <field name="model">export.csv</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Export CSV">
+                    <separator string="Sales Report" colspan="4"/>
+                    <group colspan="2">
+                        <field name="csv_file" string="File"  readonly="1" filename='name'  attrs="{'invisible':[('name','=','')]}"/>
+						<field name="date_from"/>
+                        <field name="date_to"/>
+                    </group>
+                    <field name="name" readonly="1" invisible="1" colspan="2" attrs="{'invisible':[('csv_file','=','')]}"/>
+                    <newline/>
+                    <button special="cancel" string="Cancel" icon="gtk-cancel"/>
+                    <button name="export_csv" string="Export" type="object" icon="gtk-apply"/>
+                </form>
+            </field>
+        </record>
+
+        <!--Cancel Services reference creation-->
+        <record id="view_export_cancel_servicecsv_wizard" model="ir.ui.view">
+            <field name="name">Export Cancelled Service CSV</field>
+            <field name="model">export.cancel.service.csv</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Export CSV">
+                    <separator string="Sales Cancelled services Report" colspan="4"/>
+                    <group colspan="2">
+                        <field name="csv_file" string="File"  readonly="1" filename='name'  attrs="{'invisible':[('name','=','')]}"/>
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                    </group>
+                    <field name="name" readonly="1" invisible="1" colspan="2" attrs="{'invisible':[('csv_file','=','')]}"/>
+                    <newline/>
+                    <button special="cancel" string="Cancel" icon="gtk-cancel"/>
+                    <button name="export_cancel_service_csv" string="Export" type="object" icon="gtk-apply"/>
+                </form>
+            </field>
+        </record>
+        <!--Cancel Services reference creation-->
+
+        <record id="action_view_export_csv" model="ir.actions.act_window">
+            <field name="name">Sales Report</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">export.csv</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="view_export_csv_wizard"/>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem action="action_view_export_csv" parent="base.next_id_64" id="menu_sales_csv_import"  name="Export Sales Report"/>
+
+         <record id="action_view_cancel_service_export_csv" model="ir.actions.act_window">
+            <field name="name">Cancel Sevices Report</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">export.cancel.service.csv</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="view_export_cancel_servicecsv_wizard"/>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem action="action_view_cancel_service_export_csv" parent="base.next_id_64" id="menu_sales_cancel_services_csv_import"  name="Export Churn Report"/>
+
+        <record id="view_subscription_list_export" model="ir.ui.view">
+            <field name="name">view.subscription.list.export</field>
+            <field name="model">export.csv</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Export CSV">
+                    <separator string="Subscription List" colspan="4"/>
+                    <group colspan="2">
+                        <field name="csv_file" string="File" readonly="1" filename='name'  attrs="{'invisible':[('name','=','')]}"/>
+                    </group>
+                    <field name="name" readonly="1" invisible="1" colspan="2" attrs="{'invisible':[('csv_file','=','')]}"/>
+                    <newline/>
+                    <button special="cancel" string="Cancel" icon="gtk-cancel"/>
+                    <button name="export_subscription" string="Export" type="object" icon="gtk-apply"/>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_subscription_list_export" model="ir.actions.act_window">
+            <field name="name">Subscription List</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">export.csv</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="view_subscription_list_export"/>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem action="action_subscription_list_export" parent="base.next_id_64" id="menu_subscription_list_export"  name="Subscription List"/>
+
+
+        <record id="view_demo_accounts_export" model="ir.ui.view">
+            <field name="name">view.demo.accounts.export</field>
+            <field name="model">export.csv</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Export CSV">
+                    <separator string="Demo Accounts List" colspan="4"/>
+                    <group colspan="2">
+                        <field name="csv_file" string="File" readonly="1" filename='name'  attrs="{'invisible':[('name','=','')]}"/>
+                    </group>
+                    <field name="name" readonly="1" invisible="1" colspan="2" attrs="{'invisible':[('csv_file','=','')]}"/>
+                    <newline/>
+                    <button special="cancel" string="Cancel" icon="gtk-cancel"/>
+                    <button name="demo_account_list" string="Export" type="object" icon="gtk-apply"/>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_demo_account_export" model="ir.actions.act_window">
+            <field name="name">Demo Accounts List</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">export.csv</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="view_demo_accounts_export"/>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem action="action_demo_account_export" parent="base.next_id_64" id="menu_demo_account_export"  name="Demo Accounts List"/>
+	
+	<!-- View For Offers-Index -->
+        <record id="view_offers_index_export" model="ir.ui.view">
+            <field name="name">view.offer.index.export</field>
+            <field name="model">export.csv</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Offers Index">
+                    <separator string="Offers Index" colspan="4"/>
+                    <group colspan="2">
+                        <field name="csv_file" string="File" readonly="1" filename='name'  attrs="{'invisible':[('name','=','')]}"/>
+                    </group>
+                    <field name="name" readonly="1" invisible="1" colspan="2" attrs="{'invisible':[('csv_file','=','')]}"/>
+                    <newline/>
+                    <button special="cancel" string="Cancel" icon="gtk-cancel"/>
+                    <button name="export_offer_index" string="Export" type="object" icon="gtk-apply"/>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_offers_index_export" model="ir.actions.act_window">
+            <field name="name">Offers Index</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">export.csv</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="view_offers_index_export"/>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem action="action_offers_index_export" parent="base.next_id_64" id="menu_offers_index_export"  name="Offers Index"/>
+
+
+	<record id="default_view_demo_accounts_export" model="ir.ui.view">
+            <field name="name">defaultview.demo.accounts.export</field>
+            <field name="model">export.csv</field>
+            <field name="type">form</field>
+	    <field name="priority">1</field> 
+            <field name="arch" type="xml">
+                <form string="Export CSV">
+                    <group colspan="2">
+                        <field name="csv_file" string="File" readonly="1" filename='name'  attrs="{'invisible':[('name','=','')]}"/>
+                    </group>
+                    <field name="name" readonly="1" invisible="1" colspan="2" attrs="{'invisible':[('csv_file','=','')]}"/>
+                    <newline/>
+                </form>
+            </field>
+        </record>
+           <!--Account Report Customized wizard view-->
+       <record id="view_export_account_csv_wizard" model="ir.ui.view">
+           <field name="name">Export Account Report CSV</field>
+           <field name="model">export.account.report.csv</field>
+           <field name="type">form</field>
+           <field name="arch" type="xml">
+               <form string="Export CSV">
+                   <separator string="Accout Report" colspan="4"/>
+                   <group colspan="2">
+                       <field name="csv_file" string="File"  readonly="1" filename='name'  attrs="{'invisible':[('name','=','')]}"/>
+                       <field name="date_from"/>
+                       <field name="date_to"/>
+                   </group>
+                   <field name="name" readonly="1" invisible="1" colspan="2" attrs="{'invisible':[('csv_file','=','')]}"/>
+                   <newline/>
+                   <button special="cancel" string="Cancel" icon="gtk-cancel"/>
+                   <button name="export_custom_account_report" string="Export" type="object" icon="gtk-apply"/>
+               </form>
+           </field>
+       </record>
+       <!--Account Report Customized wizard view-->
+
+      <!--menu item for Accounting report-->
+       <record id="action_view_account_report_export_csv" model="ir.actions.act_window">
+           <field name="name">Accounting Report</field>
+           <field name="type">ir.actions.act_window</field>
+           <field name="res_model">export.account.report.csv</field>
+           <field name="view_type">form</field>
+           <field name="view_id" ref="view_export_account_csv_wizard"/>
+           <field name="target">new</field>
+       </record>
+       <menuitem action="action_view_account_report_export_csv" parent="base.next_id_64" id="menu_account_csv_import"  name="Export Account Report"/>
+            <!--menu item for Accounting report-->
+
+    </data>
+</openerp>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+	 <record id="view_avg_customer_lifetime_tree" model="ir.ui.view">
+        <field eval="1" name="priority"/>
+        <field name="name">report.avg.customer.lifetime.tree</field>
+        <field name="model">report.avg.customer.lifetime</field>
+        <field name="arch" type="xml">
+            <tree string="Sales Analysis" create="false">
+                <field name="cancel_date" invisible="1"/>
+                <field name="return_cancel_reason" invisible="1"/>
+                <field name="year" invisible="1"/>
+                <field name="month" invisible="1"/>
+                 <field name="return_count" />
+            </tree>
+        </field>
+    </record>
+
+
+         <record id="view_avg_customer_lifetime_board" model="ir.ui.view">
+            <field name="name">report.avg.customer.lifetime.graph</field>
+            <field name="model">report.avg.customer.lifetime</field>
+            <field name="arch" type="xml">
+                <graph string="Avg Customer Lifetime" type="line">
+                     <field name="month" />
+                     <field name="return_count" operator="+" string="Rate of Churn"/>
+                </graph>
+
+            </field>
+        </record>
+
+        <record id="view_avg_customer_lifetime_search" model="ir.ui.view">
+        <field name="name">report.avg.customer.lifetime.search</field>
+        <field name="model">report.avg.customer.lifetime</field>
+        <field name="arch" type="xml">
+            <search string="Sales Analysis">
+                <group expand="0" string="Extended Filters...">
+                     <filter string="Month" name="month" icon="terp-go-year" context="{'group_by':'month'}" help="Group by Month"/>
+                     <filter string="Year" name="year" icon="terp-go-year" context="{'group_by':'year'}" help="Group by Year"/>
+                     <filter string="Return Count" name="return_count" icon="terp-go-year" context="{'group_by':'return_count'}" help="Group Return Count"/>
+                     <!--<filter string="Previous Sales" name="previous_count" icon="terp-go-year" context="{'group_by':'previous_count'}" help="Group by Current Previous Count"/>-->
+                </group>
+
+            </search>
+        </field>
+    </record>
+
+        <record model="ir.actions.act_window" id="action_avg_customer_lifetime_report">
+ <!--           <field name="name">Avg Customer Lifetime</field> -->
+	    <field name="name">Monthly Returns</field>
+            <field name="res_model">report.avg.customer.lifetime</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">graph,tree</field>
+            <field name="search_view_id" ref="view_avg_customer_lifetime_search"/>
+            <field name="view_id" ref="view_avg_customer_lifetime_board"/>
+            <field name="domain"></field>
+            <field name="context">{'group_by':['month','year']}</field>
+         </record>
+
+
+
+ <menuitem   id="menu_avg_customer_lifetime"
+                    parent="menu_reporting_custom_report"
+                    action="action_avg_customer_lifetime_report"
+                    sequence="26"
+                    groups="stock.group_stock_user"/>
+
+
+
+    </data>
+</openerp>

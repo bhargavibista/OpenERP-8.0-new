@@ -1,0 +1,705 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <!-- This search view is added to show billing_date on search form -->
+        <record id="view_res_partner_filter" model="ir.ui.view">
+            <field name="name">res.partner.select</field>
+            <field name="model">res.partner</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="base.view_res_partner_filter" />
+            <field name="arch" type="xml">
+                <xpath expr="/search/field[@name='name']" position="after">
+                    <field name="billing_date"/>
+                    <field name="phone"/>
+                    <field name="emailid"/>
+                    <field name="ref" string="Customer No"/>
+                </xpath>
+                <xpath expr="/search/field[@name='user_id']" position="replace">
+                </xpath>
+            </field>
+        </record>
+        <!--Start Code Preeti-->
+        <record id="view_partner_dashboard_form" model="ir.ui.view">
+            <field name="name">view.partner.dashboard.form</field>
+            <field name="model">res.partner</field>
+            <field name="arch" type="xml">
+                <form string="Customer Details" version="7.0">
+                    <group>
+                        <group>
+                            <field name="name" readonly='1' string="Customer Name"/>
+                            <label for="street" string="Address" />
+                            <div>
+                                <field name="street" placeholder="Street..." readonly='1'/>
+                                <field name="street2" readonly='1'/>
+                                <div class="address_format">
+                                    <field name="city" placeholder="City" style="width: 28%%" readonly='1'/>
+                                    <field name="state_id" class="oe_no_button" placeholder="State" style="width: 15%%" on_change="onchange_state(state_id)" readonly='1'/>
+                                    <field name="zip" placeholder="ZIP" style="width: 20%%" readonly='1'/>
+                                </div>
+                                <field name="country_id" placeholder="Country" class="oe_no_button" readonly='1'/>
+                            </div>
+                            <field name = "phone" readonly='1'/>
+                            <field name="emailid" readonly='1'/> 
+                            <field name="billing_date" readonly='1'/>                            
+                        </group>
+                        <group>
+                            <field name = "customer_profile_id" readonly='1'/>
+                            <separator string="Payment Profiles" colspan="2"/>
+                            <field name = "profile_ids" readonly='1' nolabel="1" colspan="2"/>
+                        </group>                       
+                        <group string="Selected Service">
+                            <field name="agreement_policy" readonly='1' nolabel='1' options="{'limit':5}">
+                                <tree string="Selected Service">
+                                    <field name="service_name"/>
+                                    <field name="active_service" string="Active/Deactive"/>
+                                    <field name="sale_order"/>
+                                    <field name="start_date"/>
+                                    <field name="free_trial_date"/>
+                                    <field name="cancel_date" string="Cancellation/Return Date"/>
+                                </tree>
+                            </field>
+                        </group>
+                        <group string="Customer Invoices">
+                            <field name="customer_invoice_ref" readonly='1' nolabel='1' options='{"limit":5}'>
+                                <tree string="Customer Invoices" >
+                                    <field name="name"/>
+                                    <field  name="date_invoice"/>
+                                    <field  name="user_id"/>
+                                    <field  name="origin"/>
+                                    <field  name="amount_total"/>
+                                    <field  name="state"/>
+                                </tree>
+                            </field>
+                        </group>
+                        <group string="Sales Return">
+                            <field name="sales_return_ref" readonly='1' nolabel='1' options="{'limit':5}">
+                                <tree string="Sales Return">
+                                    <field name="name"/>
+                                    <field  name="user_id"/>
+                                    <field name="date_order"/>
+                                    <field name="return_type"/>
+                                    <field name="linked_sale_order"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </group>
+
+                        <group string="Sale Orders">
+                            <field name = "sale_order_refrence" readonly='1' nolabel='1' options="{'limit':5}">
+                                <tree string="Sale Orders" >
+                                    <field name="name"/>
+                                    <field  name="cox_sales_channels"/>
+                                    <field  name="amount_total"/>
+                                    <field name="date_order"/>
+                                    <field  name="state"/>
+                                </tree>
+                            </field>
+                        </group>
+                        <group string="Credits and Cancellations">
+                            <field name="credit_cancel_ref" readonly='1' nolabel='1' options="{'limit':5}">
+                                <field name="name"/>
+                                <field  name="cancellation_type"/>
+                                <field name="user_id"/>
+                                <field  name="amount_total"/>
+                                <field name="date_order"/>
+                                <field  name="state"/>
+                            </field>
+                        </group>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_partner_dashboard_tree" model="ir.ui.view">
+            <field name="name">view.partner.dashboard.tree</field>
+            <field name="model">res.partner</field>
+            <field name="arch" type="xml">
+                <tree string="Customer Dashboard">
+                    <field name = "name"/>
+                    <field name="ref" string="Customer No"/>
+                    <field name = "phone"/>
+                    <field name = "emailid"/> 
+                    <field name = "city"/>
+                    <field name = "billing_date"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_partner_dashboard" model="ir.actions.act_window">
+            <field name="name">Customer Dashboard</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <!--<field name="view_id" ref="view_partner_dashboard_tree"/>-->
+        </record>
+
+        <record id="action_partner_dashboard_tree" model="ir.actions.act_window.view">
+            <field eval="0" name="sequence"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_partner_dashboard_tree"/>
+            <field name="act_window_id" ref="action_partner_dashboard"/>
+        </record>
+        <record id="action_partner_dashboard_form" model="ir.actions.act_window.view">
+            <field eval="1" name="sequence"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_partner_dashboard_form"/>
+            <field name="act_window_id" ref="action_partner_dashboard"/>
+        </record>
+        <!--<menuitem id="menu_partner_dashboard" name="Customer Dashboard" parent="menu_cust_subscription" action="action_partner_dashboard"/> cox gen2--> 
+        <!--End Code Preeti-->
+        
+        <!-- To Hide Sales Team from search view-->
+       <!-- <record id="view_hide_sales_team_search" model="ir.ui.view">
+            <field name="name">view.hide.sales.team.search</field>
+            <field name="model">res.partner</field>
+            <field name="type">search</field>
+             <field name="inherit_id" ref="crm.view_partners_form_crm3" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='section_id']" position="replace">
+                </xpath>
+            </field>
+        </record>-->
+        <!-- To Hide Sales Team from form view-->
+<!--        <record id="view_hide_sales_team_form" model="ir.ui.view">
+            <field name="name">view.hide.sales.team.form</field>
+            <field name="model">res.partner</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="crm.view_partners_form_crm1" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='section_id']" position="replace">
+                </xpath>
+            </field>
+        </record>-->
+        <!-- To Hide Sales Team from tree view-->
+        <!--<record id="view_hide_sales_team_form" model="ir.ui.view">
+            <field name="name">view.hide.sales.team.tree</field>
+            <field name="model">res.partner</field>
+            <field name="type">tree</field>
+             <field name="inherit_id" ref="crm.view_partners_tree_crm2" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='section_id']" position="replace">
+                </xpath>
+            </field>
+        </record>-->
+        <!-- Record to show emalid instead of related email field in the tree view-->
+        <record id="view_emailid_tree_view" model="ir.ui.view">
+            <field name="name">view.emailid.tree.view</field>
+            <field name="model">res.partner</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="base.view_partner_tree" />
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='email']" position="replace">
+                    <field name="emailid"/>
+                </xpath>
+                <xpath expr="/tree/field[@name='user_id']" position="replace">
+                    <field name="city"/>
+                </xpath>
+                <xpath expr="/tree/field[@name='function']" position="after">
+                    <field name="ref"/>
+                </xpath>
+                <xpath expr="/tree/field[@name='country_id']" position="after">
+                    <field name="billing_date"/>
+                </xpath>
+                <xpath expr="/tree/field[@name='country_id']" position="attributes">
+                    <attribute name="invisible">0</attribute>
+                </xpath>
+            </field>
+        </record>
+        
+        <!-- To Hide Sales Team from search view-->
+       <!-- <record id="view_hide_sales_team_search" model="ir.ui.view">
+            <field name="name">view.hide.sales.team.search</field>
+            <field name="model">res.partner</field>
+            <field name="type">search</field>
+             <field name="inherit_id" ref="crm.view_partners_form_crm3" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='section_id']" position="replace">
+                </xpath>
+            </field>
+        </record>-->
+        <!-- To Hide Sales Team from form view-->
+        <record id="view_hide_sales_team_form" model="ir.ui.view">
+            <field name="name">view.hide.sales.team.form</field>
+            <field name="model">res.partner</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="crm.view_partners_form_crm1" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='section_id']" position="replace">
+                </xpath>
+            </field>
+        </record>
+        <!-- To Hide Sales Team from tree view-->
+        <!--<record id="view_hide_sales_team_form" model="ir.ui.view">
+            <field name="name">view.hide.sales.team.tree</field>
+            <field name="model">res.partner</field>
+            <field name="type">tree</field>
+             <field name="inherit_id" ref="crm.view_partners_tree_crm2" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='section_id']" position="replace">
+                </xpath>
+            </field>
+        </record>-->
+        <!-- Record to show emalid instead of related email field in the tree view-->
+        <record id="view_emailid_tree_view" model="ir.ui.view">
+            <field name="name">view.emailid.tree.view</field>
+            <field name="model">res.partner</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="base.view_partner_tree" />
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='email']" position="replace">
+                    <field name="emailid"/>
+                </xpath>
+                <xpath expr="/tree/field[@name='user_id']" position="replace">
+                    <field name="city"/>
+                </xpath>
+                <xpath expr="/tree/field[@name='function']" position="after">
+                    <field name="ref"/>
+                </xpath>
+                <xpath expr="/tree/field[@name='country_id']" position="after">
+                    <field name="billing_date"/>
+                </xpath>
+                <xpath expr="/tree/field[@name='country_id']" position="attributes">
+                    <attribute name="invisible">0</attribute>
+                </xpath>
+            </field>
+        </record>
+        
+        <!-- To hide email id of partner which is show at the top of res.partner form -->
+        <!--cox gen2-->
+<!--        <record id="view_partner_form_ecommerce_cox" model="ir.ui.view">
+            <field name="name">res.partner.form.ecommerce</field>
+            <field name="model">res.partner</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="bista_ecommerce.view_partner_form_ecommerce" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='emailid']" position="replace">
+                    <field name="emailid" colspan="4" attrs="{'readonly': [('magento_exported', '=', True)]}" required="1"/>
+                    <field name="emailid" colspan="2" required="1" on_change="onchange_emailid(emailid)"/>
+                </xpath>
+            </field>
+        </record>-->
+        <!-- To remove accounting manager group from that field-->
+        <record id="view_partner_account_configuration" model="ir.ui.view">
+            <field name="name">view.partner.account.configuration</field>
+            <field name="model">res.partner</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_partner_property_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//page[@string='Accounting']/group/group/field[@name='property_account_receivable']" position="attributes">
+                    <attribute name="groups"></attribute>
+<!--                    <attribute name="required">0</attribute>-->
+                </xpath>
+                <xpath expr="//page[@string='Accounting']/group/group/field[@name='property_account_receivable']" position="after">
+                    <field name="deferred_revenue_account"/> 
+                </xpath>
+                <xpath expr="//page[@string='Accounting']/group/group/field[@name='property_account_payable']" position="attributes">
+                    <attribute name="groups"></attribute>
+                    <attribute name="required">0</attribute>
+                </xpath>
+            </field>
+        </record>
+        <record id="partner_credits_service" model="ir.actions.act_window">
+            <field name="name">Credits and Cancellation</field>
+            <field name="src_model">res.partner</field>
+            <field name="res_model">credit.service</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'search_default_partner_id': active_id}</field>
+        </record>
+        <record id="view_partner_form_cox_inherited1" model="ir.ui.view">
+            <field name="name">res.partner.form.cox.inherited1</field>
+            <field name="model">res.partner</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.view_partner_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='lang']" position="replace">
+                    <field name="lang" invisible="1"/>
+                </xpath>
+                <xpath expr="/form/sheet/group/group[2]/field[@name='email']" position="after">
+                    <field name="type"/>
+                 <!--<button name="update_policy_datas" type="object" string="Capture" icon="gtk-go-forward" />-->
+                </xpath>
+                <xpath expr="/form/sheet/group/group/field[@name='title']" position="replace" >
+                    <field domain="[('domain', '=', 'partner')]" name="title" size="0" groups="base.group_extended" invisible="1"/>
+                </xpath>
+                <xpath expr="/form/sheet/group/group[2]/field[@name='function']" position="replace" >
+                    <field name="function" invisible="1"/>
+                </xpath>
+                <xpath expr="/form/sheet/group/group/field[@name='website']" position="after">
+                    <newline/>
+                    <field name="billing_date" readonly="True"/>
+                    <field name="next_billing_amount" readonly="True"/> <!--cox gen2 changes by yogita-->
+                </xpath>
+                <xpath expr="/form/sheet/notebook/page[@string='Sales &amp; Purchases']/group/group/field[@name='ref']" position="attributes">
+                    <attribute name="readonly">1</attribute>
+                </xpath>
+               
+                <xpath expr="/form/sheet/group/group[2]/field[@name='email']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                    <attribute name="required">0</attribute>
+                    <attribute name="context">{}</attribute>
+                </xpath>
+                <!--cox gen2-->
+                <xpath expr="/form/sheet/group/group[2]/field[@name='phone']" position="after">
+                    <field name="emailid"/>
+                </xpath>
+                <xpath expr="/form/sheet/group/group[1]/div[2]/field[@name='street']" position="attributes">
+                    <attribute name="required">1</attribute>
+                </xpath>
+                <xpath expr="/form/sheet/group/group[1]/div[2]/div/field[@name='city']" position="attributes">
+                    <attribute name="required">1</attribute>
+                </xpath>
+                <xpath expr="/form/sheet/group/group[1]/div[2]/div/field[@name='zip']" position="attributes">
+                    <attribute name="required">1</attribute>
+                </xpath>
+                <xpath expr="/form/sheet/group/group[1]/div[2]/field[@name='country_id']" position="attributes">
+                    <attribute name="required">1</attribute>
+                </xpath>
+                <xpath expr="/form/sheet/group/group[2]/field[@name='phone']" position="attributes">
+                    <attribute name="required">1</attribute>
+                </xpath>
+                <xpath expr="/form/sheet/group/group[1]/div[2]/div/field[@name='state_id']" position="attributes">
+                    <attribute name="required">1</attribute>
+                </xpath>
+               <!-- xpath to make required fields in the contacts tab in res.partner-->
+                <xpath expr="/form/sheet/notebook/page[@string='Contacts']/field[@name='child_ids']/form/sheet/group[1]/field[@name='phone']" position="attributes">
+                    <attribute name="required">1</attribute>
+                </xpath>
+                <xpath expr="/form/sheet/notebook/page[@string='Contacts']/field[@name='child_ids']/form/sheet/group[2]/div[@name='div_address']/field[@name='street']" position="attributes">
+                    <attribute name="attrs">{'required': [('use_parent_address','=',False)]}</attribute>
+                </xpath>
+                <xpath expr="/form/sheet/notebook/page[@string='Contacts']/field[@name='child_ids']/form/sheet/group[2]/div[@name='div_address']/field[@name='country_id']" position="attributes">
+                    <attribute name="attrs">{'required': [('use_parent_address','=',False)]}</attribute>
+                </xpath>
+                <xpath expr="/form/sheet/notebook/page[@string='Contacts']/field[@name='child_ids']/form/sheet/group[2]/div[@name='div_address']/div/field[@name='city']" position="attributes">
+                    <attribute name="attrs">{'required': [('use_parent_address','=',False)]}</attribute>
+                </xpath>
+                <xpath expr="/form/sheet/notebook/page[@string='Contacts']/field[@name='child_ids']/form/sheet/group[2]/div[@name='div_address']/div/field[@name='state_id']" position="attributes">
+                    <attribute name="attrs">{'required': [('use_parent_address','=',False)]}</attribute>
+                </xpath>
+                <xpath expr="/form/sheet/notebook/page[@string='Contacts']/field[@name='child_ids']/form/sheet/group[2]/div[@name='div_address']/div/field[@name='zip']" position="attributes">
+                    <attribute name="attrs">{'required': [('use_parent_address','=',False)]}</attribute>
+                </xpath>
+                <!--cox gen2-->
+<!--                <xpath expr="/form/sheet/notebook/page[@string='Contacts']/field[@name='child_ids']/form/sheet/group[1]/field[@name='email']" position="replace">
+                    <field name="emailid" on_change="onchange_emailid(emailid)"/>
+                </xpath>-->
+                <xpath expr="/form/sheet/notebook/page[@string='Contacts']/field[@name='child_ids']" position="attributes">
+                    <attribute name="context">{'default_supplier': False, 'default_customer': False}</attribute>
+                </xpath>
+                <xpath expr="/form/sheet/div/h1/field[@name='name']" position="attributes">
+                    <attribute name="on_change">onchange_name(name, context)</attribute>
+                </xpath>
+                <xpath expr="/form/sheet/notebook/page[@string='Contacts']/field[@name='child_ids']/form/sheet/div[1]/h1/field[@name='name']" position="attributes">
+                    <attribute name="on_change">onchange_name(name, context)</attribute>
+                </xpath>
+                <xpath expr="//div[@name='buttons']" position="inside">
+                    <button name="%(partner_credits_service)d" type="action"
+                       string="Credits and Cancellation"
+                       attrs="{'invisible': [('customer', '=', False)]}"/>
+                </xpath>
+<!--                <xpath expr="/form/sheet/notebook" position="inside">
+                    <page string="Valid User Info">
+                        <field name="auth_user" nolabel="1">
+                            <tree string="User Info">
+                                <field name="serial_no"/>
+                                <field name="mac_address"/>
+                            </tree>
+                        </field>
+                    </page>
+                </xpath>-->
+            </field>
+        </record>
+
+<!-- Record for Region ID in the State -->
+        <record model="ir.ui.view" id="view_users_magento_region_id">
+            <field name="name">view.users.magento.region_id</field>
+            <field name="model">res.country.state</field>
+            <field name="inherit_id" ref="base.view_country_state_form" />
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <xpath expr="/form/group/field[@name='country_id']" position="after">
+                    <field name="region_id"/>
+                </xpath>
+            </field>
+        </record>
+<!-- To add Location into the Users-->
+        <record id="view_user_source_location" model="ir.ui.view">
+            <field name="name">view.user.source.location</field>
+            <field name="model">res.users</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.view_users_form" />
+            <field name="arch" type="xml">
+                <!--<xpath expr="/form/sheet/notebook/page/group/field[@name='active']" position="after"> cox gen2-->
+                <xpath expr="/form/sheet/div/group/field[@name='active']" position="after">
+                    <field name="src_location_id"/>
+                    <!--<field name="mag_store_id" widget="selection" domain="[('magento_shop', '=', True)]" />-->
+                </xpath>
+            </field>
+        </record>
+
+        <!-- To add Location into the Users-->
+        <!--<record id="view_partner_address_unrequired" model="ir.ui.view">
+            <field name="name">view.partner.address.unrequired</field>
+            <field name="model">res.partner.address</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.view_partner_address_form1" />
+            <field name="arch" type="xml">
+                <xpath expr="/form/group[3]/field[@name='email']" position="attributes">
+                    <attribute name="required">0</attribute>
+                </xpath>
+                <xpath expr="/form/group[3]/field[@name='phone']" position="attributes">
+                    <attribute name="required">1</attribute>
+                </xpath>
+                <xpath expr="/form/group[2]/field[@name='street']" position="attributes">
+                    <attribute name="required">1</attribute>
+                </xpath>
+                <xpath expr="/form/group[2]/field[@name='zip']" position="attributes">
+                    <attribute name="required">1</attribute>
+                </xpath>
+                <xpath expr="/form/group[2]/field[@name='city']" position="attributes">
+                    <attribute name="required">1</attribute>
+                </xpath>
+                <xpath expr="/form/group[2]/field[@name='country_id']" position="attributes">
+                    <attribute name="required">1</attribute>
+                </xpath>
+                <xpath expr="/form/group[2]/field[@name='state_id']" position="attributes">
+                    <attribute name="required">1</attribute>
+                </xpath>
+            </field>
+        </record>-->
+       <!-- <record id="view_partner_address_unrequired_fields" model="ir.ui.view">
+            <field name="name">view.partner.address.unrequired.fields</field>
+            <field name="model">res.partner.address</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="magentoerpconnect.view_partner_address_form1_magerp1" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='firstname']" position="attributes">
+                    <attribute name="required">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='lastname']" position="attributes">
+                    <attribute name="required">1</attribute>
+                </xpath>
+            </field>
+        </record>-->
+
+        <record model="ir.ui.view" id="view_company_form_easy">
+            <field name="name">view.company.form.easy</field>
+            <field name="model">res.company</field>
+            <field name="inherit_id" ref="base.view_company_form" />
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <xpath expr="/form/sheet/notebook" position="inside">
+                    <page string="Retail Agreement">
+<!--                        <separator string="Terms of Use" colspan="8"/>-->
+                        <separator string="Flare Play Terms and Conditions" colspan="8"/>
+                        <field name="flare_watch_tou_agmt" colspan="8" nolabel="1"/>
+<!--                        <newline/>
+                        <separator string="Fanhattan Terms of Agreement" colspan="8"/>
+                        <field name="fanhanttan_toa_agmt" colspan="8" nolabel="1"/>
+                        <newline/>
+                        <separator string=" Privacy Policy" colspan="8"/>
+                        <field name="privacy_policy_agmt" colspan="8" nolabel="1"/>
+                        <newline/>
+                        <separator string=" Fanhattan Privacy Policy" colspan="8"/>
+                        <field name="fanhanttan_privacy_policy_agmt" colspan="8" nolabel="1"/>
+                        <newline/>-->
+                        <button name='call_center_update' type='object' string="Agreement accepted?"/>
+                    </page>
+                    <page string="EULA Reminder Setting">
+                        <group colspan="4">
+                            <field name="eula_accpt_days" on_change="onchange_reminder_day(eula_accpt_days)" colspan="2"/>
+                            <label string="days" colspan="2"/>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+<!-- These records are added to customers which are having exception at the time of recurring billing -->
+        <menuitem  name="Recurring Payment Exceptions" id="menu_recurring_payment_exceptions"
+    parent="base.menu_base_partner" sequence="4"/>
+    <!--groups="base.group_sale_manager,group_retail_sales_manager,group_retail_sales_associate,"/>-->
+        <record id="view_res_partner_payment_error_form1_filter" model="ir.ui.view">
+            <field name="name">res.partner.payment.error.select</field>
+            <field name="model">partner.payment.error</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Payment Error">
+                    <field name="invoice_date"/>
+                    <field name="partner_id"/>
+                    <field name="email_id"/>
+                    <field name="phone_no"/>
+                    <field name="invoice_name"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_res_partner_payment_error_form1" model="ir.ui.view">
+            <field name="name">res.partner.payment.error.form1</field>
+            <field name="model">partner.payment.error</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Payment Error">
+                    <group colspan="4" col="4">
+			<!--<button name="next_retry_update" string="Next Retry Update" type="object" icon="gtk-execute" colspan="2"/>--> 
+                        <field name="next_retry_date" readonly="1"/>
+                        <field name="partner_id" readonly="1"/>
+                        <field name="email_id" readonly="1"/>
+                        <field name="phone_no" readonly="1"/>
+                        <field name="invoice_name" readonly="1"/>
+                        <field name="invoice_date" readonly="1"/>
+                        <field name="message" readonly="1"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_res_partner_payment_error_tree" model="ir.ui.view">
+            <field name="name">res.partner.payment.error.tree</field>
+            <field name="model">partner.payment.error</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Payment Error" editable="bottom">
+                    <field name="partner_id" readonly="1"/>
+                    <field name="email_id" readonly="1"/>
+                    <field name="phone_no" readonly="1"/>
+                    <field name="invoice_name" readonly="1"/>
+                    <field name="invoice_date" readonly="1"/>
+                    <field name="cc_update_date" readonly="1"/>
+                    <field name="message" readonly="1"/>
+                    <field name="status" invisible="1"/>
+                    <field name="active_payment" invisible="1"/>
+                    <button name="capture_pending_payment" type="object" string="Capture" icon="gtk-go-forward" attrs="{'invisible': [('status','&lt;&gt;',False)]}"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_res_partner_payment_error_cox" model="ir.actions.act_window">
+            <field name="name">Payment Exceptions</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">partner.payment.error</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_res_partner_payment_error_tree"/>
+            <field name="search_view_id" ref="view_res_partner_payment_error_form1_filter"/>
+            <field name="domain">[('active_payment','!=',False)]</field>
+        </record>
+        <menuitem action="action_res_partner_payment_error_cox" id="menu_show_payment_exception" parent="menu_recurring_payment_exceptions" sequence="1"
+                groups="base.group_sale_salesman,base.group_sale_manager,group_retail_sales_manager,group_retail_sales_associate,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox,group_third_party_reseller"/>
+<!-- Record for all payment exceptions -->	
+        <record id="view_res_partner_payment_error_all_tree" model="ir.ui.view">
+            <field name="name">res.partner.payment.error.all.tree</field>
+            <field name="model">partner.payment.error</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Payment Error" editable="bottom">
+                    <field name="partner_id" readonly="1"/>
+                    <field name="email_id" readonly="1"/>
+                    <field name="phone_no" readonly="1"/>
+                    <field name="invoice_name" readonly="1"/>
+                    <field name="invoice_date" readonly="1"/>
+                    <field name="cc_update_date" readonly="1"/>
+                    <field name="message" readonly="1"/>
+                    <field name="status" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+        <record id="action_res_partner_payment_error_all_cox" model="ir.actions.act_window">
+            <field name="name">All Payment Exceptions</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">partner.payment.error</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('invoice_date','>','2013-10-31')]
+            </field>
+            <field name="view_id" ref="view_res_partner_payment_error_all_tree"/>
+            <field name="search_view_id" ref="view_res_partner_payment_error_form1_filter"/>
+        </record>
+
+        <menuitem action="action_res_partner_payment_error_all_cox" id="menu_show_payment_exception_all" parent="menu_recurring_payment_exceptions" sequence="4"
+                 groups="base.group_sale_salesman,base.group_sale_manager,group_retail_sales_manager,group_retail_sales_associate,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox,group_third_party_reseller"/>
+
+<!-- record for Customer Contacts -->
+        <record id="action_partner_contact_form_cox" model="ir.actions.act_window">
+            <field name="name">Customers Contact</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="domain">[('customer','=',0),('supplier','=',0)]</field>
+            <!--<field name="context">{"search_default_customer":1}</field>-->
+            <field name="search_view_id" ref="view_res_partner_filter"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                Click to add a contact in your address book.
+                </p>
+                <p>
+                OpenERP helps you easily track all activities related to
+                a customer; discussions, history of business opportunities,
+                documents, etc.
+                </p>
+            </field>
+        </record>
+
+        <record id="view_partner_contact_tree" model="ir.ui.view">
+            <field name="name">res.partner.contact.tree</field>
+            <field name="model">res.partner</field>
+            <field eval="8" name="priority"/>
+            <field name="arch" type="xml">
+                <tree string="Contacts">
+                    <field name="display_name"/>
+                    <field name="function" invisible="1"/>
+                    <field name="phone"/>
+                    <field name="email"/>
+                    <field name="user_id" invisible="1"/>
+                    <field name="is_company" invisible="1"/>
+                    <field name="city"/>
+                    <!--<field name="country" invisible="1"/> cox gen2-->
+                    <field name="country_id"/>
+                    <field name="parent_id" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+        <record id="action_partner_contact_form_view1" model="ir.actions.act_window.view">
+            <field eval="0" name="sequence"/>
+            <field name="view_mode">kanban</field>
+            <field name="view_id" ref="base.res_partner_kanban_view"/>
+            <field name="act_window_id" ref="action_partner_contact_form_cox"/>
+        </record>
+        <record id="action_partner_contact_form_view2" model="ir.actions.act_window.view">
+            <field eval="2" name="sequence"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="base.view_partner_form"/>
+            <field name="act_window_id" ref="action_partner_contact_form_cox"/>
+        </record>
+        <record id="action_partner_contact_tree_view1" model="ir.actions.act_window.view">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_partner_contact_tree"/>
+            <field name="act_window_id" ref="action_partner_contact_form_cox"/>
+        </record>
+        <menuitem id="menu_partner_contact_form" parent="base.menu_sales" action="action_partner_contact_form_cox" sequence="3"/>
+	<!-- Record for showing billing_date and emailid field in the kanban view-->
+        <record id="view_cox_res_partner_kanban" model="ir.ui.view">
+            <field name="name">view.cox.res.partner.kanban</field>
+            <field name="model">res.partner</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="base.res_partner_kanban_view" />
+            <field name="arch" type="xml">
+                <xpath expr="//div[@class='oe_kanban_details']/ul" position="inside">
+                    <li t-if="record.emailid.raw_value">
+                        <a t-attf-href="mailto:#{record.emailid.raw_value}">
+                            <field name="emailid"/>
+                        </a>
+                    </li>
+                    <li t-if="record.billing_date.raw_value">
+                        <field name="billing_date"/>
+                    </li>
+                </xpath>
+                <xpath expr="//div[@class='oe_kanban_details']/ul/li/a/field[@name='email']" position="replace">
+                </xpath>
+            </field>
+        </record>
+    </data>
+</openerp>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_in_store_pickup" model="ir.ui.view">
+            <field name="name">view.in.store.pickup</field>
+            <field name="model">in.store.pickup</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="In Store Pick UP">
+                    <separator string="Source Location" colspan="8"/>
+                    <field name="src_location" readonly="True" colspan="4"/>
+                    <newline/>
+                    <separator string="Pick Up location" colspan="8"/>
+                    <field name="pick_up_location" colspan="4" required="True"/>
+                    <newline/>
+                    <group colspan="4" col="6">
+                   <button name="barcode_scanning" string="BarCode Scanning" type="object"/>
+                   <button name="default_picking_flow" string="Skip BarCode Scanning" type="object" invisible="1"/>
+                   </group>
+                </form>
+            </field>
+        </record>
+    </data>
+</openerp>

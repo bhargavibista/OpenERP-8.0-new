@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="action_refund_agains_invoice_wizard" model="ir.ui.view">
+          <field name="name">refund.against.invoice.wizrad</field>
+          <field name="model">refund.against.invoice</field>
+          <field name="type">form</field>
+          <field name="arch" type="xml">
+              <form string="Refund Against Invoice">
+                  <group colspan="4" col="4">
+                  <field name="invoice_ids" nolabel="1"/>
+                  </group>
+                  <newline/>
+                  <group colspan="4" col="4">
+                  <button name="refund_service" string="Credit Only" type="object" icon="terp-gtk-go-back-rtl" groups="cox_communication.group_retail_sales_manager,cox_communication.group_internal_operations_manager,cox_communication.group_support,cox_communication.group_warehouse_cox"/>
+                  <button name="refund_cancel_service" string="Credit and Cancel" type="object" icon="terp-gtk-go-back-ltr" groups="cox_communication.group_retail_sales_manager,cox_communication.group_internal_operations_manager,cox_communication.group_support,cox_communication.group_warehouse_cox"/>
+                  <button name="cancel_service" string="Cancel Only" type="object" icon="terp-gtk-go-back-ltr"/>
+              </group>
+              </form>
+          </field>
+       </record>
+
+        <record id="action_refund_agains_invoice" model="ir.actions.act_window">
+            <field name="name">Refund Against Invoice</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">refund.against.invoice</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="action_refund_agains_invoice_wizard"/>
+            <field name="target">new</field>
+        </record>
+
+    </data>
+</openerp>

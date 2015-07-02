@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<openerp>
+    <data>
+        <record id="view_charge_termination_fees" model="ir.ui.view">
+            <field name="name">view.charge.termination.fees</field>
+            <field name="model">charge.termination.fee</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Charge Termination Fees">
+                    <separator string="Use Existing CC" colspan="8"/>
+                      <field name="termination_fees"/>				        
+                    <field name="cust_payment_profile_id" attrs="{'required':[('diff_cc','=',False)]}"/>
+                    <newline/>
+		    <field name="diff_cc" invisible="1"/>
+		<newline/>
+                    <field name="new_cc_number" attrs="{'required':[('diff_cc','=',True)],'invisible':[('diff_cc','=',False)]}"/>
+                    <field name="cc_expiration_date" attrs="{'required':[('diff_cc','=',True)],'invisible':[('diff_cc','=',False)]}"/>
+
+                     <button name="charge_termiation_fees" type="object" string="Charge"/>
+                </form>
+            </field>
+        </record>
+    </data>
+</openerp>

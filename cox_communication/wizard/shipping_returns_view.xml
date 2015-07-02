@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record id="view_shipping_response_returns_form" model="ir.ui.view">
+            <field name="name">shipping.response.form</field>
+            <field name="model">shipping.response.returns</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Shipping Response">
+                    <field name="name" />
+                    <field name="rate" />
+                    <field name="type" />
+                    <newline/>
+                    <button name="generate_tracking_no" string="Accept" type="object" icon="gtk-go-forward" />
+                </form>
+            </field>
+        </record>
+
+        <record id="view_shipping_response_returns_tree" model="ir.ui.view">
+            <field name="name">shipping.response.returns.tree</field>
+            <field name="model">shipping.response.returns</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+<!--                <tree colors="blue:cust_default==True;red:sys_default==True" string = "Shipping Response" >-->
+                <tree string = "Shipping Response" >
+                    <button name="generate_tracking_no" string="Accept" type="object" icon="gtk-go-forward" />
+                    <field name="name" />
+                    <field name="rate" />
+                    <field name="type" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_shipping_returns_form_new" model="ir.ui.view">
+            <field name="name">view.shipping.returns.form.new</field>
+            <field name="model">shipping.returns</field>
+            <field name="type">form</field> 
+            <field name="arch" type="xml">
+                <form string="Shipping Response">
+                                <field name="warehouse_location_id"/>
+		   <group colspan="4" col="4" >
+                            <separator string = "Shipping Type" colspan="4" />
+                                <group colspan="4" col="4">
+                                    <field name="use_shipping" invisible="1"/>
+                                    <field name="shipping_type" />
+                                </group>
+                        </group>
+		   <group colspan="4" col="4" >
+                            <separator string = "Weight" colspan="4" />
+                            <group colspan="4" col="4">
+                                <field name="weight_package" />
+                            </group>
+                        </group>
+		    <group colspan="4" col="4" name="fedex" attrs="{'invisible':[('shipping_type','!=','Fedex'), ('shipping_type','!=','All')]}" >
+                            <separator string = "Fedex" colspan="4" />
+                            <group colspan="4" col="4" >
+                                <field name="dropoff_type_fedex" attrs="{'required':['|', ('shipping_type','=','Fedex'),('shipping_type','=','All')]}" />
+                                <field name="service_type_fedex" attrs="{'required':['|', ('shipping_type','=','Fedex'),('shipping_type','=','All')]}" on_change="onchange_shipping_rates(service_type_fedex,response_usps_ids,shipping_type)"/>
+                                <field name="customsvalue" attrs="{'invisible':[('service_type_fedex','not in',['INTERNATIONAL_ECONOMY','INTERNATIONAL_ECONOMY_FREIGHT','INTERNATIONAL_FIRST','INTERNATIONAL_PRIORITY','INTERNATIONAL_PRIORITY_FREIGHT','INTERNATIONAL_GROUND','EUROPE_FIRST_INTERNATIONAL_PRIORITY'])]}"/>
+                                <field name="currency_id" attrs="{'invisible':[('service_type_fedex','not in',['INTERNATIONAL_ECONOMY','INTERNATIONAL_ECONOMY_FREIGHT','INTERNATIONAL_FIRST','INTERNATIONAL_PRIORITY','INTERNATIONAL_PRIORITY_FREIGHT','INTERNATIONAL_GROUND','EUROPE_FIRST_INTERNATIONAL_PRIORITY'])]}"/>
+                                <field name="packaging_type_fedex" attrs="{'required':['|', ('shipping_type','=','Fedex'),('shipping_type','=','All')]}" />
+                                <field name="package_detail_fedex" attrs="{'required':['|', ('shipping_type','=','Fedex'),('shipping_type','=','All')]}" />
+                                <field name="payment_type_fedex" attrs="{'required':['|', ('shipping_type','=','Fedex'),('shipping_type','=','All')]}" />
+                                <field name="physical_packaging_fedex" attrs="{'required':['|', ('shipping_type','=','Fedex'),('shipping_type','=','All')]}" />
+                                <field name="pack_length" />
+                                <field name="pack_width" />
+                                <field name="pack_height" /></group>
+			<group colspan="4" col="1" attrs="{'invisible':[('shipping_type','!=','Fedex'), ('shipping_type','!=','USPS'), ('shipping_type','!=','UPS'),('shipping_type','!=','All')]}" >
+                            <separator/>
+                            <button string="Generate Shipping Quotes" icon="gtk-apply" name="generate_shipping" type="object" />
+                        </group>
+                        <group colspan="4" col="2" attrs="{'invisible':[('shipping_type','!=','Fedex'), ('shipping_type','!=','USPS'), ('shipping_type','!=','UPS'),('shipping_type','!=','All')]}" >
+                            <separator string = "Shipping Quotes" colspan="2" />
+                            <field name="response_usps_ids" nolabel="1" widget="one2many"  colspan="2" >
+                                <tree string="Shipping Quotes" >
+                                    <button name="generate_tracking_no" string="Accept" type="object" icon="gtk-go-forward" />
+                                    <field name="name"/>
+                                    <field name="type"/>
+                                    <field name="rate" />
+                                </tree>
+                            </field>
+                        </group>	
+                        </group>	
+                    </form>
+            </field>
+        </record> 
+        <act_window name="Generate Shipping Label"
+            res_model="shipping.returns"
+            src_model="return.order"
+            view_mode="form"
+            target="new"
+            key2="client_action_multi"
+            id="action_view_shipping_returns_form"/>
+    </data>
+</openerp>
