@@ -36,7 +36,7 @@
         </record>
         <!--incomm configartion records ends here-->
         
-<!--        gift card records starts here
+        <!--gift card records starts here-->
         <record id="view_gift_card_validate_details_form" model="ir.ui.view">
             <field name="name">view.gift.cred.details.form</field>
             <field name="model">gift.card.validate.call</field>
@@ -69,10 +69,10 @@
             <field name="res_model">gift.card.validate.call</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-        </record>-->
+        </record>
         <!--gift card records ends here-->
         <menuitem id="user_auth_menu" sequence="3" parent="incomm_menu" name="Incomm"/>
         <menuitem id="user_auth_menu_three" action="action_incomm_cred_information" sequence="3" parent="user_auth_menu"/>
-        <!--<menuitem id="user_auth_menu_four" action="action_gift_card_details_information" sequence="4" parent="user_auth_menu"/>-->
+        <menuitem id="user_auth_menu_four" action="action_gift_card_details_information" sequence="4" parent="user_auth_menu"/>
     </data>
 </openerp>

@@ -10,6 +10,7 @@ from openerp import netsvc
 from openerp.addons.account_salestax_avatax.wizard import suds_client
 from openerp.tools import float_compare
 import openerp.addons.decimal_precision as dp
+from openerp.http import request
 
 
 #code by riyaz for issues related to manual validation of invoice for parter having parent company
@@ -26,6 +27,9 @@ class account_move_line(osv.osv):
         print "pat_id----------------",pat_id
         res=super(account_move_line, self).create(cr, uid, vals, context=context)
         return res
+    
+    invoice_line_id=fields.Many2one('account.invoice.line','Invoice Lines')
+
 account_move_line()
 
 #code by riyaz for issues related to manual validation of invoice for parter having parent company
@@ -48,7 +52,7 @@ class account_invoice(models.Model):
     
     @api.multi
     def check_tax_lines(self, compute_taxes):
-        print"check tax linesssss"
+        print"self.tax_lineself.tax_lineself.tax_line",self.tax_line
         account_invoice_tax = self.env['account.invoice.tax']
         company_currency = self.company_id.currency_id
         if not self.tax_line:
@@ -124,7 +128,219 @@ class account_invoice(models.Model):
             else:
                 res[invoice.id] = False
         return res'''
-                
+
+    @api.multi
+    def action_move_create(self):
+        """
+        This calls the finalize_invoice_move_lines and creates the moves and the
+        revenue recognition schedule.
+        """
+#        sale_obj=self.pool.get('sale.order')
+        sale_obj=self.env['sale.order']
+        print"sale_objsale_objsale_objsale_objsale_obj",sale_obj
+        for inv in self.browse():
+            print"invinvinvinvinvinvinv",inv
+            if not inv.date_invoice:
+                date_confirm = sale_obj.date_order_confirm(cr,uid,context)
+                print"date_invoicedate_invoicedate_invoicedate_invoicedate_invoice------------",inv.date_invoice,date_confirm
+                self.write({'date_invoice':date_confirm})
+                inv.refresh()
+        super(account_invoice,self).action_move_create()
+        request.cr.execute("select order_id from sale_order_invoice_rel where invoice_id='%s'"%(self.ids[0])) 
+        so_id=filter(None, map(lambda x:x[0], request.cr.fetchall()))
+        print"so_idso_idso_idso_idso_idso_idso_idso_idso_idso_idso_idso_idso_idso_id",so_id
+        if so_id:
+            sale_brw=sale_obj.browse(so_id[0])
+            print"sale_brwsale_brwsale_brwsale_brw",sale_brw
+            sales_channel=sale_brw.cox_sales_channels
+            print"sales_channelsales_channelsales_channel",sales_channel,self
+            if not sales_channel=='playjam':
+                # Process the invoices
+                for inv in self:
+                    print"invinvinvinvinvinv",inv
+                    if inv.type in ('out_invoice','in_invoice'):
+                        move_line_obj=self.pool.get('account.move.line')
+                        print'inv.move_id.idinv.move_id.idinv.move_id.id',inv.move_id.id
+                        request.cr.execute("select id from account_move_line where product_id in (select id from product_product where product_tmpl_id in (select id from product_template where product_type='service')) and move_id=%s"%(inv.move_id.id))
+                        move_line_ids=filter(None, map(lambda x:x[0], request.cr.fetchall()))
+                        print"move_objmove_objmove_objmove_obj",move_line_ids
+                        if move_line_ids:
+                        # Process the customer invoice
+                            self._process_invoice_line(move_line_ids, inv)
+                return True
+
+    def _amount_currency(self, line, invoice): 
+        """
+        Calculate the invoice line net amount based on the company currency. This amount will be used
+        for the journals.
+        """
+        price=line.debit if 'Discount' in line.name else line.credit
+        curr_obj = self.pool.get('res.currency')
+        amount = curr_obj.compute(request.cr, request.uid, invoice.currency_id.id, invoice.company_id.currency_id.id,
+                                  price, context={'date':invoice.date_invoice}) 
+        return amount
+
+    def _process_invoice_line(self,line, invoice):
+        """
+        Handle the creation of the revenue recognition schedule and the initial journal to move
+        the invoice line amount into the Unearned Income account.
+        """
+        # Exit if revenue recognition is not required
+        if invoice.recurring==True:
+            return
+        # Get the revenue recognition journal
+        domain = [('name','=',_('Recognition Journal')),'|',('company_id','=',invoice.company_id.id),('company_id','=',False)]
+        journal_ids = self.pool.get('account.journal').search(request.cr,request.uid, domain) 
+        print"journal_idsjournal_idsjournal_idsjournal_ids",journal_ids
+        if len(journal_ids)==0:
+            raise osv.except_osv(_("Error in Invoice Line '%s'" % line.name), _("Cannot find the Recognition Journal for this company."))
+        # Generate the revenue recognition schedule
+        self._create_schedule(line, invoice, journal_ids[0])
+
+    def _create_schedule(self,line, invoice, journal_id): 
+        print"_create_schedule_create_schedule_create_schedule_create_schedule",invoice,journal_id
+        """
+        Generate the revenue recognition schedule records, based on the contract start and end
+        and the net invoice line value.
+        """
+        move_line_obj=self.pool.get('account.move.line')
+#        schedule = []
+        # Calculate the contract length in days and daily rate (rounded)
+        contract_start = datetime.datetime.strptime(str(invoice.date_invoice), '%Y-%m-%d').date()
+        for each_inv_line in invoice.invoice_line:
+            free_trail_months=each_inv_line.product_id.free_trail_days
+            if free_trail_months>0:
+                contract_end=contract_start+relativedelta(months=free_trail_months)
+            else:
+                return
+        contract_end = datetime.datetime.strptime(str(contract_end), '%Y-%m-%d').date()
+        days = (contract_end - contract_start).days
+        print"contract_startcontract_start",contract_start,contract_end,days
+            # Create revenue recognition as a list
+        if contract_start > datetime.date.today():
+            this_date = contract_start
+        else:
+            this_date = datetime.date.today()
+
+        while this_date<contract_end:
+            move_lines=[]
+            amount,total_amount,total_amounts=0.0000,0.0000,0.0000
+            print"this_datethis_datethis_datethis_datethis_date",this_date
+            for each_line in move_line_obj.browse(request.cr,request.uid,line): 
+                print"each_lineeach_lineeach_line",each_line
+            # Calculate last day of month (or contract)
+                amount = self._amount_currency(each_line, invoice)
+                day_rate = round(amount / free_trail_months,3)
+                print"day_rateday_rateday_rateday_rateday_rateday_rateday_rateday_rateday_rateday_rate",day_rate
+                last_day = this_date+relativedelta(months=1)
+
+                if last_day > contract_end:
+                    last_day = contract_end
+                print"last_daylast_daylast_day",last_day,day_rate
+                # Calculate the pro-rata revenue for the last period
+                period_amount=day_rate
+                total_amount +=period_amount
+                print"period_amountperiod_amountperiod_amountperiod_amount-",period_amount,day_rate,amount,total_amount
+                # Save this scheduled amount
+
+                if invoice.type=='out_invoice':
+                    debit_account_id = each_line.account_id.id
+                    credit_account_id = each_line.product_id.property_account_income.id
+                else:
+                    # Supplier invoice
+                    debit_account_id = each_line.product_id.property_account_income.id
+        #            credit_account_id = line.unearned_account_id.id
+                    credit_account_id = each_line.account_id.id
+                ml_credit = self._move_line_create(invoice, journal_id)
+                ml_credit.update({
+                        'name':'Revenue Recognition/Prepayment',
+                        'date':last_day,
+                        'date_maturity': last_day,
+                        'account_id': credit_account_id,
+                        'credit': period_amount})
+                move_lines.append((0,0,ml_credit))
+                ml_debit = self._move_line_create(invoice, journal_id)
+                ml_debit.update({
+                        'name':'/',
+                        'date_maturity': last_day,
+                        'date':last_day,
+                        'account_id': debit_account_id,
+                        'debit': period_amount})
+                move_lines.append((0,0,ml_debit))
+                print"ml_creditml_creditml_creditml_credit",ml_credit,ml_debit
+                period_id = self._period_get(invoice.company_id.id,last_day)
+                print"period_idperiod_idperiod_idperiod_idperiod_idperiod_id",period_id
+            move = {
+                'ref': invoice.move_id.name,
+                'line_id': move_lines,
+                'journal_id': journal_id,
+                'date':last_day,
+                'period_id': period_id,
+                }
+            context = {'journal_id': journal_id, 'period_id': invoice.period_id.id}
+            move_id = self.pool.get('account.move').create(request.cr, request.uid, move, context=context)
+            this_date = last_day
+            print"move_idmove_idmove_idmove_id",move_id
+
+    def _move_line_create(self, invoice, journal_id):
+        return {
+            'date_maturity': invoice.date_invoice,
+            'partner_id': invoice.partner_id.id,
+            'date': invoice.date_invoice,
+            'ref': invoice.move_id.name,
+            'journal_id': journal_id,
+            }
+
+    def _period_get(self,company_id, date): 
+        # Get the current accounting period for the company
+        period_ids = self.pool.get('account.period').search(request.cr, request.uid, [('date_start','<=',date),('date_stop','>=',date), ('company_id', '=', company_id)]) 
+        if not period_ids or len(period_ids)==0:
+            raise osv.except_osv(_('Error!'), _("Cannot find an Accounting Period for the company."))
+        return period_ids[0]
+
+
+    def post_revenue_recognition(self, *args): 
+        """
+        Run by a scheduled task (daily).
+        Reads the revenue recognition records for the run date (or older) and post financial journals for
+        the draft schedule records.
+        """
+        logger = netsvc.Logger()
+        logger.notifyChannel('post_revenue', netsvc.LOG_INFO,'Generating revenue recognition journals')
+        acc_move_obj=self.pool.get('account.move')
+        domain = [('name','=',_('Recognition Journal'))]
+        journal_ids = self.pool.get('account.journal').search(cr, uid, domain)
+        print"journal_idsjournal_idsjournal_idsjournal_ids",journal_ids
+        if len(journal_ids)==0:
+            raise osv.except_osv(_("Error in Invoice Line '%s'" % line.name), _("Cannot find the Recognition Journal for this company."))
+        # Get the scheduled revenue recognition records for today
+        move_ids=acc_move_obj.search(cr,uid,[('state','=','draft'),('date','<=','2015-06-12'),('journal_id','=',journal_ids[0])])
+        if move_ids:
+            self.pool.get('account.move').post(request.cr, request.uid, move_ids) 
+        logger.notifyChannel('post_revenue', netsvc.LOG_INFO,'Completed revenue recognition journals')
+
+    def line_get_convert(self, cr, uid, x, part, date, context=None):
+        return {
+            'date_maturity': x.get('date_maturity', False),
+            'partner_id': part,
+            'name': x['name'][:64],
+            'date': date,
+            'debit': x['price']>0 and x['price'],
+            'credit': x['price']<0 and -x['price'],
+            'account_id': x['account_id'],
+            'analytic_lines': x.get('analytic_lines', []),
+            'amount_currency': x['price']>0 and abs(x.get('amount_currency', False)) or -abs(x.get('amount_currency', False)),
+            'currency_id': x.get('currency_id', False),
+            'tax_code_id': x.get('tax_code_id', False),
+            'tax_amount': x.get('tax_amount', False),
+            'ref': x.get('ref', False),
+            'quantity': x.get('quantity',1.00),
+            'product_id': x.get('product_id', False),
+            'product_uom_id': x.get('uos_id', False),
+            'analytic_account_id': x.get('account_analytic_id', False),
+            'invoice_line_id':x.get('invoice_line_id',False),
+        }
+            
                 
     @api.one
     @api.depends('invoice_line')
@@ -223,20 +439,28 @@ class account_invoice(models.Model):
             current_obj=self.browse(cr,uid,ids[0])
             config_ids = authorize_net_config.search(cr,uid,[])
             customer_profile_id=current_obj.partner_id.customer_profile_id
+            print"customer_profile_idcustomer_profile_id",customer_profile_id,config_ids
             act_model='account.invoice'
             next_try_date=current_obj.date_invoice
             next_retry_date=datetime.datetime.strptime(next_try_date, "%Y-%m-%d")
             next_retry_date=next_retry_date+datetime.timedelta(weeks=1)
             if config_ids and customer_profile_id:
+		print "config ids//////////////////////////////",config_ids,customer_profile_id
                 config_obj = authorize_net_config.browse(cr,uid,config_ids[0])
                 cust_payment_profile_id = current_obj.customer_payment_profile_id
+                print"cust_payment_profile_idcust_payment_profile_idcust_payment_profile_id",cust_payment_profile_id
                 transaction_type = current_obj.auth_transaction_type
+                print"transaction_typetransaction_typetransaction_type",transaction_type,current_obj.capture_status
                 amount=current_obj.amount_total
                 try:
                     capture_status = current_obj.capture_status
+		    print "cpature status///////////////////////////////////",capture_status
                     if not capture_status:
+                        ccv=''
                         #context['recurring_billing'] =True
-                        transaction_details =authorize_net_config.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',ids[0],transaction_type,amount,customer_profile_id,cust_payment_profile_id,'',act_model,'',context)
+			print "msndc,sdnfcjkdfnkjdjvkdjvlkfdjvl",ids[0],transaction_type,amount,customer_profile_id,cust_payment_profile_id,config_obj
+                        transaction_details =authorize_net_config.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',ids[0],transaction_type,amount,customer_profile_id,cust_payment_profile_id,'',ccv,act_model,'',context)
+                        print"transaction_detailstransaction_detailstransaction_details",transaction_details
                         if transaction_details:
                             transaction_response = transaction_details.get('response')
                             if transaction_response:
@@ -250,19 +474,19 @@ class account_invoice(models.Model):
                                                 'invoice_date':current_obj.date_invoice,
                                                 'invoice_id':ids[0],
                                                 'message':transaction_details.get('message'),
-						'source': source,
-						'next_retry_date':next_retry_date,
-						'active_payment':True,
+                                                'source': source,
+                                                'next_retry_date':next_retry_date,
+                                                'active_payment':True,
                                                 }
-					if not context.get('called_from_rentals',False):
-	                                        exception_id = exception_object.create(cr,uid,vals,context)
-						exception_id_brw =exception_object.browse(cr,uid,exception_id)
-#                                    transaction_response =  transaction_response[2]
- #                                   if transaction_response in ('2','3') :
-                	                        self.pool.get('sale.order').email_to_customer(cr,uid,exception_id_brw,'partner.payment.error','payment_exception',current_obj.partner_id.emailid,context)
-					else:
-                                            	msg=vals.get('message')
-                                            	cr.execute("UPDATE account_invoice SET comment='%s' where id=%d"%(msg,ids[0]))
+                                        if not context.get('called_from_rentals',False):
+                                                exception_id = exception_object.create(cr,uid,vals,context)
+                                                exception_id_brw =exception_object.browse(cr,uid,exception_id)
+    #                                    transaction_response =  transaction_response[2]
+    #                                   if transaction_response in ('2','3') :
+                                                self.pool.get('sale.order').email_to_customer(cr,uid,exception_id_brw,'partner.payment.error','payment_exception',current_obj.partner_id.emailid,context)
+                                        else:
+                                                msg=vals.get('message')
+                                                cr.execute("UPDATE account_invoice SET comment='%s' where id=%d"%(msg,ids[0]))
                                     return False
                     state = current_obj.state
                     if state != 'paid':
@@ -319,8 +543,6 @@ class account_invoice(models.Model):
         return lines
         
     ########*
-    gift_card_no = fields.Char()
-    processed_by = fields.Selection([('wallet','Wallet'),('authorize','Authorize'),('giftcard','GiftCard')],string="Processed By",readonly=True)
     recurring = fields.Boolean('Recurring Payment')
     credit_id = fields.Many2one('credit.service',string="Service Credit ID",help="Date on which next Payment will be generated.")
     next_billing_date = fields.Datetime('Next Billing Date',select=True, help="Date on which next Payment will be generated.")
@@ -333,6 +555,7 @@ class account_tax(osv.osv):
     _inherit='account.tax'
 #    _columns = {
 #    'account_collected_id':fields.property(
+
 ##            'account.account',
 #            type='many2one',
 #            relation='account.account',
@@ -412,7 +635,6 @@ class account_invoice_line(osv.osv):
         res,cox_sales_channels = [],''
         tax_obj = self.pool.get('account.tax')
         cur_obj = self.pool.get('res.currency')
-        policy_object=self.pool.get('res.partner.policy')        
         if context is None:
             context = {}
         invoice_obj = self.pool.get('account.invoice')
@@ -421,7 +643,6 @@ class account_invoice_line(osv.osv):
         inv_type = inv.type
         return_order = self.pool.get('return.order')
         so_obj = self.pool.get('sale.order')
-        so_line_obj = self.pool.get('sale.order.line')#Preeti for Product Configuration
         search_sale =  so_obj.search(cr,uid,[('name','=',inv.origin)])
         if search_sale:
             cox_sales_channels = so_obj.browse(cr,uid,search_sale[-1]).cox_sales_channels
@@ -434,25 +655,17 @@ class account_invoice_line(osv.osv):
                 else:
                     cr.execute("select id from sale_order_line where parent_so_line_id in (select order_line_id from sale_order_line_invoice_rel where invoice_id = %s)"%(line.id))
                     child_so_line_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
+                    print"child_so_line_ids",child_so_line_ids
                 if line.product_id.free_trail_days>0:
-                    context['free_trail_days']=line.product_id.free_trail_days
+                    context={'free_trail_days':line.product_id.free_trail_days}
             elif inv_type == 'out_refund':
                 return_ref = (inv.return_ref.split("/") if inv.return_ref else  False)
                 if return_ref:
                     return_ref = return_ref[0]
                     return_id = return_order.search(cr,uid,[('name','ilike',return_ref)])
                     if return_id:
-                        #Start code Preeti for RMA
-                        if return_order.browse(cr,uid,return_id[0]).linked_sale_order:
-                            sale_order_id = return_order.browse(cr,uid,return_id[0]).linked_sale_order
-                            cr.execute("select id from account_invoice where (recurring=False or recurring is Null) and id in (select invoice_id from sale_order_invoice_rel where order_id in %s)",(tuple([sale_order_id.id]),))
-                        else:                            
-                            return_brw = return_order.browse(cr,uid,return_id[0])
-                            policy_id =return_brw.service_id
-                            policy_brw=policy_object.browse(cr,uid,policy_id.id)
-                            linked_sale_id=policy_brw.sale_id                                       
-                            cr.execute("select id from account_invoice where (recurring=False or recurring is Null) and id in (select invoice_id from sale_order_invoice_rel where order_id in %s)",(tuple([linked_sale_id]),))
-                        #End code Preeti for RMA
+                        sale_order_id = return_order.browse(cr,uid,return_id[0]).linked_sale_order
+                        cr.execute("select id from account_invoice where (recurring=False or recurring is Null) and id in (select invoice_id from sale_order_invoice_rel where order_id in %s)",(tuple([sale_order_id.id]),))
                         invoice_id = cr.fetchone()
                         if invoice_id:
                             date_invoice =invoice_obj.browse(cr,uid,invoice_id[0]).date_invoice
@@ -463,7 +676,10 @@ class account_invoice_line(osv.osv):
 #            fjkdhgjf
             if child_so_line_ids:
                 for each_so_line in child_so_line_ids:
-                    context={'so_line_id':each_so_line}  ##cox gen2
+                    if not context:
+                        context={'so_line_id':each_so_line}  ##cox gen2
+                    else:
+                        context['so_line_id']=each_so_line
                     mres = self.move_line_get_item(cr, uid, line, context)
                     if not mres:
                         continue
@@ -504,6 +720,7 @@ class account_invoice_line(osv.osv):
         return res
 
     def move_line_get_item(self, cr, uid, line, context=None):
+        print"contextcontextcontextcontext--------------------",context
         ##Extra Code Starts here
         if context and context.get('so_line_id'):
             so_line_id_brw = self.pool.get('sale.order.line').browse(cr,uid,context.get('so_line_id'))
@@ -511,13 +728,12 @@ class account_invoice_line(osv.osv):
                 account_id = so_line_id_brw.product_id.property_account_income.id
             else:
                 account_id = so_line_id_brw.product_id.categ_id.property_account_income_categ.id
-             ########### code to pass prepaid account in sales journal entry for service
             if so_line_id_brw.product_id.type=='service' and context.get('free_trail_days',False)>0:
                 if so_line_id_brw.product_id.property_account_line_prepaid_revenue.id:
                     account_id = so_line_id_brw.product_id.property_account_line_prepaid_revenue.id
                 else:
                     account_id = so_line_id_brw.product_id.categ_id.property_account_line_prepaid_revenue_categ.id
-	    print"acoyntttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt",account_id,so_line_id_brw.product_id
+            print"account_idaccount_idaccount_idaccount_idaccount_id",account_id
             return {
             'type':'src',
             'name': so_line_id_brw.name.split('\n')[0][:64],
@@ -529,7 +745,7 @@ class account_invoice_line(osv.osv):
             'uos_id':so_line_id_brw.product_uom.id,
             'account_analytic_id':False,
             'taxes':so_line_id_brw.tax_id,
-            'invoice_line_id':line.id
+            'invoice_line_id':line.id,
             }
         else:
         #Endes here
@@ -544,7 +760,7 @@ class account_invoice_line(osv.osv):
             'uos_id':line.uos_id.id,
             'account_analytic_id':line.account_analytic_id.id,
             'taxes':line.invoice_line_tax_id,
-            'invoice_line_id':line.id
+            'invoice_line_id':line.id,
             }
 account_invoice_line()
 

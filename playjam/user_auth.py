@@ -679,7 +679,7 @@ class user_auth(models.Model):
 
         return json.dumps({'body':{ "code":False, "message":"Playjam Server Issue."}})
         
-    def wallet_playjam(self, cr, uid, user_id, quantity, context=None):
+    def wallet_playjam(self, user_id, quantity, context=None):
         url = "http://54.75.245.17/api/rest/flare/wallet/view.json"
         headers = {'content-type': 'application/x-www-form-urlencoded'}
 
@@ -692,7 +692,7 @@ class user_auth(models.Model):
         print "data.......................",data
         request=urllib.quote(data.encode('utf-8'))
         response = requests.post(
-                    url, data="request="+requ, headers=headers)
+                    url, data="request="+request, headers=headers)
         print"response.content",response.content
         return response.content
     
@@ -768,13 +768,13 @@ class device_history(models.Model):
 
     
     def write(self,ids,vals,context=None):
-#        cr._cnx.set_isolation_level(ISOLATION_LEVEL_READ_COMMITTED)
+        cr._cnx.set_isolation_level(ISOLATION_LEVEL_READ_COMMITTED)
         res=super(device_history,self).write(cr,uid,ids,vals,context)
         return res
 
     
     def create(self,vals,context=None):
-#        cr._cnx.set_isolation_level(ISOLATION_LEVEL_READ_COMMITTED)
+        cr._cnx.set_isolation_level(ISOLATION_LEVEL_READ_COMMITTED)
         res=super(device_history,self).create(cr,uid,vals,context)
         return res
 device_history()

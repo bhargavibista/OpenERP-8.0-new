@@ -328,6 +328,7 @@
                 <xpath expr="/form/sheet/group/group/field[@name='website']" position="after">
                     <newline/>
                     <field name="billing_date" readonly="True"/>
+                    <field name="next_billing_amount" readonly="True"/> <!--cox gen2 changes by yogita-->
                 </xpath>
                 <xpath expr="/form/sheet/notebook/page[@string='Sales &amp; Purchases']/group/group/field[@name='ref']" position="attributes">
                     <attribute name="readonly">1</attribute>
