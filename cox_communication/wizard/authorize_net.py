@@ -12,7 +12,7 @@ import openerp.netsvc as netsvc
 import datetime
 #from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
-from openerp.addons.base_external_referentials.external_osv import ExternalSession
+#from openerp.addons.base_external_referentials.external_osv import ExternalSession
 import time
 import ast
 
