@@ -48,6 +48,7 @@ class account_invoice(models.Model):
     
     @api.multi
     def check_tax_lines(self, compute_taxes):
+        print"check tax linesssss"
         account_invoice_tax = self.env['account.invoice.tax']
         company_currency = self.company_id.currency_id
         if not self.tax_line:
