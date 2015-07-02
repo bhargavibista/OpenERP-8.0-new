@@ -24,6 +24,7 @@ class return_shipment_label(osv.osv_memory):
                     'context': context
                         }
     def receive_refund(self,cr,uid,ids,context={}):
+        search_incoming_shipment=False
         if ids:
             id_brw = self.browse(cr,uid,ids[0])
             return_id  = id_brw.return_id
@@ -37,7 +38,8 @@ class return_shipment_label(osv.osv_memory):
             ####
 #	    print "context",context
             #print "search_incoming_shipmen",search_incoming_shipment
-            search_shipment = self.pool.get('stock.picking').search(cr,uid,[('return_id','=',active_id),('state','=','draft')])	
+#            search_shipment = self.pool.get('stock.picking').search(cr,uid,[('return_id','=',active_id),('state','=','draft')])	
+            search_shipment = self.pool.get('stock.picking').search(cr,uid,[('return_id','=',return_id.id),('state','=','draft')])	
             print"search_shipment",search_shipment
             if search_shipment:
                 for each in self.pool.get('stock.picking').browse(cr,uid,search_shipment):
