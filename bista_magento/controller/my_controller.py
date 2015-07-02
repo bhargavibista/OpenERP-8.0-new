@@ -472,7 +472,7 @@ class Magento(http.Controller):
 #            with registry.cursor() as cr:
 #                result=user.update_subscription(cr,1,dict_req,{})
             ###
-            registry = RegistryManager.get('stable_8_openerp')
+            registry = RegistryManager.get('test_odoo8_1')
             with registry.cursor() as cr:
                 u = registry['res.partner']
                 result = u.update_subscription(dict_req)
