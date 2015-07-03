@@ -561,11 +561,11 @@ class picking_scanning(osv.osv_memory):
                                             stock_move_obj.write(cr, uid, search_child_mv_ids,{'status': 'done'})
                                             total_scanned_moves += 1
                                             if total_scanned_moves == len(obj_stock_moves):
-                                                return {'value': {'bcquantity': 1,'line_ids':scanning_line,'is_new_pick':False,'note':'Scan Next Shipment!'},'type': 'ir.actions.act_window_close'}
+                                                return {'value': {'bcquantity': received_qty,'line_ids':scanning_line,'is_new_pick':False,'note':'Scan Next Shipment!'},'type': 'ir.actions.act_window_close'}
                                             else:
-                                                return {'value': {'bcquantity': 1,'is_new_pick':False,'note':''}}
+                                                return {'value': {'bcquantity': received_qty,'is_new_pick':False,'note':'Scan Next','line_ids':scanning_line}}
                                         else:
-                                            return {'value': {'bcquantity': 1,'is_new_pick':False,'note':''}}
+                                            return {'value': {'bcquantity': received_qty,'is_new_pick':False,'note':'Scan Next','default_code':False,'line_ids':scanning_line }}
                                 else:
                                     raise osv.except_osv(_('ERROR !'), _('Serial number not found'))
 #                                    received_qty = received_qty + 1
@@ -594,11 +594,11 @@ class picking_scanning(osv.osv_memory):
                                         stock_move_obj.write(cr, uid, search_child_mv_ids,{'status': 'done'})
                                     total_scanned_moves += 1
                                     if total_scanned_moves == len(obj_stock_moves):
-                                        return {'value': {'bcquantity': 1,'line_ids':line_scanned_ids,'is_new_pick':False,'note':'Scanning is Done'},'type': 'ir.actions.act_window_close'}
+                                        return {'value': {'bcquantity': received_qty,'line_ids':line_scanned_ids,'is_new_pick':False,'note':'Scanning is Done'},'type': 'ir.actions.act_window_close'}
                                     else:
-                                        return {'value': {'line_ids':line_scanned_ids,'bcquantity': 1,'is_new_pick':False,'note':'', 'stock_picking_id':picking_obj1.id,'default_code':False,'picking_ids':picking_ids}}
+                                        return {'value': {'line_ids':line_scanned_ids,'bcquantity':received_qty,'is_new_pick':False,'note':'Scan Next', 'stock_picking_id':picking_obj1.id,'default_code':False,'picking_ids':picking_ids}}
                                 else:
-                                        return {'value': {'line_ids':line_scanned_ids, 'bcquantity': 1, 'is_new_pick':False, 'note':'','stock_picking_id':picking_obj1.id,'default_code':False,'picking_ids':picking_ids}}
+                                        return {'value': {'line_ids':line_scanned_ids, 'bcquantity': received_qty, 'is_new_pick':False, 'note':'Scan Next','stock_picking_id':picking_obj1.id,'default_code':False,'picking_ids':picking_ids}}
 		elif type == 'internal':
                     if default_code != False:
                         if picking:
