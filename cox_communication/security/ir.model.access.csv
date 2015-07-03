@@ -931,7 +931,6 @@
 "access_pack_track_internal_ops_mgr","pack.track_internal_ops_mgr","bista_shipping.model_pack_track","group_internal_operations_manager",1,1,1,0
 "access_shipping_response_internal_ops_mgr","shipping.response_internal_ops_mgr","bista_shipping.model_shipping_response","group_internal_operations_manager",1,1,1,0
 "access_ir_model_data_internal_ops_mgr","ir.model.data_internal_ops_mgr","base.model_ir_model_data","group_internal_operations_manager",1,1,1,0
-"access_external_referential_version_internal_ops_mgr","external.referential.version_internal_ops_mgr","base_external_referentials.model_external_referential_version","group_internal_operations_manager",1,1,1,0
 "access_product_attribute_options_internal_ops_mgr","magerp.product_attribute_options_internal_ops_mgr","magentoerpconnect.model_magerp_product_attribute_options","group_internal_operations_manager",1,1,1,0
 "access_crm_helpdesk_internal_ops_mgr","crm.helpdesk_internal_ops_mgr","crm_helpdesk.model_crm_helpdesk","group_internal_operations_manager",1,1,1,0
 "access_report_internal_ops_mgr","report.stock.move.internal_ops_mgr","cox_communication.model_report_stock_move","group_internal_operations_manager",1,1,1,0
@@ -1447,13 +1446,11 @@
 "access_reasons_title_third_party_reseller","reasons.title_third_party_reseller","model_reasons_title","group_third_party_reseller",1,1,1,0
 "access_account_invoice_report_third_party_reseller","account.invoice.report_third_party_reseller","account.model_account_invoice_report","group_third_party_reseller",1,1,1,0
 "access_ir_attachment_third_party_reseller","ir.attachment_third_party_reseller","base.model_ir_attachment","group_third_party_reseller",1,1,1,0
-"access_external_referential_type_third_party_reseller","external.referential.type_third_party_reseller","base_external_referentials.model_external_referential_type","group_third_party_reseller",1,1,1,0
 "access_ir_property_third_party_reseller","ir.property_third_party_reseller","base.model_ir_property","group_third_party_reseller",1,1,1,0
 "access_payment_method_third_party_reseller","payment.method_third_party_reseller","sale_quick_payment.model_payment_method","group_third_party_reseller",1,1,1,0
 "access_pack_track_third_party_reseller","pack.track_third_party_reseller","bista_shipping.model_pack_track","group_third_party_reseller",1,1,1,0
 "access_shipping_response_third_party_reseller","shipping.response_third_party_reseller","bista_shipping.model_shipping_response","group_third_party_reseller",1,1,1,0
 "access_ir_model_data_third_party_reseller","ir.model.data_third_party_reseller","base.model_ir_model_data","group_third_party_reseller",1,1,1,0
-"access_external_referential_version_third_party_reseller","external.referential.version_third_party_reseller","base_external_referentials.model_external_referential_version","group_third_party_reseller",1,1,1,0
 "access_product_attribute_options_third_party_reseller","magerp.product_attribute_options_third_party_reseller","magentoerpconnect.model_magerp_product_attribute_options","group_third_party_reseller",1,1,1,0
 "access_crm_helpdesk_third_party_reseller","crm.helpdesk_third_party_reseller","crm_helpdesk.model_crm_helpdesk","group_third_party_reseller",1,1,1,0
 "access_report_third_party_reseller","report.stock.move.third_party_reseller","cox_communication.model_report_stock_move","group_third_party_reseller",1,1,1,0
