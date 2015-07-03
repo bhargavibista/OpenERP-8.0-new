@@ -3,7 +3,7 @@ from openerp.osv import fields, osv
 from openerp.tools.translate import _
 import random
 import string
-from openerp.addons.base_external_referentials.external_osv import ExternalSession
+#from openerp.addons.base_external_referentials.external_osv import ExternalSession
 
 class magento_data_export(osv.osv_memory):
     _name = 'magento.data.export'
