@@ -13,7 +13,7 @@ class demo_account_setup(osv.osv_memory):
     'emailid': fields.char('Email ID',size=215),
     'email_subject': fields.char('Subject',size=215),
     'email_body': fields.text('Email Body'),
-    'magento_location': fields.many2one('external.referential','Magento Website'),
+#    'magento_location': fields.many2one('external.referential','Magento Website'),
     'send_email': fields.boolean('Send Email'),
     'product_id': fields.many2one('product.product', 'Product', domain=[('sale_ok', '=', True)], change_default=True),   #Preeti
     }
@@ -33,9 +33,10 @@ class demo_account_setup(osv.osv_memory):
             emailid = self.pool.get('res.partner').browse(cr,uid,context.get('active_id')).emailid
             if emailid:
                 res.update({'emailid':emailid})
-            search_referential = self.pool.get('external.referential').search(cr,uid,[])
-            if search_referential:
-                res.update({'magento_location':search_referential})
+            ##cox gen2
+#            search_referential = self.pool.get('external.referential').search(cr,uid,[])
+#            if search_referential:
+#                res.update({'magento_location':search_referential})
         return res
     def onchange_password(self,cr,uid,ids,password,context):
         res= {}
@@ -77,7 +78,8 @@ class demo_account_setup(osv.osv_memory):
             all_website = website_obj.search(cr,uid,[])
             website_ids = partner_obj.get_website_magento_id(cr,uid,all_website)
             try:
-                conn = ids_brw.magento_location.external_connection(True)
+                conn=False
+#                conn = ids_brw.magento_location.external_connection(True)
                 if conn:
                     context['conn_obj'] = conn
                     customer_id = conn.call('ol_customer.customerExists',[partner_brw.emailid,website_ids,partner_brw.name])
@@ -98,12 +100,13 @@ class demo_account_setup(osv.osv_memory):
                         customer_id = conn.call('customer.create',[dict_cust])
                         if customer_id:
                             cr.execute("update res_partner set ref='%s',magento_pwd='%s' where id=%d"%(customer_id,password,partner_brw.id))
-                            id_val = partner_obj.extid_to_existing_oeid(cr, uid, ids_brw.magento_location.id,customer_id,context)
+#                            id_val = partner_obj.extid_to_existing_oeid(cr, uid, ids_brw.magento_location.id,customer_id,context)
                             if not id_val:
-                                model_data_ids = model_data_obj.search(cr, uid,
-                                [('res_id', '=', partner_brw.id),
-                                ('model', '=', 'res.partner'),
-                                ('referential_id', '=', ids_brw.magento_location.id)], context=context)
+                                ##cox gen2
+#                                model_data_ids = model_data_obj.search(cr, uid,
+#                                [('res_id', '=', partner_brw.id),
+#                                ('model', '=', 'res.partner'),
+#                                ('referential_id', '=', ids_brw.magento_location.id)], context=context)
                                 if model_data_ids:
                                     model_data_obj.write(cr,uid,model_data_ids[0],{'name':'res_partner/%s'%(customer_id)})
                                 else:

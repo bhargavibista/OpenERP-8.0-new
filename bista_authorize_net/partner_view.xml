@@ -28,9 +28,11 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Customer Payment Profile">
-                   <field name="profile_id" readonly="True"/>
-                   <field name="credit_card_no" readonly="True"/>
-                   <field name="active_payment_profile" string="Active" readonly="True"/>
+                    <group>
+                        <field name="profile_id" readonly="True"/>
+                        <field name="credit_card_no" readonly="True"/>
+                        <field name="active_payment_profile" string="Active" readonly="True"/>
+                    </group>
                </form>
             </field>
             

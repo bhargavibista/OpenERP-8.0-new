@@ -65,7 +65,7 @@ class refund_customer_payment(osv.osv_memory):
                                 cc_number = wizard_obj.refund_cc_number[-4:]
                                 cc_number='XXXX'+''+str(cc_number)
                                 context['linked_refund'] = False
-                            api_call =authorize_obj.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',return_obj.id,'profileTransRefund',total,cust_profile_id,cust_payment_profile_id,auth_transaction_id,act_model,cc_number,context)
+                            api_call =authorize_obj.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',return_obj.id,'profileTransRefund',total,cust_profile_id,cust_payment_profile_id,auth_transaction_id,'',act_model,cc_number,context)
                         elif (transaction_status) and (transaction_status.get('transactionStatus') == 'expired'):
                             cr.execute("select id from account_invoice where (recurring=False or recurring is Null) and id in (select invoice_id from sale_order_invoice_rel where order_id in %s)",(tuple([return_obj.linked_sale_order.id]),))
                             invoice_id = cr.fetchone()

@@ -45,7 +45,7 @@ class pre_requisites_wizard(osv.osv_memory):
             context = {}
         result = super(pre_requisites_wizard, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         if view_type=='form':
-            arch = """<form string="Pre Requisites">"""
+            arch = """<form string="Pre Requisites"><group>"""
             if context and context.get('active_id') and context.get('active_model') == 'sale.order':
                 sale_id_obj = so_obj.browse(cr,uid,context.get('active_id'))
                 for line in sale_id_obj.order_line:
@@ -64,7 +64,7 @@ class pre_requisites_wizard(osv.osv_memory):
                                 i = i + 1
             if not categ_id:
                 arch += """<separator string="No Requisites are Defined"/>"""
-            arch += """<newline/><button name="accept" string="Next"
+            arch += """</group><newline/><button name="accept" string="Next"
                         colspan="1" type="object" icon="gtk-go-forward" /></form>"""
             result['arch'] = arch
             result['fields'] = fields_list

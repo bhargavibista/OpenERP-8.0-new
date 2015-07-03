@@ -22,7 +22,7 @@ class charge_termination_fee(osv.osv_memory):
         active_id = context.get('active_id',False)
         if active_id:
             return_id_obj = self.pool.get('return.order').browse(cr,uid,active_id)
-            no_days = self.no_days_passed(cr,uid,return_id_obj,context)
+            no_days = self.no_of_days_passed(cr,uid,return_id_obj,context)
             if no_days > 90:
                 raise osv.except_osv(_('Warning'), _('You cannot Charge Termination Fees because return days are greater than 90'))
         return res
@@ -101,7 +101,7 @@ class charge_termination_fee(osv.osv_memory):
                 invoice_id=self.pool.get('account.invoice').create(cr,uid,invoice_vals)
                 return invoice_id
         return False
-    def no_days_passed(self,cr,uid,id_brw,context):
+    def no_of_days_passed(self,cr,uid,id_brw,context):
         linked_sale_order = id_brw.linked_sale_order
         today=date.today()
         confirmed_date=datetime.strptime(linked_sale_order.date_confirm, "%Y-%m-%d").date()
@@ -111,7 +111,7 @@ class charge_termination_fee(osv.osv_memory):
     def get_termination_fees(self,cr,uid,context={}):
         if context and context.get('active_id',False) and context.get('active_model') =='return.order':
             id_brw = self.pool.get('return.order').browse(cr,uid,context.get('active_id',False))
-            no_days = self.no_days_passed(cr,uid,id_brw,context)
+            no_days = self.no_of_days_passed(cr,uid,id_brw,context)
             termination_fees,service_price,final_price = 0.0,0.0,0.0
             line_obj = self.pool.get('sale.order.line')
             for each_line in id_brw.order_line:

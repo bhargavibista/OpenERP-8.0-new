@@ -679,7 +679,7 @@ class user_auth(models.Model):
 
         return json.dumps({'body':{ "code":False, "message":"Playjam Server Issue."}})
         
-    def wallet_playjam(self, cr, uid, user_id, quantity, context=None):
+    def wallet_playjam(self, user_id, quantity, context=None):
         url = "http://54.75.245.17/api/rest/flare/wallet/view.json"
         headers = {'content-type': 'application/x-www-form-urlencoded'}
 
@@ -692,7 +692,7 @@ class user_auth(models.Model):
         print "data.......................",data
         request=urllib.quote(data.encode('utf-8'))
         response = requests.post(
-                    url, data="request="+requ, headers=headers)
+                    url, data="request="+request, headers=headers)
         print"response.content",response.content
         return response.content
     

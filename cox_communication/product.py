@@ -93,6 +93,13 @@ class product_template(osv.osv):
                                             ],'Catalog Type'),
                                             
     'app_id':fields.integer('App Id'),#field to set app id of playjam side
+    'property_account_line_prepaid_revenue': fields.property(
+        type='many2one',
+        relation='account.account',
+        string="Account Prepaid Revenue",
+        domain="[('type', '=', 'payable')]",
+        help="This account will be used as Prepaid Revenue account for service "),#yogita for product configuration
+
     }
     _defaults={
     'recurring_service':True,
@@ -111,6 +118,13 @@ class product_category(osv.osv):
     _inherit = 'product.category'
     _columns={
         'pre_requisites':fields.one2many('pre.requisites','category_id','Pre-Requisites'),
+        'property_account_line_prepaid_revenue_categ': fields.property(
+            type='many2one',
+            relation='account.account',
+            string="Account Prepaid Revenue",
+            domain="[('type', '=', 'payable')]",
+            help="This account will be used as Prepaid Revenue account for service "),#yogita for product configuration
+
     }
 product_category()
 

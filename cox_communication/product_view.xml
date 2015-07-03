@@ -82,6 +82,9 @@
                         <field name="prod_width"/>
                         <field name="prod_height"/>
                     </xpath>
+                    <xpath expr="/form/sheet/notebook/page[@string='Accounting']/group/group[1]/field[@name='taxes_id']" position="after">
+                        <field name="property_account_line_prepaid_revenue" domain="[('type','=','other')]" groups="account.group_account_user"/>
+                    </xpath>
                 </data>
             </field>
         </record>
@@ -110,6 +113,8 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='property_stock_journal']" position="after">
                     <newline/>
+                    <field name="property_account_line_prepaid_revenue_categ" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation')]"/>
+
                     <group colspan="8">
                         <separator string="Pre-Requisites" colspan="8"/>
                         <field name="pre_requisites" nolabel="1" colspan="8">
