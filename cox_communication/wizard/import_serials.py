@@ -10,6 +10,9 @@ import base64
 from openerp.tools.translate import _
 from openerp.osv import fields, osv
 import logging
+import requests
+from openerp.http import request
+from openerp import SUPERUSER_ID
 logger = logging.getLogger('arena_log')
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 
@@ -24,11 +27,11 @@ class import_serials(osv.osv_memory):
         picking_in_obj = self.pool.get('stock.picking.in')
         picking_obj = self.pool.get('stock.picking')
         prodlot_obj = self.pool.get('stock.production.lot')
-        csv_data = self.browse(cr,uid,ids[0])
+        csv_data = self.browse(request.cr, SUPERUSER_ID, ids[0])
         if not context.get('active_ids') or len(context.get('active_ids')) > 1:
             raise osv.except_osv(_('Active Ids Issue !'), _('Improper Manufacturing ID or you \'re trying to select multiple Manufacturing ids '))
         picking_id = context.get('active_ids')[0]
-        picking_brw = picking_in_obj.browse(cr,uid,picking_id)
+        picking_brw = picking_obj.browse(cr,uid,picking_id)
         module_data = csv_data.csv_file_supplier
         val = base64.decodestring(module_data)
         partner_data = val.split("\r")
@@ -88,11 +91,15 @@ class import_serials(osv.osv_memory):
                         ### check the serial Lots in the csv
                         serial_lot = partner_single_row[2].replace(" ","")
                         serial_lot = partner_single_row[2].replace("\"","")
+                        print "serial_lottttttttttttt",serial_lot
                         if quantity > '1':
                             raise osv.except_osv(_('Error!'), _('Quantity can not be more than 1 for %s serial number!.'%(serial_lot)))
                         if serial_lot:
                             lot_ids = prodlot_obj.search(cr, uid, [('name','=',serial_lot)])
-                            if not lot_ids and context.get('active_model',False)=='stock.picking.in':
+                            print "picking_brwwwwww",picking_brw.state,lot_ids
+                            print "typeeeeeeeeeeeeeeee",picking_brw.picking_type_id.code
+#                            if not lot_ids and context.get('active_model',False)=='stock.picking.in':
+                            if not lot_ids and picking_brw.picking_type_id and picking_brw.picking_type_id.code == 'incoming':
                                 if csv_list_qty < total_qty_in_shipment:
                                     csv_list_qty+= 1
                                     lot_id = [prodlot_obj.create(cr, uid, {
@@ -103,7 +110,8 @@ class import_serials(osv.osv_memory):
                                             'location_id': lines.location_dest_id.id
                                         })]
                                     cr.execute('insert into stock_move_lot (stock_move_id,production_lot) values (%s,%s)', (lines.id, lot_id[0]))
-                            elif lot_ids and context.get('active_model',False)=='stock.picking':
+#                            elif lot_ids and context.get('active_model',False)=='stock.picking':
+                            elif lot_ids and picking_brw.picking_type_id and picking_brw.picking_type_id.code == 'internal':
                                 internal_lot_ids = prodlot_obj.search(cr, uid, [('name','=',serial_lot),('location_id','=', lines.location_id.id)])
                                 print"internal_lot_ids",internal_lot_ids
                                 if csv_list_qty < total_qty_in_shipment:
@@ -111,22 +119,24 @@ class import_serials(osv.osv_memory):
                                     prodlot_obj.write(cr,uid,internal_lot_ids,{'location_id':lines.location_dest_id.id,'ref':picking_brw.name})
                                     for each_lot in internal_lot_ids:
                                         cr.execute("insert into stock_move_lot (stock_move_id,production_lot) values (%s,%s)"%(lines.id,each_lot))
-                            elif not lot_ids and context.get('active_model',False)=='stock.picking':
+                            elif not lot_ids and picking_brw.picking_type_id.code == 'internal':
                                 continue
 #                                self.pool.get('stock_move_lot').create(cr,uid)
 #                                dhfgjgf
                                 
                             else:
                               raise osv.except_osv(_('Error!'), _('Serial number %s already present!.'%(serial_lot)))                
-            if context.get('active_model',False)== 'stock.picking':
+#            if context.get('active_model',False)== 'stock.picking':
+            if picking_brw.picking_type_id and picking_brw.picking_type_id.code == 'internal':
                 picking_state=picking_obj.write(cr,uid,[picking_id],{'state':'shipping'})
             else:
                 incoming_picking_id= context.get('active_ids')
-                partial_id = self.pool.get("stock.partial.picking").create(cr, uid, {}, context=context)
-                context.update({'partial_id':partial_id})
-                self.pool.get('stock.picking').make_picking_done(cr, uid, incoming_picking_id, context)
-#            else:
-                
+                print "incoming_picking_idddddd",incoming_picking_id
+#                partial_id = self.pool.get("stock.partial.picking").create(cr, uid, {}, context=context)
+#                context.update({'partial_id':partial_id})
+                # self.pool.get('stock.picking').make_picking_done(cr, uid, incoming_picking_id, context)
+                self.pool.get('stock.picking').do_transfer(cr, uid, incoming_picking_id, context)
+#            else:                
         return True
 
     def import_serial_numbers(self, cr, uid, ids, context=None):
