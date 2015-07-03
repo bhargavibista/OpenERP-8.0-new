@@ -5,7 +5,7 @@ from dateutil.relativedelta import relativedelta
 from psycopg2.extensions import ISOLATION_LEVEL_READ_COMMITTED
 import calendar
 from openerp.tools.misc import attrgetter
-from openerp.addons.base_external_referentials.external_osv import ExternalSession
+#from openerp.addons.base_external_referentials.external_osv import ExternalSession
 #from openerp.addons.magentoerpconnect import magerp_osv
 DEBUG = True
 from openerp.tools.translate import _
@@ -26,7 +26,6 @@ class res_partner(osv.Model):
             type='many2one',
             relation='account.account',
             string="Deferred Revenue Account",
-            view_load=True,
             help="This account will be used instead of the default one as the receivable account for the current partner",
             required=True),
     'email': fields.char('Email', size=240,required=False),
