@@ -181,6 +181,8 @@ class account_invoice(models.Model):
         return amount
 
     def _process_invoice_line(self,line, invoice):
+        print"lineeeeeee",line
+        
         """
         Handle the creation of the revenue recognition schedule and the initial journal to move
         the invoice line amount into the Unearned Income account.
@@ -188,14 +190,16 @@ class account_invoice(models.Model):
         # Exit if revenue recognition is not required
         if invoice.recurring==True:
             return
-        # Get the revenue recognition journal
-        domain = [('name','=',_('Recognition Journal')),'|',('company_id','=',invoice.company_id.id),('company_id','=',False)]
-        journal_ids = self.pool.get('account.journal').search(request.cr,request.uid, domain) 
-        print"journal_idsjournal_idsjournal_idsjournal_ids",journal_ids
-        if len(journal_ids)==0:
-            raise osv.except_osv(_("Error in Invoice Line '%s'" % line.name), _("Cannot find the Recognition Journal for this company."))
-        # Generate the revenue recognition schedule
-        self._create_schedule(line, invoice, journal_ids[0])
+        for each_line in line:
+            line_brw = self.pool.get('account.move.line').browse(request.cr,request.uid,each_line)
+            # Get the revenue recognition journal
+            domain = [('code','=',_('RCJ')),'|',('company_id','=',invoice.company_id.id),('company_id','=',False)]
+            journal_ids = self.pool.get('account.journal').search(request.cr,request.uid, domain) 
+            print"journal_idsjournal_idsjournal_idsjournal_ids",journal_ids
+            if len(journal_ids)==0:
+                raise osv.except_osv(_("Error in Invoice Line '%s'" % line_brw.name), _("Cannot find the Recognition Journal for this company."))
+            # Generate the revenue recognition schedule
+            self._create_schedule(each_line, invoice, journal_ids[0])
 
     def _create_schedule(self,line, invoice, journal_id): 
         print"_create_schedule_create_schedule_create_schedule_create_schedule",invoice,journal_id
@@ -781,7 +785,7 @@ class account_invoice_tax(models.Model):
 #            invoice = invoice_obj.browse(cr, uid, invoice_id, context=context)
             tax_grouped = {}
             if invoice._avatax_calc():
-#                print"invoice111111111111"
+                print"invoice111111111111"
                 cur = invoice.currency_id
                 company_currency = invoice.company_id.currency_id.id
                 lines = invoice_obj.create_lines(cr, uid, invoice.invoice_line, 1)
