@@ -259,7 +259,7 @@ class stock_picking(osv.osv):
         if picking:
             ids_obj =self.browse(cr,uid,picking[0])
             context = dict(context, active_ids=picking, active_model='stock.picking')
-            if ids_obj.picking_type_id.code == 'outgoing':
+            if ids_obj.picking_type_id.code in ('outgoing', 'incoming'):
                 if not context.get('action_process_original'):
                     return {
                             'name':_("Bar Code Scanning"),
