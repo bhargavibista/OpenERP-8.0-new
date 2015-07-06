@@ -421,11 +421,18 @@ class picking_scanning(osv.osv_memory):
                 if default_code != False:
                     if picking:
                         for pick in picking:
-                            purchase = self.pool.get('stock.picking').browse(cr,uid,pick).purchase_id
-                            if purchase:
+                            po_name= picking_obj.browse(cr,uid,pick).origin
+                            print "purchaseeeeeeeeeeeee",po_name
+                            search_ids= po_obj.search(cr,uid,[('name','=',po_name)])
+                            if search_ids and search_ids[0]:
                                 purchase_status = True
                             else:
                                 purchase_status = False
+#                            purchase = self.pool.get('stock.picking').browse(cr,uid,pick).purchase_id
+#                            if purchase:
+#                                purchase_status = True
+#                            else:
+#                                purchase_status = False
 #                                dest_id = self.pool.get('stock.picking').browse(cr,uid,picking[0]).dest_id.id
 #                                move_lines = self.pool.get('stock.picking').browse(cr,uid,picking[0]).move_lines
                         if purchase_status != False:
