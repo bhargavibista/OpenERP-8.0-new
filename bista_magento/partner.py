@@ -715,6 +715,20 @@ class res_partner(models.Model):
                     print "line data........................................",line_data
                     sale_line_id=self.pool.get("sale.order.line").create(request.cr, SUPERUSER_ID, line_data, context=context)
                     print "sale line id...............................",sale_line_id
+                    if dict.get('Shipping') and dict.get('Shipping')>0.0:
+                        print "shipping line needs to be added//////////////////////"
+                        ship_product_id=product_obj.search(cr,uid,[('default_code','=','SHIP')])
+                        if ship_product_id:
+                            ship_dict_price=float(dict.get('Shipping'))
+                            ship_list_price=product_obj.browse(cr,uid,ship_product_id[0]).list_price
+                            if ship_list_price!=ship_dict_price:
+                                print "shipping price updated////////////////////////////"
+                                product_obj.write(cr,uid,ship_product_id[0],{'list_price':float(dict.get('Shipping'))})
+                                cr.commit()
+                            ship_prdct_name=str(product_obj.browse(cr,uid,ship_product_id[0]).name)
+                            ship_line_data = {'order_id': new_id,'name':ship_prdct_name,'price_unit': ship_dict_price,'product_uom_qty': quantity or 1.0,'product_uos_qty': quantity or 1.0,'product_id': ship_product_id[0] or False,'actual_price':0.0}
+                            ship_so_line_id=self.pool.get("sale.order.line").create(cr, uid, ship_line_data, context=context)
+
                     sub_components = product_obj.browse(request.cr,SUPERUSER_ID,product_id[0]).ext_prod_config
                     print "sub_componentssub_components",sub_components,product_id
                     if sub_components:
