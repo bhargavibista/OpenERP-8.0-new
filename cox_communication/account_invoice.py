@@ -639,6 +639,7 @@ class account_invoice_line(osv.osv):
         res,cox_sales_channels = [],''
         tax_obj = self.pool.get('account.tax')
         cur_obj = self.pool.get('res.currency')
+        policy_object=self.pool.get('res.partner.policy') 
         if context is None:
             context = {}
         invoice_obj = self.pool.get('account.invoice')
@@ -668,14 +669,31 @@ class account_invoice_line(osv.osv):
                     return_ref = return_ref[0]
                     return_id = return_order.search(cr,uid,[('name','ilike',return_ref)])
                     if return_id:
-                        sale_order_id = return_order.browse(cr,uid,return_id[0]).linked_sale_order
-                        cr.execute("select id from account_invoice where (recurring=False or recurring is Null) and id in (select invoice_id from sale_order_invoice_rel where order_id in %s)",(tuple([sale_order_id.id]),))
+                        #Start code Preeti for RMA
+                        if return_order.browse(cr,uid,return_id[0]).linked_sale_order:
+                            sale_order_id = return_order.browse(cr,uid,return_id[0]).linked_sale_order
+                            cr.execute("select id from account_invoice where (recurring=False or recurring is Null) and id in (select invoice_id from sale_order_invoice_rel where order_id in %s)",(tuple([sale_order_id.id]),))
+                        else:                            
+                            return_brw = return_order.browse(cr,uid,return_id[0])
+                            policy_id =return_brw.service_id
+                            policy_brw=policy_object.browse(cr,uid,policy_id.id)
+                            linked_sale_id=policy_brw.sale_id                                       
+                            cr.execute("select id from account_invoice where (recurring=False or recurring is Null) and id in (select invoice_id from sale_order_invoice_rel where order_id in %s)",(tuple([linked_sale_id]),))
+                        #End code Preeti for RMA
                         invoice_id = cr.fetchone()
                         if invoice_id:
                             date_invoice =invoice_obj.browse(cr,uid,invoice_id[0]).date_invoice
                             if date_invoice > '2014-04-03':
                                 cr.execute("select id from sale_order_line where parent_so_line_id in (select sale_line_id from return_order_line where id in (select order_line_id from return_order_line_invoice_rel where invoice_id = %s))"%(line.id))
                                 child_so_line_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
+#                        sale_order_id = return_order.browse(cr,uid,return_id[0]).linked_sale_order
+#                        cr.execute("select id from account_invoice where (recurring=False or recurring is Null) and id in (select invoice_id from sale_order_invoice_rel where order_id in %s)",(tuple([sale_order_id.id]),))
+#                        invoice_id = cr.fetchone()
+#                        if invoice_id:
+#                            date_invoice =invoice_obj.browse(cr,uid,invoice_id[0]).date_invoice
+#                            if date_invoice > '2014-04-03':
+#                                cr.execute("select id from sale_order_line where parent_so_line_id in (select sale_line_id from return_order_line where id in (select order_line_id from return_order_line_invoice_rel where invoice_id = %s))"%(line.id))
+#                                child_so_line_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
             print"child_so_line_ids",child_so_line_ids,context
 #            fjkdhgjf
             if child_so_line_ids:
