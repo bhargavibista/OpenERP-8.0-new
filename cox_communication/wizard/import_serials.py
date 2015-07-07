@@ -46,7 +46,9 @@ class import_serials(osv.osv_memory):
             total_qty_in_shipment += lines.product_qty
             for each in partner_data[1:-1]:
                 partno = each.split(';')[0]
+                print"partno",partno
                 prod_id = product_obj.search(cr, uid, [('default_code','=', partno)])
+                print"prod_id",prod_id
                 if prod_id and prod_id[0] ==  lines.product_id.id:
                     qty =  int(each.split(';')[1])
                     total_qty_in_csv += qty
@@ -432,16 +434,9 @@ class import_serials(osv.osv_memory):
                     if serial_num and not  serial_num in serial_no_list:
                         serial_no_list.append(serial_num[0])
                     total_qty += qty
-                print "total_qtyyyyy",total_qty
-                print "manufacturing_brw.product_qtyyy",manufacturing_brw.product_qty
-                print"serial_no_list",serial_no_list
-                print"manufacturing_brw.location_src_id.id",manufacturing_brw.location_src_id.id
                 serial_numbers = prodlot_obj.search(cr,uid,[('product_id','=',prod_id[0]),('location_id','=',manufacturing_brw.location_src_id.id),('serial_used','=',False)]) 
 #                serial_numbers=[63]
-                print"serial_num",serial_num
-                print"serial_numbers",serial_numbers
                 cancel_final_list=set(serial_num) & set(serial_numbers)
-                print"cancel_final_list",cancel_final_list
                 if not cancel_final_list:
                     raise osv.except_osv(_('Error!'),_('Serial Number not Found'))
                 if len(partner_data) > 1:
