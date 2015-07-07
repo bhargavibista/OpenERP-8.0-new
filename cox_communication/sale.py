@@ -2403,7 +2403,7 @@ class cancel_service(osv.osv):
                         print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch,type(expiry_epoch),int(expiry_epoch)
                         expiry_epoch=expiry_epoch+3600.0
                         print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
-                        old_policy_result = user_auth_obj.rental_playjam(cr,uid,user_id,app_id,expiry_epoch)
+                        old_policy_result = user_auth_obj.rental_playjam(user_id,app_id,expiry_epoch)
                         print "voucher_return----------",old_policy_result
                         if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
                             if (context and  (context.get('refund_cancel_service') or (context.get('active_model')=='credit.service'))) or (context and context.get('immediate_cancel')):
