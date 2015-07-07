@@ -301,6 +301,7 @@ class picking_scanning(osv.osv_memory):
         ##line_ids
         #search delivery orders and populate the products from them
         prodlot_obj = self.pool.get('stock.production.lot')
+        po_obj = self.pool.get('purchase.order')
         tr_barcode_obj = self.pool.get('tr.barcode')
         if context is None:
             context={}
@@ -483,7 +484,7 @@ class picking_scanning(osv.osv_memory):
                                     if picking_obj1:
                                         if picking_obj1.move_lines:
                                             for each_move_line in picking_obj1.move_lines:
-                                                if each_move_line.sale_line_id and each_move_line.sale_line_id.order_id:
+                                                if each_move_line.procurement_id and each_move_line.procurement_id.sale_line_id and each_move_line.procurement_id.sale_line_id.order_id:
                                                     line_scanned_ids.append(each_move_line.id)
                                     if each_move.product_qty == received_qty:
                                         cr.execute("update stock_move set status='done' where id='%s'"%(current_stock_move_id))
