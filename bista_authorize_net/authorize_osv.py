@@ -202,8 +202,8 @@ class CreateCustomerProfileTransaction:
                 taxable = 'false'
                 product_id = each_line.product_id
                 default_code = product_id.default_code or product_id.name
-                product_name = (str(product_id.name)[:31].replace('&','&amp;') if product_id.name else '')
-                description = (str(each_line.name)[:255].replace('&','&amp;') if each_line.name else '')
+                product_name = (str(product_id.name).replace('&','&amp;') if product_id.name else '')
+                description = (str(each_line.name).replace('&','&amp;') if each_line.name else '')
                 
                 quantity = (each_line.product_uom_qty if each_line.product_uom_qty else 0.0)
                 unit_price  =  (each_line.price_unit if each_line.price_unit else 0.0)
@@ -245,8 +245,8 @@ class CreateCustomerProfileTransaction:
                 taxable = 'false'
                 product_id = each_line.product_id
                 default_code = product_id.default_code or product_id.name
-                product_name = (str(product_id.name)[:31].replace('&','&amp;') if product_id.name else '')
-                description = (str(each_line.name)[:255].replace('&','&amp;') if each_line.name else '')
+                product_name = (str(product_id.name).replace('&','&amp;') if product_id.name else '')
+                description = (str(each_line.name).replace('&','&amp;') if each_line.name else '')
                 quantity = (each_line.quantity if each_line.quantity else 0.0)
                 unit_price  =  (each_line.price_unit if each_line.price_unit else 0.0)
                 cr.execute('select tax_id from account_invoice_line_tax where invoice_line_id=%d'%(each_line.id))
