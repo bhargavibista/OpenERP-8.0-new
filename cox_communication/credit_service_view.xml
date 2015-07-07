@@ -150,7 +150,7 @@
             </field>
         </record>
 
-        <record id="action_credit_service" model="ir.actions.act_window">
+        <!--<record id="action_credit_service" model="ir.actions.act_window">
             <field name="name">Credits and Cancellations</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">credit.service</field>
@@ -158,8 +158,8 @@
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="view_credit_service_tree"/>
             <field name="search_view_id" ref="credit_service_search_form_view"/>
-        </record>
-        <!--<menuitem action="action_credit_service" id="menu_credit_service" parent="base.menu_sales" sequence="4" groups="base.group_sale_manager"/>-->  <!--cox gen2-->
+        </record> cox gen2 not needed-->
+        <!--<menuitem action="action_credit_service" id="menu_credit_service" parent="base.menu_sales" sequence="4" groups="base.group_sale_manager"/>-->  <!--cox gen2 not needed-->
         <!--,group_retail_sales_associate,group_retail_sales_manager,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox"/>-->-->
 
 <record id="crm.crm_case_section_salesteams_act" model="ir.actions.act_window">
