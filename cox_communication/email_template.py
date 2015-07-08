@@ -35,6 +35,7 @@ class email_template(osv.osv):
             ('return_confirmation', 'Return Confirmation'),
 	    ('shipment_confirmation', 'Shipment Confirmation'),
             ('account_set_up', 'Account Set Up'),
+            ('advance_billing_notice', 'Billing notice 10 days in advance'), #Added by Preeti for Billing Reminder
             ('recurring_service_alert', 'Reminder to activate Recurring Service'),
             ('cancel_service', 'Cancel Service')],'Email Type'),}
             
