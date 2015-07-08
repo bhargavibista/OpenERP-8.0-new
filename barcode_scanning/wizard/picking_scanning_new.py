@@ -729,7 +729,7 @@ class serial_no_ref(osv.osv_memory):
 	#####function for serial no reference
     def default_get(self,cr,uid,fields,context=None):
         stock_move_obj=self.pool.get('stock.move')
-        res={}
+        res,cust_name,cust_ref={},False,False
         ro_ref,so_ref,move_ref,purchase_date=[],'','',''
         if context is None:
             context = {}
