@@ -4,7 +4,7 @@ from dateutil.relativedelta import relativedelta
 from psycopg2.extensions import ISOLATION_LEVEL_READ_COMMITTED
 import calendar
 from openerp.tools.misc import attrgetter
-from openerp.addons.base_external_referentials.external_osv import ExternalSession
+#from openerp.addons.base_external_referentials.external_osv import ExternalSession
 #from openerp.addons.magentoerpconnect import magerp_osv
 DEBUG = True
 from openerp.tools.translate import _
@@ -715,6 +715,20 @@ class res_partner(models.Model):
                     print "line data........................................",line_data
                     sale_line_id=self.pool.get("sale.order.line").create(request.cr, SUPERUSER_ID, line_data, context=context)
                     print "sale line id...............................",sale_line_id
+                    if dict.get('Shipping') and dict.get('Shipping')>0.0:
+                        print "shipping line needs to be added//////////////////////"
+                        ship_product_id=product_obj.search(cr,uid,[('default_code','=','SHIP')])
+                        if ship_product_id:
+                            ship_dict_price=float(dict.get('Shipping'))
+                            ship_list_price=product_obj.browse(cr,uid,ship_product_id[0]).list_price
+                            if ship_list_price!=ship_dict_price:
+                                print "shipping price updated////////////////////////////"
+                                product_obj.write(request.cr,SUPERUSER_ID,ship_product_id[0],{'list_price':float(dict.get('Shipping'))})
+                                cr.commit()
+                            ship_prdct_name=str(product_obj.browse(request.cr,SUPERUSER_ID,ship_product_id[0]).name)
+                            ship_line_data = {'order_id': new_id,'name':ship_prdct_name,'price_unit': ship_dict_price,'product_uom_qty': quantity or 1.0,'product_uos_qty': quantity or 1.0,'product_id': ship_product_id[0] or False,'actual_price':0.0}
+                            ship_so_line_id=self.pool.get("sale.order.line").create(request.cr,SUPERUSER_ID, ship_line_data, context=context)
+
                     sub_components = product_obj.browse(request.cr,SUPERUSER_ID,product_id[0]).ext_prod_config
                     print "sub_componentssub_components",sub_components,product_id
                     if sub_components:
@@ -1099,7 +1113,9 @@ class res_partner(models.Model):
                 return json.dumps({"body":{"code":False,'message': "Incorrect Data for Gender",}})
 
         if dict.has_key('ProfilePIN'):
+            
             pin=dict.get('ProfilePIN')
+            print""
             profile_vals.update({'pin':pin})
 
         if dict.has_key('AvatarId'):
@@ -1403,7 +1419,7 @@ class res_partner(models.Model):
         contact_id=False
         
         if dict.get('FirstName',False) and dict.get('LastName'):
-            name=self.browse(cr,uid,customer_id).name
+            name=self.browse(request.cr,SUPERUSER_ID,customer_id).name
             x=name.find('')
             name=name.replace(" ","")
             first_name=name[:x]
@@ -1411,8 +1427,8 @@ class res_partner(models.Model):
 
             if first_name!= dict.get('FirstName') and last_name!= dict.get('LastName'):
 
-                contact_id=self.create(cr,uid,{'name':dict.get('FirstName')+" "+dict.get('LastName'),'parent_id':customer_id})
-                cr.commit()
+                contact_id=self.create(request.cr,SUPERUSER_ID,{'name':dict.get('FirstName')+" "+dict.get('LastName'),'parent_id':customer_id})
+                request.cr.commit()
                 
                 
         if ('BillingInfo' in dict) and ('BillingAddress' in dict.get('BillingInfo')):
@@ -1432,8 +1448,8 @@ class res_partner(models.Model):
                 vals.update({'city':city})
             if 'State' in billing_add:
                 state=billing_add.get('State')
-                cr.execute('select id from res_country_state where code = %s', (state,))
-                state_id = filter(None, map(lambda x:x[0], cr.fetchall()))
+                request.cr.execute('select id from res_country_state where code = %s', (state,))
+                state_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
 		if state_id:
                     vals.update({'state_id':state_id[0]})
 		else:
@@ -1441,8 +1457,8 @@ class res_partner(models.Model):
 
             if 'Country' in billing_add:
                 country=billing_add.get('Country')
-                cr.execute('select id from res_country where code = %s', ('US',))
-                country_id = filter(None, map(lambda x:x[0], cr.fetchall()))
+                request.cr.execute('select id from res_country where code = %s', ('US',))
+                country_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
 		if state_id:
                     vals.update({'country_id':country_id[0]})
                 else:

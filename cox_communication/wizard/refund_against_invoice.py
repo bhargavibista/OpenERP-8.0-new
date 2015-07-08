@@ -40,10 +40,9 @@ class refund_against_invoice(osv.osv_memory):
             cancel_service = self.pool.get('cancel.service')                
             if not return_object.return_reason:
                 raise osv.except_osv(_('Error !'),_('Please Specify Reason for Cancellation in Return Order Line'))
-                for line in order_lines:
-                    if not line.notes:
-                        raise osv.except_osv(_('Error !'),_('Please Specify Reason for Cancellation in Credit Service Line'))
-                    need_to_update_data = []
+            for line in order_lines:
+                
+                need_to_update_data = []
                 result = cancel_service.cancel_service(cr,uid,ids,return_object.service_id,return_object.partner_id.billing_date,line,context)
                 if return_object.partner_id.ref:
                     sale_id_obj = sale_obj.browse(cr,uid,return_object.service_id.sale_id)
@@ -58,14 +57,15 @@ class refund_against_invoice(osv.osv_memory):
                             value = final_dict[sale_id_obj.shop_id.referential_id.id]
                             new_value = value + need_to_update_data
                             final_dict[sale_id_obj.shop_id.referential_id.id] = new_value
-                        if result and result.get('state'):
-				return_object.write({'state':result.get('state')})
-                        if context.get('deactivate_service')==True:
-                            return_object.write({'cancellation_type':'credits_cancel'})
-                        elif context.get('immediate_cancel')=='yes':
-                            return_object.write({'cancellation_type':'cancel_immediately'})
-                        else:
-                            return_object.write({'cancellation_type':'cancel'})
+                    if result and result.get('state'):
+                            return_object.write({'state':result.get('state')})
+                if context.get('deactivate_service')==True:
+                    return_object.write({'cancellation_type':'credits_cancel'})
+                elif context.get('immediate_cancel')=='yes':
+                    return_object.write({'cancellation_type':'cancel_immediately'})
+                else:
+                    return_object.write({'cancellation_type':'cancel'})
+                partner_obj.cal_next_billing_amount(cr,uid,return_object.partner_id.id)
 #                cox gen2
 #                if final_dict:
 #                    referential_obj = self.pool.get('external.referential')

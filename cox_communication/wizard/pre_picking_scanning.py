@@ -64,4 +64,24 @@ class pre_picking_scanning(osv.osv_memory):
             'context': context,
         }
 
+    def import_serial_number(self, cr, uid, ids, context=None):
+        print "inside import_serial_numberrrrrrrrrrrrr",context
+        import_serails = False
+        if context is None: context = {}
+        if context.get('active_ids',False):
+            if context.get('active_model',False) == 'stock.picking':
+                import_serails = self.pool.get("import.serials").create(cr, uid, {'move_internal':True}, context=context)
+            return {
+            'name':_("Import Serials"),
+            'view_mode': 'form',
+            'view_id': False,
+            'view_type': 'form',
+            'res_model': 'import.serials',
+            'res_id': import_serails,
+            'type': 'ir.actions.act_window',
+            'nodestroy': True,
+            'target': 'new',
+            'domain': '[]',
+            'context': context,
+        }
 pre_picking_scanning()

@@ -11,7 +11,7 @@ import string
 import openerp.addons.decimal_precision as dp
 import random
 from dateutil.relativedelta import relativedelta
-from openerp.addons.base_external_referentials.external_osv import ExternalSession
+#from openerp.addons.base_external_referentials.external_osv import ExternalSession
 import pytz
 from openerp.osv import osv, fields
 import base64

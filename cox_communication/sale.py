@@ -10,7 +10,7 @@ import string
 import openerp.addons.decimal_precision as dp
 import random
 from dateutil.relativedelta import relativedelta
-from openerp.addons.base_external_referentials.external_osv import ExternalSession
+#from openerp.addons.base_external_referentials.external_osv import ExternalSession
 import pytz
 from psycopg2.extensions import ISOLATION_LEVEL_READ_COMMITTED
 import ast
@@ -1230,6 +1230,7 @@ class sale_order(osv.osv):
                             if each_child_sol.product_id.recurring_service:
                                 search_policy_id = policy_object.search(cr,uid,[('sale_id','=',ids[0]),('sale_line_id','=',each_child_sol.id),('sale_order','=',so_name)])
                                 if not search_policy_id:
+                                    print"search_policy_id",search_policy_id
                                     vals={'sale_order':so_name,
                                        # 'active_service':(False if sale_id_brw.cox_sales_channels == 'call_center' else True),
                                         'product_id':each_child_sol.product_id.id,
@@ -1246,12 +1247,15 @@ class sale_order(osv.osv):
                                         }
                                     policy_object.create(cr,uid,vals)
                                 else:
+                                    print"eeeeelllllllllllllllseeeeeeeee"
                                     policy_object.write(cr,uid,search_policy_id,{'active_service':True,
                                     'start_date':order_date,
                                     'free_trial_date':free_trial_date,
                                     'next_billing_date':billing_date if billing_date >=free_trial_date else free_trial_date+relativedelta(days=1),
                                     })
                 else:
+                    
+                    print"eleeeeeeeeeeeeeeeeeeeee"
                     if order_line.product_id.recurring_service:
                         search_policy_id = policy_object.search(cr,uid,[('sale_id','=',ids[0]),('sale_line_id','=',order_line.id),('sale_order','=',so_name)])
                         if not search_policy_id:
@@ -2408,7 +2412,7 @@ class cancel_service(osv.osv):
                         print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch,type(expiry_epoch),int(expiry_epoch)
                         expiry_epoch=expiry_epoch+3600.0
                         print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
-                        old_policy_result = user_auth_obj.rental_playjam(cr,uid,user_id,app_id,expiry_epoch)
+                        old_policy_result = user_auth_obj.rental_playjam(user_id,app_id,expiry_epoch)
                         print "voucher_return----------",old_policy_result
                         if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
                             if (context and  (context.get('refund_cancel_service') or (context.get('active_model')=='credit.service'))) or (context and context.get('immediate_cancel')):

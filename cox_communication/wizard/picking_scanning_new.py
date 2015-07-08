@@ -301,6 +301,7 @@ class picking_scanning(osv.osv_memory):
         ##line_ids
         #search delivery orders and populate the products from them
         prodlot_obj = self.pool.get('stock.production.lot')
+        po_obj = self.pool.get('purchase.order')
         tr_barcode_obj = self.pool.get('tr.barcode')
         if context is None:
             context={}
@@ -421,11 +422,18 @@ class picking_scanning(osv.osv_memory):
                 if default_code != False:
                     if picking:
                         for pick in picking:
-                            purchase = self.pool.get('stock.picking').browse(cr,uid,pick).purchase_id
-                            if purchase:
+                            po_name= picking_obj.browse(cr,uid,pick).origin
+                            print "purchaseeeeeeeeeeeee",po_name
+                            search_ids= po_obj.search(cr,uid,[('name','=',po_name)])
+                            if search_ids and search_ids[0]:
                                 purchase_status = True
                             else:
                                 purchase_status = False
+#                            purchase = self.pool.get('stock.picking').browse(cr,uid,pick).purchase_id
+#                            if purchase:
+#                                purchase_status = True
+#                            else:
+#                                purchase_status = False
 #                                dest_id = self.pool.get('stock.picking').browse(cr,uid,picking[0]).dest_id.id
 #                                move_lines = self.pool.get('stock.picking').browse(cr,uid,picking[0]).move_lines
                         if purchase_status != False:
@@ -476,7 +484,7 @@ class picking_scanning(osv.osv_memory):
                                     if picking_obj1:
                                         if picking_obj1.move_lines:
                                             for each_move_line in picking_obj1.move_lines:
-                                                if each_move_line.sale_line_id and each_move_line.sale_line_id.order_id:
+                                                if each_move_line.procurement_id and each_move_line.procurement_id.sale_line_id and each_move_line.procurement_id.sale_line_id.order_id:
                                                     line_scanned_ids.append(each_move_line.id)
                                     if each_move.product_qty == received_qty:
                                         cr.execute("update stock_move set status='done' where id='%s'"%(current_stock_move_id))
@@ -561,11 +569,11 @@ class picking_scanning(osv.osv_memory):
                                             stock_move_obj.write(cr, uid, search_child_mv_ids,{'status': 'done'})
                                             total_scanned_moves += 1
                                             if total_scanned_moves == len(obj_stock_moves):
-                                                return {'value': {'bcquantity': 1,'line_ids':scanning_line,'is_new_pick':False,'note':'Scan Next Shipment!'},'type': 'ir.actions.act_window_close'}
+                                                return {'value': {'bcquantity': received_qty,'line_ids':scanning_line,'is_new_pick':False,'note':'Scan Next Shipment!'},'type': 'ir.actions.act_window_close'}
                                             else:
-                                                return {'value': {'bcquantity': 1,'is_new_pick':False,'note':''}}
+                                                return {'value': {'bcquantity': received_qty,'is_new_pick':False,'note':'Scan Next','line_ids':scanning_line}}
                                         else:
-                                            return {'value': {'bcquantity': 1,'is_new_pick':False,'note':''}}
+                                            return {'value': {'bcquantity': received_qty,'is_new_pick':False,'note':'Scan Next','default_code':False,'line_ids':scanning_line }}
                                 else:
                                     raise osv.except_osv(_('ERROR !'), _('Serial number not found'))
 #                                    received_qty = received_qty + 1
@@ -594,11 +602,11 @@ class picking_scanning(osv.osv_memory):
                                         stock_move_obj.write(cr, uid, search_child_mv_ids,{'status': 'done'})
                                     total_scanned_moves += 1
                                     if total_scanned_moves == len(obj_stock_moves):
-                                        return {'value': {'bcquantity': 1,'line_ids':line_scanned_ids,'is_new_pick':False,'note':'Scanning is Done'},'type': 'ir.actions.act_window_close'}
+                                        return {'value': {'bcquantity': received_qty,'line_ids':line_scanned_ids,'is_new_pick':False,'note':'Scanning is Done'},'type': 'ir.actions.act_window_close'}
                                     else:
-                                        return {'value': {'line_ids':line_scanned_ids,'bcquantity': 1,'is_new_pick':False,'note':'', 'stock_picking_id':picking_obj1.id,'default_code':False,'picking_ids':picking_ids}}
+                                        return {'value': {'line_ids':line_scanned_ids,'bcquantity':received_qty,'is_new_pick':False,'note':'Scan Next', 'stock_picking_id':picking_obj1.id,'default_code':False,'picking_ids':picking_ids}}
                                 else:
-                                        return {'value': {'line_ids':line_scanned_ids, 'bcquantity': 1, 'is_new_pick':False, 'note':'','stock_picking_id':picking_obj1.id,'default_code':False,'picking_ids':picking_ids}}
+                                        return {'value': {'line_ids':line_scanned_ids, 'bcquantity': received_qty, 'is_new_pick':False, 'note':'Scan Next','stock_picking_id':picking_obj1.id,'default_code':False,'picking_ids':picking_ids}}
 		elif type == 'internal':
                     if default_code != False:
                         if picking:

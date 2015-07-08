@@ -181,6 +181,8 @@ class account_invoice(models.Model):
         return amount
 
     def _process_invoice_line(self,line, invoice):
+        print"lineeeeeee",line
+        
         """
         Handle the creation of the revenue recognition schedule and the initial journal to move
         the invoice line amount into the Unearned Income account.
@@ -188,14 +190,16 @@ class account_invoice(models.Model):
         # Exit if revenue recognition is not required
         if invoice.recurring==True:
             return
-        # Get the revenue recognition journal
-        domain = [('name','=',_('Recognition Journal')),'|',('company_id','=',invoice.company_id.id),('company_id','=',False)]
-        journal_ids = self.pool.get('account.journal').search(request.cr,request.uid, domain) 
-        print"journal_idsjournal_idsjournal_idsjournal_ids",journal_ids
-        if len(journal_ids)==0:
-            raise osv.except_osv(_("Error in Invoice Line '%s'" % line.name), _("Cannot find the Recognition Journal for this company."))
-        # Generate the revenue recognition schedule
-        self._create_schedule(line, invoice, journal_ids[0])
+        for each_line in line:
+            line_brw = self.pool.get('account.move.line').browse(request.cr,request.uid,each_line)
+            # Get the revenue recognition journal
+            domain = [('code','=',_('RCJ')),'|',('company_id','=',invoice.company_id.id),('company_id','=',False)]
+            journal_ids = self.pool.get('account.journal').search(request.cr,request.uid, domain) 
+            print"journal_idsjournal_idsjournal_idsjournal_ids",journal_ids
+            if len(journal_ids)==0:
+                raise osv.except_osv(_("Error in Invoice Line '%s'" % line_brw.name), _("Cannot find the Recognition Journal for this company."))
+            # Generate the revenue recognition schedule
+            self._create_schedule(each_line, invoice, journal_ids[0])
 
     def _create_schedule(self,line, invoice, journal_id): 
         print"_create_schedule_create_schedule_create_schedule_create_schedule",invoice,journal_id
@@ -634,6 +638,7 @@ class account_invoice_line(osv.osv):
         res,cox_sales_channels = [],''
         tax_obj = self.pool.get('account.tax')
         cur_obj = self.pool.get('res.currency')
+        policy_object=self.pool.get('res.partner.policy') 
         if context is None:
             context = {}
         invoice_obj = self.pool.get('account.invoice')
@@ -663,14 +668,31 @@ class account_invoice_line(osv.osv):
                     return_ref = return_ref[0]
                     return_id = return_order.search(cr,uid,[('name','ilike',return_ref)])
                     if return_id:
-                        sale_order_id = return_order.browse(cr,uid,return_id[0]).linked_sale_order
-                        cr.execute("select id from account_invoice where (recurring=False or recurring is Null) and id in (select invoice_id from sale_order_invoice_rel where order_id in %s)",(tuple([sale_order_id.id]),))
+                        #Start code Preeti for RMA
+                        if return_order.browse(cr,uid,return_id[0]).linked_sale_order:
+                            sale_order_id = return_order.browse(cr,uid,return_id[0]).linked_sale_order
+                            cr.execute("select id from account_invoice where (recurring=False or recurring is Null) and id in (select invoice_id from sale_order_invoice_rel where order_id in %s)",(tuple([sale_order_id.id]),))
+                        else:                            
+                            return_brw = return_order.browse(cr,uid,return_id[0])
+                            policy_id =return_brw.service_id
+                            policy_brw=policy_object.browse(cr,uid,policy_id.id)
+                            linked_sale_id=policy_brw.sale_id                                       
+                            cr.execute("select id from account_invoice where (recurring=False or recurring is Null) and id in (select invoice_id from sale_order_invoice_rel where order_id in %s)",(tuple([linked_sale_id]),))
+                        #End code Preeti for RMA
                         invoice_id = cr.fetchone()
                         if invoice_id:
                             date_invoice =invoice_obj.browse(cr,uid,invoice_id[0]).date_invoice
                             if date_invoice > '2014-04-03':
                                 cr.execute("select id from sale_order_line where parent_so_line_id in (select sale_line_id from return_order_line where id in (select order_line_id from return_order_line_invoice_rel where invoice_id = %s))"%(line.id))
                                 child_so_line_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
+#                        sale_order_id = return_order.browse(cr,uid,return_id[0]).linked_sale_order
+#                        cr.execute("select id from account_invoice where (recurring=False or recurring is Null) and id in (select invoice_id from sale_order_invoice_rel where order_id in %s)",(tuple([sale_order_id.id]),))
+#                        invoice_id = cr.fetchone()
+#                        if invoice_id:
+#                            date_invoice =invoice_obj.browse(cr,uid,invoice_id[0]).date_invoice
+#                            if date_invoice > '2014-04-03':
+#                                cr.execute("select id from sale_order_line where parent_so_line_id in (select sale_line_id from return_order_line where id in (select order_line_id from return_order_line_invoice_rel where invoice_id = %s))"%(line.id))
+#                                child_so_line_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
             print"child_so_line_ids",child_so_line_ids,context
 #            fjkdhgjf
             if child_so_line_ids:
@@ -780,7 +802,7 @@ class account_invoice_tax(models.Model):
 #            invoice = invoice_obj.browse(cr, uid, invoice_id, context=context)
             tax_grouped = {}
             if invoice._avatax_calc():
-#                print"invoice111111111111"
+                print"invoice111111111111"
                 cur = invoice.currency_id
                 company_currency = invoice.company_id.currency_id.id
                 lines = invoice_obj.create_lines(cr, uid, invoice.invoice_line, 1)
