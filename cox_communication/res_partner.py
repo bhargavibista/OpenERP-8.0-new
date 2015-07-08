@@ -60,7 +60,25 @@ class res_partner(osv.Model):
 #    'cable': fields.boolean('Essential Tier Cox Cable'),
 #    'flare_account': fields.boolean('Flare Account'),
     }
-    
+        #Start code Preeti for Billing Reminder
+    def advance_billing_notice(self,cr,uid,ids,context=None):
+        today=datetime.date.today()
+        print "Today is ", today
+        billing_date = today+relativedelta(days=10)
+        print"billing_datebilling_datebilling_datebilling_date",billing_date
+        cr.execute("select id from res_partner where billing_date='%s'"%(billing_date))
+#        cr.execute("select id from res_partner where billing_date = '2012-06-24'")
+        partner_ids=filter(None, map(lambda x:x[0], cr.fetchall()))
+        print"partner_ids========>",partner_ids
+        if partner_ids:
+            for partner_idb in self.browse(cr,uid,partner_ids):
+                email_to = self.browse(cr,uid,partner_id.id).emailid
+                print "email======>",email_to
+                res=self.pool.get('sale.order').email_to_customer(cr, uid, partner_id,'res.partner','advance_billing_notice',email_to,context)
+#                if res:
+#                        partner_id.write({'billing_reminder':True})
+        return True
+    #End code Preeti for Billing Reminder
     
     #    function to send mail to customer for expired credit card or no credit card
     def expiry_credit_card_check(self,cr,uid,ids,context):
@@ -102,6 +120,7 @@ class res_partner(osv.Model):
             return True
         
     def cal_next_billing_amount(self,cr,uid,ids,context=None):
+        print"idsssssssssssssssss",ids
         if not context:
             context={}
         policy_obj=self.pool.get("res.partner.policy")
