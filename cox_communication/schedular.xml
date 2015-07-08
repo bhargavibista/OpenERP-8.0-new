@@ -200,5 +200,19 @@
             <field eval="'expiry_credit_card_check_7_days'" name="function"/>
             <field eval="'()'" name="args"/>
         </record>
+        <!--Start code Preeti for Billing Reminder-->
+        <record forcecreate="True" id="ir_cron_advance_billing_notice" model="ir.cron">
+            <field name="name">Ten Days Advance Billing Notice</field>
+            <field eval="False" name="active"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field eval="'schedular.function'" name="model"/>
+            <field eval="'advance_billing_notice'" name="function"/>
+            <field eval="'()'" name="args"/>
+        </record>
+        <!--End code Preeti for Billing Reminder-->
     </data>
 </openerp>
