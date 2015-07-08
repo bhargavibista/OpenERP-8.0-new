@@ -9,6 +9,8 @@ class service_configuration(osv.osv):
                     ('recurring_payment_reminder','Recurring Payment Reminder'),
                     ('expiry_credit_card_check_14_days','Check Credit Card Expiry Before 14 Days'),
                     ('expiry_credit_card_check_7_days','Check Credit Card Expiry Before 7 Days'),
+                    ('advance_billing_notice','Ten Days Advance Billing Notice'),
+
     ],'Scheduler')
     }
 service_configuration()
