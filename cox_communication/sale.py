@@ -1300,12 +1300,17 @@ class sale_order(osv.osv):
             if not active_services:
                 value += ",start_date='%s'"%order_date
             if value:
-                print"value",value
+                print"value",value,sale_id_brw.cox_sales_channels
                 if sale_id_brw.cox_sales_channels != 'amazon':
-                    cr.execute('update res_partner set %s where id=%s'%(value,partner_id))
-                    #cr.commit()
+                    print"ffffffffffffffffff"
+                    result=partner_obj.write(cr,uid,partner_id,{'billing_date':billing_date})
+                    print"resultttttttttttttt",result
+#                    cr.execute('update res_partner set %s where id=%s'%(value,partner_id))
+#                    cr.commit()
             self.calculate_extra_days(cr,uid,partner_id,billing_date)
-            partner_obj.cal_next_billing_amount(cr,uid,partner_id)#cox gen2 changes changed the function name
+            billing=partner_obj.browse(cr,uid,partner_id)
+            print"billingbillingbillingbillingbilling",billing,billing.billing_date
+            partner_obj.cal_next_billing_amount(cr,uid,partner_id)
         return True
 
     def calculate_extra_days(self,cr,uid,partner_id,billing_date):
@@ -2255,6 +2260,10 @@ class schedular_function(osv.osv):
             no_of_days=7
         context['no_of_days']=no_of_days
         self.pool.get('res.partner').expiry_credit_card_check(cr,uid,[],context)
+        
+    ##### schedular to send mail before 10 days of billing date
+    def advance_billing_notice(self,cr,uid,context={}):
+        self.pool.get('res.partner').advance_billing_notice(cr,uid,[],{})
         
         
     def recurring_payment_reminder(self,cr,uid,context={}):
