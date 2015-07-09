@@ -117,7 +117,7 @@ class product_template(osv.osv):
         return super(product_template,self).create(cr,uid,vals,context)
 
     def write(self,cr,uid,ids,vals,context={}):
-        print"valsvalsvalsvalsvalsvals",vals
+        print"valsvalsvalsvalsvalsvals////////////////////////////////",vals,ids
         ids_obj=self.browse(cr,uid,ids[0])
         extra_prod_config = self.pool.get('extra.prod.config')
         price=0
