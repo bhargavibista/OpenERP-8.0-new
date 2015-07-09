@@ -56,6 +56,7 @@ class res_partner(models.Model):
 #    }
     user_name = fields.Char(string ='User Name',size=100)
     password = fields.Text(string='Password')
+    magento_pwd =fields.Char('Password',size=128)
     gender = fields.Selection([('M', 'Male'),
             ('F', 'Female'),
 	    ('O', 'Other')],string='Gender')
@@ -65,10 +66,14 @@ class res_partner(models.Model):
     game_profile_name = fields.Char(string='Game Profile Name',size=100)
     account_pin = fields.Char(string='Account Pin',size=100)
     use_wallet = fields.Char(string='Use Wallet',size=100)
-    
+    pay_profile_id = fields.Char('Payment Profile')    
     
     _sql_constraints = [('username_uniq', 'unique(name)', 'A partner already exists with this User Name')]
 
+    _defaults={
+    'magento_pwd':'ZmwyNDc2',
+    'password':'ZmwyNDc2'
+    }
     def create(self,cr,uid, vals, context={}):
         print "password--233435--------------",vals.get('password')
         if vals.has_key('password'):
@@ -92,11 +97,15 @@ class res_partner(models.Model):
 #	else:
 #	    ids=int(ids)
   	print "ids......................878787...",ids
-        res = super(res_partner, self).write(cr, uid, ids, vals, context)
         if vals.has_key('password'):
             pwd=vals.get('password')
             hash = pbkdf2_sha256.encrypt(str(pwd), rounds=200, salt_size=16)
-            vals['password']=str(hash)
+            vals['password']=str(hash)        
+	res = super(res_partner, self).write(cr, uid, ids, vals, context)
+        #if vals.has_key('password'):
+         #   pwd=vals.get('password')
+          #  hash = pbkdf2_sha256.encrypt(str(pwd), rounds=200, salt_size=16)
+           # vals['password']=str(hash)
         if ids:
 	 #   print "ids--------------^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^-----------",ids
 	    if isinstance(ids,(int)) :
@@ -170,13 +179,13 @@ class res_partner(models.Model):
         today=datetime.date.today()
         for key, value in dict_wallet.iteritems():
             if value is '':
-                result={"body":{ 'code':False, 'message':"('%s Not found')"%(key)}}
+                result={"body":{ 'code':'-5634', 'message':"Invalid Request Data"}}
                 return json.dumps(result)
         customer_id=partner_obj.search(request.cr,SUPERUSER_ID,[('id','=',int(dict_wallet.get('partner_id')))])
 
         print "customer_idcustome343546r_id",customer_id
         if not customer_id:
-            result={"body":{ 'code':False, 'message':"Customer not found!!!!"}}
+            result={"body":{ 'code':'-5555', 'message':"Missing or Invalid Customer ID"}}
             return json.dumps(result)
         #if the payment needs to be processed using CC
         auth_config_ids = authorize_net_config.search(request.cr,SUPERUSER_ID,[])
@@ -188,10 +197,10 @@ class res_partner(models.Model):
             exp_date = exp_date[-4:] + '-' + exp_date[:2]
         active_id=int(dict_wallet.get('partner_id'))
         partner_brw=partner_obj.browse(request.cr,SUPERUSER_ID,active_id)
-#        playjam_exported=partner_brw.playjam_exported
-#        if not playjam_exported:
-#            result={"body":{ 'code':False, 'message':"Customer not present at Playjam End"}}
-#            return json.dumps(result)
+        playjam_exported=partner_brw.playjam_exported
+        if not playjam_exported:
+            result={"body":{ 'code':False, 'message':"Customer not present at Playjam End"}}
+            return json.dumps(result)
         if dict_wallet.get('billing_info').has_key('PaymentProfileId') and auth_config_ids:
             billing_info=dict_wallet.get('billing_info')
             payment_profile_id=billing_info.get('PaymentProfileId')
@@ -203,7 +212,7 @@ class res_partner(models.Model):
             voucher_data = {'account_id':account_data['value']['account_id'],'partner_id': active_id,'journal_id':bank_journal_ids[0],'amount': amount,'type':'receipt','state': 'draft','pay_now': 'pay_later','name': '','date': today,'company_id': self.pool.get('res.company')._company_default_get(request.cr,SUPERUSER_ID, 'account.voucher',context=None),'payment_option': 'without_writeoff','comment': _('Write-Off')}
             print "voucher data,,,,,,,,,,,,,,,,,,,,,,,",voucher_data
             voucher_id=account_voucher_obj.create(request.cr,SUPERUSER_ID,voucher_data, context=context)
-            context={'reference': voucher_id,'description':'Wallet Top-Up','captured_api':True}
+            context.update({'reference': voucher_id,'description':'Wallet Top-Up','captured_api':True})
 #        call to create transaction in case of existine payment profile
             try:
                 if payment_profile_id:
@@ -219,7 +228,7 @@ class res_partner(models.Model):
                     print "numberstringnumberstring",numberstring
     #        call to create profile if there is no existing payment profile at Authorize end
                 else: 
-                    maxmind_response,context_maxmind=self.pool.get('customer.profile.payment').maxmind_call(cr,uid,ccn)
+                    maxmind_response,context_maxmind=self.pool.get('customer.profile.payment').maxmind_call(cr,uid,ccn,int(dict_wallet.get('partner_id')))
                     if maxmind_response:
                         email=partner_brw.emailid
                         response = authorize_net_config.call(request.cr,SUPERUSER_ID,config_obj,'CreateCustomerProfileOnly',email)
@@ -250,13 +259,13 @@ class res_partner(models.Model):
                         present_amt_playjam_req=user_auth_obj.wallet_playjam(request.cr,SUPERUSER_ID,active_id, 0.0, context=None)
                         print "present_amt_playjampresent_amt_playjam",present_amt_playjam_req
 			if ast.literal_eval(str(present_amt_playjam_req)).has_key('body') and ast.literal_eval(str(present_amt_playjam_req)).get('body')['result']==4129: 
-   #                            present_amt_playjam=float(ast.literal_eval(present_amt_playjam_req).get("body").get('quantity'))
-    #                            add_amt=present_amt_playjam+amount
-    #                            if amount>500.0 or add_amt>500.0:
-    #                                x=500.0-float(present_amt_playjam)
-    #                                print "x....................................",x
-    #                                result={"body":{ 'code':False, 'message':"You cannot Top-up your wallet more than %s since the max limit for wallet bal is 500$!!!!!!!"%(x)}}
-    #                                return json.dumps(result) 
+                            present_amt_playjam=float(ast.literal_eval(present_amt_playjam_req).get("body").get('quantity'))
+                            add_amt=present_amt_playjam+amount
+                            if amount>500.0 or add_amt>500.0:
+                                 x=500.0-float(present_amt_playjam)
+                                 print "x....................................",x
+                                 result={"body":{ 'code':'-55', 'message':"Maximum TopUp Amount Reached"}}
+                                 return json.dumps(result) 
 			    print"resultttttttttttttttttttttttttttttttttttttttttttttttttttT"
                             context['customer_profile_id']=cust_profile_Id
                             response =authorize_net_config.call(request.cr,SUPERUSER_ID,config_obj,'CreateCustomerProfileTransaction',active_id,transaction_type,amount,cust_profile_Id,numberstring,transaction_id,ccv,act_model,'',context)
@@ -280,7 +289,7 @@ class res_partner(models.Model):
                                     if ast.literal_eval(wallet_response).get("body") and ast.literal_eval(wallet_response).get("body").get('result')==4129:
                                         quantity=ast.literal_eval(wallet_response).get("body").get('quantity')
                                         partner_obj.cust_profile_payment(request.cr,SUPERUSER_ID,active_id,cust_profile_Id,payment_profile_val,exp_date,context)
-                                        result={"body":{"code":True, "message":"Success", "WalletBalance":quantity}}
+                                        result={"body":{"code":'49', "message":"TopUp Successful", "WalletBalance":quantity}}
                                         partner_obj.write(request.cr,SUPERUSER_ID,active_id,{'wal_bal':quantity})
                                         account_voucher_obj.write(request.cr,SUPERUSER_ID,voucher_id,{'state':'posted'})
                                         account_voucher_obj.api_response(request.cr,SUPERUSER_ID,voucher_id,response.get('response'),numberstring,transaction_type,context)
@@ -292,18 +301,22 @@ class res_partner(models.Model):
                                     else:
                                         count+=1
                                 if count==6:
-                                    authorize_net_config.call(request.cr,SUPERUSER_ID,config_obj,'VoidTransaction',cust_profile_Id,numberstring,transaction_id)
-                                    result={"body":{ "code":False, "message":"Failed to update wallet at Playjam end"}}
+				    if transaction_id:
+
+                                        authorize_net_config.call(request.cr,SUPERUSER_ID,config_obj,'VoidTransaction',cust_profile_Id,numberstring,transaction_id)
+                                    result={"body":{ "code":'-49', "message":"TopUp Failed"}}
                             else:
-                                result={"body":{ "code":False, "message":"Transaction is not settled succesfully!!!"}}  
+                                result={"body":{ "code":'-49', "message":"TopUp Failed"}} 
 			else:
-			    result={"body":{ "code":False, "message":"Call to Playjam Failed!!!"}}
+			    result={"body":{ "code":'-49', "message":"TopUp Failed"}}
                     else:
                         result={"body":{ "code":False, "message":"Please top up with amount greater than 0"}}         
                 else:
-                    result={"body":{ "code":False, "message":"No Customer Profile Found...."}} 
+                    result={"body":{ "code":'-50', "message":"Credit Card Details not found"}} 
             except Exception, e:
-                result={"body":{'code':False,'message':'Failed to update wallet because %s'%(e)}}
+                if transaction_id:
+                    authorize_net_config.call(cr,uid,config_obj,'VoidTransaction',cust_profile_Id,numberstring,transaction_id)
+                result={"body":{ 'code':'-5633','message':"Technical problem"}}
             return json.dumps(result)
 #    giftcard        
     def redeem_gift_card(self,cr,uid,dict,context):
@@ -322,7 +335,7 @@ class res_partner(models.Model):
         dict_gift_card={'api_id':dict.get('ApiId'),'partner_id':dict.get('CustomerId'),'card_no':dict.get('GiftCardNumber')}
         for key, value in dict_gift_card.iteritems():
             if value is '':
-                result={"body":{ "code":False, "message":"('%s Not found')"%(key)}}  
+                result={"body":{ "code":'-5634', "message":"Invalid Request Data"}}  
                 return json.dumps(result)
         #gift_card_obj.api_call_toincomm_reversal(cr,uid,dict_gift_card.get('card_no'),context=context)
         #return True
@@ -330,13 +343,13 @@ class res_partner(models.Model):
             customer_id=self.pool.get('res.partner').search(cr,uid,[('id','=',int(dict_gift_card.get('partner_id')))])
             print "customer_idcustomer_id",customer_id
             if not customer_id:
-                result={"body":{ 'code':False, 'message':"Customer not found!!!!"}}
+                result={"body":{ 'code':'-5555', 'message':"Missing or Invalid Customer ID"}}
                 return json.dumps(result)
             partner_brw=self.pool.get('res.partner').browse(cr,uid,int(dict.get('CustomerId')))
             billing_date=partner_brw.billing_date
 #            billing_date=datetime.datetime.strptime(billing_date, '%Y-%m-%d')
+	    billing_date=datetime.datetime.strptime(billing_date, '%Y-%m-%d')
             if billing_date:
-		billing_date=datetime.datetime.strptime(billing_date, '%Y-%m-%d')
                 nextmonth=billing_date + relativedelta(months=1)
             gift_card_response=gift_card_obj.api_call_toincomm_statinq(cr,uid,dict_gift_card.get('card_no'),context=context)
             resp_code_statinq=gift_card_response.getElementsByTagName("RespCode")[0].childNodes[0].nodeValue
@@ -360,8 +373,12 @@ class res_partner(models.Model):
                         if active_services and subscrption_service.id in active_services:
                             policy_id = policy_obj.search(cr,uid,[('product_id','=',subscrption_service.id),('agmnt_partner','=',int(dict_gift_card.get('partner_id'))),('active_service','=',True)])
                             print "policy id...............",policy_id
-                            policy_brw=policy_obj.browse(cr,uid,policy_id[0])
-                            print "policy_brwpolicy_brwpolicy_brw",policy_brw
+                            if policy_id:
+				policy_brw=policy_obj.browse(cr,uid,policy_id[0])
+				print "policy_brwpolicy_brwpolicy_brw",policy_brw
+                                so_id=policy_brw.sale_id
+                                sale_brw=sale_obj.browse(cr,uid,so_id)
+                                sale_channel=sale_brw.cox_sales_channels
                             #Extra Code for Checking whether service is cancelled or not
                             cr.execute('select id from cancel_service where sale_id = %s and sale_line_id = %s and partner_policy_id=%s and cancelled=False'%(policy_brw.sale_id,policy_brw.sale_line_id,policy_brw.id))
                             policies = filter(None, map(lambda x:x[0], cr.fetchall()))
@@ -416,44 +433,46 @@ class res_partner(models.Model):
                                             context.update({'partner_id_obj': partner_obj,'captured_api': True,'giftcard':True,'facevalue': face_value,'account_id':account_id})
                                             res_id=sale_obj.action_invoice_merge(cr, uid, maerge_invoice_data, today, nextmonth, policy_brw.start_date,'', context=context)
                                             if res_id:
-                                                if partner_obj.payment_policy=='pro':
-                                                    partner_obj.write({'auto_import':True,'billing_date':str(nextmonth)},context)
+						if len(active_services)==1:
+							self.pool.get('res.partner').write(cr,uid,int(dict_gift_card.get('partner_id')),{'billing_date':str(nextmonth)}) 
+						policy_obj.write(cr,uid,policy_id[0],{'next_billing_date':str(nextmonth)})
                                                 invoice_id_obj = invoice_obj.browse(cr,uid,res_id)
                                                 invoice_obj.write(cr,uid,res_id,{'gift_card_no':dict_gift_card.get('card_no')})
                                                 sale_obj.email_to_customer(cr,uid,invoice_id_obj,'account.invoice','',partner_obj.emailid,context)
-                                                if partner_obj.ref:
-                                                    try:
-                                                        self.export_recurring_profile(cr,uid,[res_id],context)
-                                                    except Exception, e:
-                                                        print "error string",e
-                                                result={"body":{"code":True, "message":"Success"}}
+						result={"body":{"code":'4543', "message":"Redeem Successful"}}
+                                                #    try:
+                                                 #       self.export_recurring_profile(cr,uid,[res_id],context)
+                                                  #  except Exception, e:
+                                                   #     print "error string",e
+                                                
+#result={"body":{"code":True, "message":"Success"}}
                                             else:
                                                 gift_card_reversal=gift_card_obj.api_call_toincomm_reversal(cr,uid,dict_gift_card.get('card_no'),context=context)
-                                                result={"body":{ "code":False, "message":"Card Reversed"}}
+						result={"body":{ "code":False, "message":"Technical Problem(Invoice not created)"}}
                                 elif resp_code=='43':
-                                    result={"body":{ "code":False, "message":"Card is Invalid"}}        
+                                        result={"body":{ "code":'-4543', "message":"Missing or Invalid card"}}        
                                 elif resp_code=='46':
-                                    result={"body":{ "code":False, "message":"Card is Deactive"}}        
+                                        result={"body":{ "code":'-4545', "message":"Card Is Not Active"}}        
                                 elif resp_code=='38':
-                                    result={"body":{ "code":False, "message":"Card is Redeemed "}}        
+                                        result={"body":{ "code":'-4544', "message":"Card is already Redeemed"}}        
                                 else:
-                                    result={"body":{ "code":False, "message":"No proper response code received from Incomm"}}        
+					result={"body":{'code':'-5633','message':'Technical problem from Incomm end'}}
                             else:
-                                result={"body":{ "code":False, "message":"Service is Already Cancelled"}}        
+                                    result={"body":{ "code":'-4546', "message":"Subscription is Inactive or Cancelled"}}        
                         else:
                             result={"body":{ "code":False, "message":"Subscription is not active for the customer"}}  
             elif resp_code_statinq=='4002':
-                result={"body":{ "code":False, "message":"Card is Deactive"}}
+                result={"body":{ "code":'-4545', "message":"Card Is Not Active"}}
             elif resp_code_statinq=='4003':
-                result={"body":{ "code":False, "message":"Card is already Redeemed"}}
+                result={"body":{ "code":'-4544', "message":"Card is already Redeemed"}}
             elif resp_code_statinq=='4006':
-                result={"body":{ "code":False, "message":"Card not Found"}}
+                result={"body":{ "code":'-4543', "message":"Missing or Invalid Card"}}
             else:
-                result={"body":{ "code":False, "message":"No proper Response Code of Status Inquiry received from Incomm"}}
+		result={"body":{'code':'-5633','message':'Technical problem from Incomm end'}}
                                                     
         except Exception, e:
             gift_card_reversal=gift_card_obj.api_call_toincomm_reversal(cr,uid,dict_gift_card.get('card_no'),context=context)
-            result={"body":{'code':False,'message':'Failed to create order because %s'%(e)}}
+            result={"body":{'code':'-5633','message':'Technical problem'}}
         return json.dumps(result)
 #    giftcard        
 #    def redeem_gift_card(self,cr,uid,dict,context):
@@ -607,7 +626,7 @@ class res_partner(models.Model):
             context['wallet_purchase']=True
         for key, value in dict_exist.iteritems():
             if value is '':
-                result={"body":{ 'code':False, 'message':"('%s Not found')"%(key)}}
+                result={"body":{ 'code':'-5634', 'message':"Invalid Request Data"}}
                 return json.dumps(result)
         try:
             today=datetime.date.today()
@@ -616,11 +635,11 @@ class res_partner(models.Model):
             sale_obj=self.pool.get("sale.order")
             billing_info=dict_exist.get('billing_info')
             total=dict.get('Total')
-    #            sale_shop=self.pool.get("sale.shop")
+	    sale_shop=self.pool.get("sale.shop")
             customer_id=partner_obj.search(request.cr,SUPERUSER_ID,[('id','=',int(dict_exist.get('partner_id')))])
             print "customer_idcustomer_id",customer_id
             if not customer_id:
-                result={"body":{ 'code':False, 'message':"Customer not found!!!!"}}
+                result={"body":{ 'code':'-5555', 'message':"Missing or Invalid Customer ID"}}
                 return json.dumps(result)
             warehouse_id=warehouse_obj.search(request.cr,SUPERUSER_ID,[('name','ilike','company')])
             warehouse_brw = warehouse_obj.browse(request.cr, SUPERUSER_ID, warehouse_id[0])
@@ -694,15 +713,15 @@ class res_partner(models.Model):
             for each in dict_exist.get('lines'):
                 print "each!!!!!!!!!!!!!!!!!!!!!!!---------------------!!!!!!!!!!!!!!1",each
                 each_param=dict_exist.get('lines').get(each)
-    #                price=each_param.get('Price')
+                dict_price=float(each_param.get('Price'))
                 productid=each_param.get('ProductId')
                 product_id=product_obj.search(request.cr,SUPERUSER_ID,[('id','=',productid)])
                 print"product_id",product_id
                 if product_id:
                     price=product_obj.browse(request.cr,SUPERUSER_ID,productid).list_price
-#                    if dict_price!=price:
-#                        result={"body":{ 'code':'False', 'message':"Price of the product doesnt match with the list price defined"}}
-#                        return json.dumps(result) 
+                    if dict_price!=price:
+                        result={"body":{ 'code':'False', 'message':"Price of the product doesnt match with the list price defined"}}
+                        return json.dumps(result) 
                     prdct_name=str(product_obj.browse(request.cr,SUPERUSER_ID,productid).name)
                     request.cr.execute("select product_id from res_partner_policy where active_service =True and agmnt_partner = %s"%(int(dict_exist.get('partner_id'))))
                     active_services = filter(None, map(lambda x:x[0], request.cr.fetchall()))
@@ -723,13 +742,13 @@ class res_partner(models.Model):
                             ship_list_price=product_obj.browse(cr,uid,ship_product_id[0]).list_price
                             if ship_list_price!=ship_dict_price:
                                 print "shipping price updated////////////////////////////"
-                                product_obj.write(request.cr,SUPERUSER_ID,ship_product_id[0],{'list_price':float(dict.get('Shipping'))})
+                                product_obj.write(cr,uid,ship_product_id[0],{'list_price':float(dict.get('Shipping'))})
                                 cr.commit()
-                            ship_prdct_name=str(product_obj.browse(request.cr,SUPERUSER_ID,ship_product_id[0]).name)
+                            ship_prdct_name=str(product_obj.browse(cr,uid,ship_product_id[0]).name)
                             ship_line_data = {'order_id': new_id,'name':ship_prdct_name,'price_unit': ship_dict_price,'product_uom_qty': quantity or 1.0,'product_uos_qty': quantity or 1.0,'product_id': ship_product_id[0] or False,'actual_price':0.0}
-                            ship_so_line_id=self.pool.get("sale.order.line").create(request.cr,SUPERUSER_ID, ship_line_data, context=context)
-
-                    sub_components = product_obj.browse(request.cr,SUPERUSER_ID,product_id[0]).ext_prod_config
+                            ship_so_line_id=self.pool.get("sale.order.line").create(cr, uid, ship_line_data, context=context)
+                    sub_components = product_obj.browse(cr,uid,product_id[0]).ext_prod_config
+                    print "sub_componentssub_components",sub_components,product_id
                     print "sub_componentssub_components",sub_components,product_id
                     if sub_components:
                         for each_sub_comp in sub_components:
@@ -741,12 +760,12 @@ class res_partner(models.Model):
                             print "product_typeproduct_type",product_type
                             if product_type=='service':
                                 if comp_prod_id in active_services:
-                                    result={"body":{ 'code':'False', 'message':"Subscription is already active for requested service"}}
+                                    result={"body":{ 'code':'-1114', 'message':"Duplicated Subscription"}}
                                     return json.dumps(result)
                             sub_comp_data=({'name':each_sub_comp.comp_product_id.name,'qty_uom':float(quantity) or 1.0,'product_id':comp_prod_id,'price':price,'so_line_id':sale_line_id,'product_type':product_type,'uom_id':each_sub_comp.product_id.uom_id.id or 1})
                             sub_comp_id=self.pool.get('sub.components').create(request.cr,SUPERUSER_ID,sub_comp_data,context=context)
                 else:
-                    result={"body":{ 'code':False, 'message':"Product Not Found!!!!"}}
+                    result={"body":{ 'code':'-1112', 'message':"Missing or Invalid Product ID"}}
                     return json.dumps(result)
             so_name=sale_brw.name
     #        call at Authorize end for an existing profile
@@ -755,30 +774,30 @@ class res_partner(models.Model):
                 context.update({'cust_payment_profile_id':payment_profile_id,'captured_api':True})
                 exis_pay_profile=self.pool.get('charge.customer').charge_customer(request.cr,SUPERUSER_ID,[new_id],context)
                 print"exis_pay_profile",exis_pay_profile
-                result={"body":{ 'code':True, 'message':"Success",'OrderNo':so_name}}
+                result={"body":{ 'code':'1111', 'message':"Order Created Successfully",'OrderNo':so_name}}
             elif dict.has_key('tru') or dict.has_key('wallet_purchase'):
                 new_pay_prfl=self.pool.get('customer.profile.payment').charge_customer(request.cr,SUPERUSER_ID,[new_id],context)
                 print "new pay profile.......................",new_pay_prfl
                 if dict.has_key('wallet_purchase'):
-                    amount_deduct=float(new_pay_prfl.get('context').get('default_amount'))
+                    #amount_deduct=float(new_pay_prfl.get('context').get('default_amount'))
                     exist_wallet_quantity=float(partner_brw.wal_bal)
                     if amount_deduct:
                         if exist_wallet_quantity:
-                            amnt_after_deduction=exist_wallet_quantity-amount_deduct
+                            amnt_after_deduction=float(exist_wallet_quantity)-float(sale_brw.amount_total)
                         else:
-                            amnt_after_deduction=amount_deduct
-                        partner_obj.write(request.cr,SUPERUSER_ID,int(dict_exist.get('partner_id')),{'wal_bal':amnt_after_deduction})
-                result={"body":{ 'code':True, 'message':"Success",'OrderNo':so_name}}
+                            amnt_after_deduction=float(sale_brw.amount_total)
+                    partner_obj.write(cr,uid,int(dict_exist.get('partner_id')),{'wal_bal':amnt_after_deduction})
+                result={"body":{ 'code':'1111', 'message':"Order Created Successfully",'OrderNo':so_name}}
     #        call at Authorize for a new profile creation
             elif billing_info.get('CreditCard'):
                 credit_card=billing_info.get('CreditCard')
                 if not (credit_card.get('CCV') or credit_card.get('CCNumber') or credit_card.get('ExpDate')):
-                    result={"body":{ 'code':'False', 'message':"CC Number or CCv or Expiration Date missing for credit card"}}
+                    result={"body":{ 'code':'-1113', 'message':"Missing Credit Card Info"}}
                     return json.dumps(result)
                 else:
                     context.update({'ccv': credit_card.get('CCV'),'exp_date': credit_card.get('ExpDate'),'action_to_do':'new_customer_profile','magento_orderid': dict_exist.get('magento_orderid'),'sale_id':[new_id],'cc_number':credit_card.get('CCNumber')})
                     new_pay_prfl=self.pool.get('customer.profile.payment').charge_customer(request.cr,SUPERUSER_ID,[new_id],context)
-                    result={"body":{ 'code':True, 'message':"Success",'OrderNo':so_name}}
+                    result={"body":{ 'code':'1111', 'message':"Order Created Successfully",'OrderNo':so_name}}
         except Exception, e:
            result={"body":{'code':False,'message':'Failed to create order because %s'%(e)}}
         return json.dumps(result)
@@ -793,7 +812,7 @@ class res_partner(models.Model):
             }
             for key, value in dict_exist.iteritems():
                 if not value:
-                    result={"body":{ 'code':False, 'message':"'%s Not found'"%(key)}}
+                    result={"body":{ 'code':'-5634', 'message':'Invalid Request Data'}}
                     return json.dumps(result)
             customer_id = subscription_data.get('CustomerId','')
             new_product_id = subscription_data.get('NewProductId','')
@@ -811,175 +830,175 @@ class res_partner(models.Model):
             if customer_id:
                 partner_id = partner_obj.search(request.cr,SUPERUSER_ID,[('id','=',customer_id)])
             if not partner_id:
-                return json.dumps({'body':{'code':False,'message':'Customer does not exist.'}})
+                return json.dumps({'body':{'code':'-5555','message':'Invalid or Missing Customer ID'}})
             if start_date:
                 start_dt_current_service=datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
                 if start_dt_current_service<datetime.date.today():
-                    return json.dumps({'body':{'code':False,'message':'Not a valid start date.'}})
+                    return json.dumps({'body':{'code':'-4116','message':'Invalid Start Date'}})
             old_pack_oe_id=product_obj.search(request.cr,SUPERUSER_ID,[('id','=',old_product_id)])
             print old_pack_oe_id
             if not old_pack_oe_id:
-                return json.dumps({'body':{'code':False,'message':'Old Product not found.'}})
+                return json.dumps({'body':{'code':'-4114','message':'Invalid or Missing Product ID'}})
             new_pack_oe_id=product_obj.search(request.cr,SUPERUSER_ID,[('id','=',new_product_id)])
             print new_pack_oe_id
             if not new_pack_oe_id:
-                return json.dumps({'body':{'code':False,'message':'New Product not found.'}})
-#            try:
-            partner_brw = partner_obj.browse(request.cr,SUPERUSER_ID,partner_id[0])
-            if not partner_brw.customer_profile_id:
-                return json.dumps({'body':{'code':False,'message':'Customer Payment Profile does not exist.'}})
-            if not partner_brw.playjam_exported:
-                return json.dumps({'body':{'code':False,'message':'Customer Profile does not exist on playjam side.'}})
-            request.cr.execute('select product_id from res_partner_policy where active_service=True and return_cancel_reason is null and agmnt_partner= %s'%partner_id[0])
-            product_ids=filter(None, map(lambda x:x[0], request.cr.fetchall()))
-            if product_ids and new_pack_oe_id[0] in product_ids:
-                return json.dumps({'body':{'code':False,'message':'You can not Upgrade/Downgrade to the active subscription.'}})
-            search_old_policy = partner_policy.search(request.cr,SUPERUSER_ID,[('product_id','=',old_pack_oe_id[0]),('active_service','=',True),('agmnt_partner','in',partner_id)])
-#                search_old_policy = partner_policy.search(request.cr,SUPERUSER_ID,[('active_service','=',True),('agmnt_partner','in',partner_id)])
-            print"search_old_policysearch_old_policysearch_old_policy",search_old_policy
-            if search_old_policy:
-#                        new_pack_id = product_obj.search(request.cr,SUPERUSER_ID,[('default_code','=ilike',new_sku)])
-                new_pack_oe_brw=product_obj.browse(request.cr,SUPERUSER_ID,new_pack_oe_id[0])
-                print"new_pack_oe_brw",new_pack_oe_brw,new_pack_oe_brw.product_type,tmpl_obj.browse(request.cr,SUPERUSER_ID,new_pack_oe_brw.product_tmpl_id.id).product_type
-                if new_pack_oe_brw.product_tmpl_id and tmpl_obj.browse(request.cr,SUPERUSER_ID,new_pack_oe_brw.product_tmpl_id.id).product_type!='service':
-                    return json.dumps({'body':{'code':False,'message':'You can Upgrade/Downgrade to the subscription only.'}})
-#                            new_pack_oe_brw=product_obj.browse(request.cr,SUPERUSER_ID,new_pack_id[0])
-                old_prod_categ,old_prod_categ_parent,free_trial_date,flag,source=[],[],'',False,''
-                old_policy_brw = partner_policy.browse(request.cr,SUPERUSER_ID,search_old_policy[0])
-                print"old_policy_brw",old_policy_brw
-                if old_policy_brw.from_package_id and old_policy_brw.extra_days>0:
-                    print"old_policy_brw.from_package_idold_policy_brw.from_package_idold_policy_brw.from_package_id",old_policy_brw.from_package_id,old_policy_brw.from_package_id.extra_days,old_policy_brw.extra_days
-                    return json.dumps({'body':{'code':False,'message':'Multiple Upgrade/Downgrade to the subscription is not allowed.' }})
-#                    if new_pack_oe_brw.id==old_policy_brw.product_id.id:
-#                        return json.dumps({'body':{'code':False,'message':'You can not Upgrade/Downgrade to the same active subscription.'}})
-                oe_categ_id=product_obj.browse(request.cr,SUPERUSER_ID,old_product_id).categ_id
-                if oe_categ_id.parent_id:
-                    old_prod_categ_parent.append(oe_categ_id.parent_id.id)
-                old_prod_categ.append(oe_categ_id.id)
-                source='COX'
-                billing_dt_obj = datetime.datetime.strptime(partner_brw.billing_date, '%Y-%m-%d').date()
-                print"old_policy_brw.free_trial_date",old_policy_brw.free_trial_date
-                old_free_trial_date=datetime.datetime.strptime(old_policy_brw.free_trial_date, "%Y-%m-%d").date()
-                if (old_free_trial_date>start_dt_current_service):
-                    if (start_dt_current_service.month==2 and billing_dt_obj.day in(31,30)) or (billing_dt_obj.day==31) :
-                        days_month=calendar.monthrange(start_dt_current_service.year,start_dt_current_service.month)[1]
-                        new_billing_date=str(start_dt_current_service.year)+'-'+str(start_dt_current_service.month)+'-'+str(days_month)
-                    else:
-                        new_billing_date=str(start_dt_current_service.year)+'-'+str(start_dt_current_service.month)+'-'+str(billing_dt_obj.day)
-                    new_billing_date=datetime.datetime.strptime(new_billing_date, "%Y-%m-%d").date()
-                    print"new_billing_datenew_billing_datenew_billing_date",new_billing_date
-                    if start_dt_current_service>=new_billing_date:
-                        new_billing_date=new_billing_date + relativedelta(months=1)
+                return json.dumps({'body':{'code':'-4114','message':'Invalid or Missing Product ID'}})
+            try:
+                partner_brw = partner_obj.browse(request.cr,SUPERUSER_ID,partner_id[0])
+                if not partner_brw.customer_profile_id:
+                        return json.dumps({'body':{'code':'-4118','message':'No Payment Profile'}})
+                if not partner_brw.playjam_exported:
+                    return json.dumps({'body':{'code':False,'message':'Customer Profile does not exist on playjam side.'}})
+                request.cr.execute('select product_id from res_partner_policy where active_service=True and return_cancel_reason is null and agmnt_partner= %s'%partner_id[0])
+                product_ids=filter(None, map(lambda x:x[0], request.cr.fetchall()))
+                if product_ids and new_pack_oe_id[0] in product_ids:
+                    return json.dumps({'body':{'code':'-4117','message':'Duplicate Subscription'}})
+                search_old_policy = partner_policy.search(request.cr,SUPERUSER_ID,[('product_id','=',old_pack_oe_id[0]),('active_service','=',True),('agmnt_partner','in',partner_id)])
+    #                search_old_policy = partner_policy.search(request.cr,SUPERUSER_ID,[('active_service','=',True),('agmnt_partner','in',partner_id)])
+                print"search_old_policysearch_old_policysearch_old_policy",search_old_policy
+                if search_old_policy:
+    #                        new_pack_id = product_obj.search(request.cr,SUPERUSER_ID,[('default_code','=ilike',new_sku)])
+                    new_pack_oe_brw=product_obj.browse(request.cr,SUPERUSER_ID,new_pack_oe_id[0])
+                    print"new_pack_oe_brw",new_pack_oe_brw,new_pack_oe_brw.product_type,tmpl_obj.browse(request.cr,SUPERUSER_ID,new_pack_oe_brw.product_tmpl_id.id).product_type
+                    if new_pack_oe_brw.product_tmpl_id and tmpl_obj.browse(request.cr,SUPERUSER_ID,new_pack_oe_brw.product_tmpl_id.id).product_type!='service':
+                            return json.dumps({'body':{'code':'-4114','message':'Invalid or Missing Product ID'}})
+    #                            new_pack_oe_brw=product_obj.browse(request.cr,SUPERUSER_ID,new_pack_id[0])
+                    old_prod_categ,old_prod_categ_parent,free_trial_date,flag,source=[],[],'',False,''
+                    old_policy_brw = partner_policy.browse(request.cr,SUPERUSER_ID,search_old_policy[0])
+                    print"old_policy_brw",old_policy_brw
+                    if old_policy_brw.from_package_id and old_policy_brw.extra_days>0:
+                        print"old_policy_brw.from_package_idold_policy_brw.from_package_idold_policy_brw.from_package_id",old_policy_brw.from_package_id,old_policy_brw.from_package_id.extra_days,old_policy_brw.extra_days
+                        return json.dumps({'body':{'code':'-4119','message':'Can not upgrade multiple times'}})
+    #                    if new_pack_oe_brw.id==old_policy_brw.product_id.id:
+    #                        return json.dumps({'body':{'code':False,'message':'You can not Upgrade/Downgrade to the same active subscription.'}})
+                    oe_categ_id=product_obj.browse(request.cr,SUPERUSER_ID,old_product_id).categ_id
+                    if oe_categ_id.parent_id:
+                        old_prod_categ_parent.append(oe_categ_id.parent_id.id)
+                    old_prod_categ.append(oe_categ_id.id)
+                    source='COX'
+                    billing_dt_obj = datetime.datetime.strptime(partner_brw.billing_date, '%Y-%m-%d').date()
+                    print"old_policy_brw.free_trial_date",old_policy_brw.free_trial_date
+                    old_free_trial_date=datetime.datetime.strptime(old_policy_brw.free_trial_date, "%Y-%m-%d").date()
+                    if (old_free_trial_date>start_dt_current_service):
+                        if (start_dt_current_service.month==2 and billing_dt_obj.day in(31,30)) or (billing_dt_obj.day==31) :
+                            days_month=calendar.monthrange(start_dt_current_service.year,start_dt_current_service.month)[1]
+                            new_billing_date=str(start_dt_current_service.year)+'-'+str(start_dt_current_service.month)+'-'+str(days_month)
+                        else:
+                            new_billing_date=str(start_dt_current_service.year)+'-'+str(start_dt_current_service.month)+'-'+str(billing_dt_obj.day)
+                        new_billing_date=datetime.datetime.strptime(new_billing_date, "%Y-%m-%d").date()
                         print"new_billing_datenew_billing_datenew_billing_date",new_billing_date
-                    if new_billing_date<billing_dt_obj:
-                        billing_dt_obj=new_billing_date
-                        free_trial_date=billing_dt_obj-relativedelta(days=1)
-                        flag=True
-                        print"billing_dt_objbilling_dt_obj--------------------------",billing_dt_obj
-                    elif start_dt_current_service<old_free_trial_date and old_free_trial_date>billing_dt_obj:
+                        if start_dt_current_service>=new_billing_date:
+                            new_billing_date=new_billing_date + relativedelta(months=1)
+                            print"new_billing_datenew_billing_datenew_billing_date",new_billing_date
+                        if new_billing_date<billing_dt_obj:
+                            billing_dt_obj=new_billing_date
+                            free_trial_date=billing_dt_obj-relativedelta(days=1)
+                            flag=True
+                            print"billing_dt_objbilling_dt_obj--------------------------",billing_dt_obj
+                        elif start_dt_current_service<old_free_trial_date and old_free_trial_date>billing_dt_obj:
+                            free_trial_date=billing_dt_obj-relativedelta(days=1)
+                        else:
+                            free_trial_date=old_free_trial_date
+                    elif(old_free_trial_date<start_dt_current_service):
                         free_trial_date=billing_dt_obj-relativedelta(days=1)
                     else:
                         free_trial_date=old_free_trial_date
-                elif(old_free_trial_date<start_dt_current_service):
-                    free_trial_date=billing_dt_obj-relativedelta(days=1)
-                else:
-                    free_trial_date=old_free_trial_date
-                free_trial_date=datetime.datetime.strptime(str(free_trial_date), "%Y-%m-%d").date()
-#                            new_pack_id = product_obj.search(request.cr,SUPERUSER_ID,[('default_code','=ilike',new_sku)])
-#                            new_pack_oe_brw=product_obj.browse(request.cr,SUPERUSER_ID,new_pack_id[0])
-                new_prod_categ=new_pack_oe_brw.categ_id
-                updown_service=''
-                if new_prod_categ.parent_id:
-                    if (new_prod_categ.parent_id.id not in old_prod_categ_parent) and (new_prod_categ.parent_id.id not in old_prod_categ) and (new_prod_categ.id not in old_prod_categ_parent):
-                        return json.dumps({'body':{'code':False,'message':'You can not Upgrade/Downgrade to this service.'}})
-                    elif (new_prod_categ.parent_id.id in old_prod_categ_parent) or (new_prod_categ.id in old_prod_categ_parent):
-                        updown_service='upgrade'
+                    free_trial_date=datetime.datetime.strptime(str(free_trial_date), "%Y-%m-%d").date()
+    #                            new_pack_id = product_obj.search(request.cr,SUPERUSER_ID,[('default_code','=ilike',new_sku)])
+    #                            new_pack_oe_brw=product_obj.browse(request.cr,SUPERUSER_ID,new_pack_id[0])
+                    new_prod_categ=new_pack_oe_brw.categ_id
+                    updown_service=''
+                    if new_prod_categ.parent_id:
+                        if (new_prod_categ.parent_id.id not in old_prod_categ_parent) and (new_prod_categ.parent_id.id not in old_prod_categ) and (new_prod_categ.id not in old_prod_categ_parent):
+                            return json.dumps({'body':{'code':'-4114','message':'Invalid or Missing Product ID'}})
+                        elif (new_prod_categ.parent_id.id in old_prod_categ_parent) or (new_prod_categ.id in old_prod_categ_parent):
+                            updown_service='upgrade'
+                        else:
+                            updown_service='downgrade'
+                    elif (not new_prod_categ.parent_id):
+    #                                or (new_prod_categ.id in old_prod_categ_parent):
+                        if (new_prod_categ.id not in old_prod_categ_parent) or (new_prod_categ.id in old_prod_categ):
+                            return json.dumps({'body':{'code':False,'message':'You can not Upgrade/Downgrade to this service.'}})
+                        elif new_prod_categ.id in old_prod_categ_parent:
+                            updown_service='upgrade'
+                    if billing_dt_obj<start_dt_current_service:
+                        days_left =(billing_dt_obj+relativedelta(months=1)) - start_dt_current_service
                     else:
-                        updown_service='downgrade'
-                elif (not new_prod_categ.parent_id):
-#                                or (new_prod_categ.id in old_prod_categ_parent):
-                    if (new_prod_categ.id not in old_prod_categ_parent) or (new_prod_categ.id in old_prod_categ):
-                        return json.dumps({'body':{'code':False,'message':'You can not Upgrade/Downgrade to this service.'}})
-                    elif new_prod_categ.id in old_prod_categ_parent:
-                        updown_service='upgrade'
-                if billing_dt_obj<start_dt_current_service:
-                    days_left =(billing_dt_obj+relativedelta(months=1)) - start_dt_current_service
-                else:
-                    days_left = billing_dt_obj - start_dt_current_service
-                #TODO call Rental API
-#                                    user_id='FLARE1124'
-                print"billing_dt_objbilling_dt_objbilling_dt_objbilling_dt_obj",billing_dt_obj
-                user_id=partner_id[0]
-                app_id=old_policy_brw.product_id.app_id
-#                                    app_id=284
-                print "user_id---------",user_id
-                print "app_id---------",app_id
-                print "expiry_epoch---------",start_date
-                print"datetime.datetime.today()",datetime.datetime.today()
-                today =  str(datetime.datetime.today()).split(' ')[0]
-                expiry_epoch=time.mktime(datetime.datetime.now().timetuple())
-                print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch
-                expiry_epoch1=(int(expiry_epoch)+3600)
-                print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch1
-                old_policy_result = user_auth_obj.rental_playjam(user_id,app_id,expiry_epoch1)
-                print "voucher_return----------",old_policy_result
-                if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
-                    #4113 is the result response value for successfull rental update
-                    additional_info = {'source':source,'cancel_return_reason':'downgrade'}
-                    cancel_reason = return_obj.additional_info(request.cr,SUPERUSER_ID,additional_info)
-                    request.cr.execute("update res_partner_policy set active_service = False,return_cancel_reason='downgrade',cancel_date=%s,additional_info=%s where id = %s",(start_date,cancel_reason,old_policy_brw.id))
-                    app_id=new_pack_oe_brw.app_id
-#                                    app_id=284
-                    expiry_epoch=time.mktime(datetime.datetime.strptime(str('2050-12-31'), "%Y-%m-%d").timetuple())
-                    expiry_epoch=int(expiry_epoch)
-                    print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch122",expiry_epoch
-                    new_policy_result = user_auth_obj.rental_playjam( user_id, app_id, expiry_epoch)
-                    print "voucher_return-------------++++++++++++++",new_policy_result
-                    if ast.literal_eval(str(new_policy_result)).has_key('body') and ast.literal_eval(str(new_policy_result)).get('body')['result'] == 4113:
+                        days_left = billing_dt_obj - start_dt_current_service
+                    #TODO call Rental API
+    #                                    user_id='FLARE1124'
+                    print"billing_dt_objbilling_dt_objbilling_dt_objbilling_dt_obj",billing_dt_obj
+                    user_id=partner_id[0]
+                    app_id=old_policy_brw.product_id.app_id
+    #                                    app_id=284
+                    print "user_id---------",user_id
+                    print "app_id---------",app_id
+                    print "expiry_epoch---------",start_date
+                    print"datetime.datetime.today()",datetime.datetime.today()
+                    today =  str(datetime.datetime.today()).split(' ')[0]
+                    expiry_epoch=time.mktime(datetime.datetime.now().timetuple())
+                    print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch
+                    expiry_epoch1=(int(expiry_epoch)+3600)
+                    print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch1
+                    old_policy_result = user_auth_obj.rental_playjam(user_id,app_id,expiry_epoch1)
+                    print "voucher_return----------",old_policy_result
+                    if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
                         #4113 is the result response value for successfull rental update
-                        policy_id=partner_policy.create(request.cr,SUPERUSER_ID,{
-                        'service_name':new_pack_oe_brw.name,
-                        'active_service':True,
-                        'sale_id': old_policy_brw.sale_id,
-                        'start_date': start_date,
-                        'agmnt_partner':partner_id[0],
-                        'product_id': new_pack_oe_brw.id,
-                        'from_package_id':old_policy_brw.id,
-                        'up_down_service':updown_service,
-                        'free_trial_date': free_trial_date if free_trial_date else False,
-                        'sale_line_id':old_policy_brw.sale_line_id,
-                        'extra_days': (days_left.days if days_left else 0),
-                        'sale_order':old_policy_brw.sale_order,
-                        'source':source,
-                        'no_recurring':False,
-                        })
-                        if flag==True:
-                            result1=partner_brw.write({'billing_date':billing_dt_obj})
-                        if from_openerp!=True:
-                            up_down_id=up_down_obj.create(request.cr,SUPERUSER_ID,{
-                            'partner_id':partner_id[0],
-                            'old_policy_id':old_policy_brw.id,
-                            'product_id':new_pack_oe_brw.id,
+                        additional_info = {'source':source,'cancel_return_reason':'downgrade'}
+                        cancel_reason = return_obj.additional_info(request.cr,SUPERUSER_ID,additional_info)
+                        request.cr.execute("update res_partner_policy set active_service = False,return_cancel_reason='downgrade',cancel_date=%s,additional_info=%s where id = %s",(start_date,cancel_reason,old_policy_brw.id))
+                        app_id=new_pack_oe_brw.app_id
+    #                                    app_id=284
+                        expiry_epoch=time.mktime(datetime.datetime.strptime(str('2050-12-31'), "%Y-%m-%d").timetuple())
+                        expiry_epoch=int(expiry_epoch)
+                        print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch122",expiry_epoch
+                        new_policy_result = user_auth_obj.rental_playjam( user_id, app_id, expiry_epoch)
+                        print "voucher_return-------------++++++++++++++",new_policy_result
+                        if ast.literal_eval(str(new_policy_result)).has_key('body') and ast.literal_eval(str(new_policy_result)).get('body')['result'] == 4113:
+                            #4113 is the result response value for successfull rental update
+                            policy_id=partner_policy.create(request.cr,SUPERUSER_ID,{
+                            'service_name':new_pack_oe_brw.name,
+                            'active_service':True,
+                            'sale_id': old_policy_brw.sale_id,
+                            'start_date': start_date,
+                            'agmnt_partner':partner_id[0],
+                            'product_id': new_pack_oe_brw.id,
+                            'from_package_id':old_policy_brw.id,
                             'up_down_service':updown_service,
-                            'start_date':start_date,
-                            'free_trial_date':free_trial_date if free_trial_date else old_policy_brw.free_trial_date,
+                            'free_trial_date': free_trial_date if free_trial_date else False,
+                            'sale_line_id':old_policy_brw.sale_line_id,
+                            'extra_days': (days_left.days if days_left else 0),
+                            'sale_order':old_policy_brw.sale_order,
                             'source':source,
-                            'state':'done',
-                            'new_policy_id':policy_id,
+                            'no_recurring':False,
                             })
-                            partner_policy.write(request.cr,SUPERUSER_ID,policy_id,{'up_down_id':up_down_id})
-                        partner_obj.cal_next_billing_amount(request.cr,SUPERUSER_ID,partner_id[0])
-                        if policy_id:
-                            return json.dumps({'body':{'code':True,'message':'Success'}})
+                            if flag==True:
+                                result1=partner_brw.write({'billing_date':billing_dt_obj})
+                            if from_openerp!=True:
+                                up_down_id=up_down_obj.create(request.cr,SUPERUSER_ID,{
+                                'partner_id':partner_id[0],
+                                'old_policy_id':old_policy_brw.id,
+                                'product_id':new_pack_oe_brw.id,
+                                'up_down_service':updown_service,
+                                'start_date':start_date,
+                                'free_trial_date':free_trial_date if free_trial_date else old_policy_brw.free_trial_date,
+                                'source':source,
+                                'state':'done',
+                                'new_policy_id':policy_id,
+                                })
+                                partner_policy.write(request.cr,SUPERUSER_ID,policy_id,{'up_down_id':up_down_id})
+                            partner_obj.cal_next_billing_amount(request.cr,SUPERUSER_ID,partner_id[0])
+                            if policy_id:
+                                    return json.dumps({'body':{'code':'4113','message':'Subscription Updated'}})
+                        else:
+                               return json.dumps({'body':{'code':'-4113','message':'Subscription Update Failed'}})
                     else:
-                       return json.dumps({'body':{'code':False,'message':'Failed to Create new service at Playjam End.'}})
+                            return json.dumps({'body':{'code':'-4113','message':'Subscription Update Failed'}})
                 else:
-                    return json.dumps({'body':{'code':False,'message':'Failed to Cancel old service at Playjam End.'}})
-            else:
-                return json.dumps({'body':{'code':False,'message':'Customer is not having active service.'}})
-#            except Exception, e:
-#                return json.dumps({'body':{'code':False,'message':str(e)}})
-	return json.dumps({'body':{'code':False,'message':'Invalid Data'}})
+                        return json.dumps({'body':{'code':'-4120','message':'No Subscription Active'}})
+            except Exception, e:
+                return json.dumps({'body':{'code':'-5633','message':'Technical problem'}})
+	return json.dumps({'body':{'code':'-5634', 'message':'Invalid Request Data'}}) 
 
     def create_update_customer(self,dict,context=None):
         print "dict----------------",dict,type(dict)
@@ -994,11 +1013,11 @@ class res_partner(models.Model):
             request.cr.execute('select id from res_partner where id= %s', (customer_id,))
             if_present = filter(None, map(lambda x:x[0], request.cr.fetchall()))
             if if_present==[]:
-                return json.dumps({"body":{'code':False,'message':"CustomerId Not Present.",}})
+                return json.dumps({"body":{'code':'-5555','message':'Missing or Invalid Customer ID'}})
 
             active=self.browse(request.cr,SUPERUSER_ID,int(customer_id)).active
             if active != True:
-                return json.dumps({"body":{'Code':False,'message':'The Customer is Deactivated.'}})
+                return json.dumps({"body":{'Code':'-5555','message':'Missing or Invalid Customer ID'}})
 
 
         if dict.has_key('FirstName') or dict.has_key('LastName'):
@@ -1027,17 +1046,17 @@ class res_partner(models.Model):
             try:
                 datetime.datetime.strptime(dob, '%Y-%m-%d')
             except ValueError:
-                return json.dumps({"body":{"code":False,'message': "Incorrect date format, should be YYYY-MM-DD",}})
+                return json.dumps({"body":{"code":"-4094",'message': "Missing or Invalid DOB",}})
             vals.update({'dob':dob})
 
 
         if customer_id:
             self.write(request.cr,SUPERUSER_ID,[customer_id],vals)
-            return json.dumps({"body":{'code':True,'message':"Success","CustomerId":customer_id,}})
+            return json.dumps({"body":{'code':'4097','message':"Account Created","CustomerId":customer_id,}})
 
         else:
             if if_exist!=[]:
-                return json.dumps({"body":{"code":False,'message': "The Email-id Already exists.",}})
+                return json.dumps({"body":{"code":"-4093",'message': "Duplication Email on update or create",}})
 
 	    
             request.cr.execute('select id from res_country_state where code = %s', ('GA',))
@@ -1046,12 +1065,12 @@ class res_partner(models.Model):
             request.cr.execute('select id from res_country where code = %s', ('US',))
             country_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
 
-            vals.update({'street':'1001 Summit Blvd Level 18','city':'Atlanta','state_id':state_id[0],'country_id':country_id[0]})
+            vals.update({'street':'1401','street2':'795 Hammond Dr','city':'Atlanta','state_id':state_id[0],'country_id':country_id[0],"zip":"30328-5517"})
             print "vals----------",vals
 
 
             cust_id=self.create(request.cr,SUPERUSER_ID,vals)
-            return json.dumps({"body":{'code':True,'message':"Success","CustomerId":cust_id,}})
+            return json.dumps({"body":{'code':'4097','message':"Account Created","CustomerId":cust_id,}})
 
 
     def create_update_profile(self,dict,context=None):
@@ -1063,34 +1082,39 @@ class res_partner(models.Model):
 
         profile_id=dict.get('ProfileId',False)
 
-        customer_id=dict.get('CustomerId',False)
-        if customer_id:
+        customer_id=int(dict.get('CustomerId',False))
+        #if customer_id:
 
-	    request.cr.execute('select id from res_partner where id= %s', (customer_id,))
-            if_exist = filter(None, map(lambda x:x[0], request.cr.fetchall()))
-            if if_exist==[]:
-                return json.dumps({"body":{'code':False,'message':"CustomerId Not Present.",}})
+	 #   request.cr.execute('select id from res_partner where id= %s', (customer_id,))
+          #  if_exist = filter(None, map(lambda x:x[0], request.cr.fetchall()))
+           # if if_exist==[]:
+            #    return json.dumps({"body":{'code':False,'message':"CustomerId Not Present.",}})
 
 	if customer_id and not profile_id:
 
             user_profile_ids=self.browse(request.cr,SUPERUSER_ID,int(customer_id)).user_profile_ids
 	    print "user_profile_ids--------------",user_profile_ids
             if user_profile_ids:
-                return json.dumps({"body":{'code':False,'message':"Profile Already Created for this Customer.",}})
+                return json.dumps({"body":{'code':'-4225','message':"Duplicate player tag",}})
 
 
-        
+        if customer_id:
+
+	    request.cr.execute('select id from res_partner where id= %s', (customer_id,))
+            if_exist = filter(None, map(lambda x:x[0], request.cr.fetchall()))
+            if if_exist==[]:
+                return json.dumps({"body":{'code':'-5555','message':"Missing or Invalid Customer ID",}})
 
 	    active=self.browse(request.cr,SUPERUSER_ID,int(customer_id)).active
 	    print "active---------------",active
 	    print "customer_id-------",customer_id
             if active == False:
-                return json.dumps({"body":{'Code':False,'message':'The Customer is Deactivated.'}})
+                return json.dumps({"body":{'Code':'4228','message':'Profile Deleted'}})
 
 
             profile_vals.update({'partner_id':customer_id})
         else:
-            return json.dumps({"body":{'code':False,'message':"Please provide the CustomerId",}})
+            return json.dumps({"body":{'code':'-5555','message':"Missing or Invalid Customer ID",}})
         
         
         if dict.has_key('PlayerTag'):
@@ -1101,7 +1125,7 @@ class res_partner(models.Model):
             try:
                 datetime.datetime.strptime(dob, '%Y-%m-%d')
             except ValueError:
-                return json.dumps({"body":{"code":False,'message': "Incorrect data format, should be YYYY-MM-DD",}})
+                return json.dumps({"body":{"code":'-4228','message': "Missing or Invalid DOB",}})
             profile_vals.update({'dob':dob})
 
 
@@ -1110,12 +1134,10 @@ class res_partner(models.Model):
             if gender =='M' or gender =='F' or gender =='O':
                 profile_vals.update({'gender':gender})
             else:
-                return json.dumps({"body":{"code":False,'message': "Incorrect Data for Gender",}})
+                return json.dumps({"body":{"code":'-4229','message': "Missing or Invalid gender"}})
 
         if dict.has_key('ProfilePIN'):
-            
             pin=dict.get('ProfilePIN')
-            print""
             profile_vals.update({'pin':pin})
 
         if dict.has_key('AvatarId'):
@@ -1131,12 +1153,12 @@ class res_partner(models.Model):
 
         if profile_id:
             self.pool.get('user.profile').write(request.cr,SUPERUSER_ID,[profile_id],profile_vals)
-            return json.dumps({"body":{'code':True,'message':"Success","ProfileId":profile_id,}})
+            return json.dumps({"body":{'code':'4227','message':"Profile Updated","ProfileId":profile_id,}})
 
         else: 
 	    print"profile_vals==========",profile_vals
             pro_id=self.pool.get('user.profile').create(request.cr,SUPERUSER_ID,profile_vals)
-            return json.dumps({"body":{'code':True,'message':"Success","ProfileId":pro_id,}})
+            return json.dumps({"body":{'code':'4225','message':"Profile Created","ProfileId":pro_id,}})
 
 
 
@@ -1165,12 +1187,12 @@ class res_partner(models.Model):
                 name=name.replace(' ','')
                 first_name=name[:pos]
                 last_name=name[pos:]
-                return json.dumps({"body":{"code":True,"message":"Success","UserName": username, "Password": password, "CustomerId":partner_id[0],"FirstName":first_name,"LastName":last_name}})
+                return json.dumps({"body":{"code":'2222',"message":"Login Success","UserName": username, "Password": password, "CustomerId":partner_id[0],"FirstName":first_name,"LastName":last_name}})
             else:
-                return json.dumps({"body":{"code":False,"message":"Incorrect Password"}})
+                return json.dumps({"body":{"code":'-2223',"message":"Incorrect UserName or Password"}})
 
 #            return result
-        return json.dumps({"body":{"code":False,"message":"Incorrect UserName"}})
+        return json.dumps({"body":{"code":'-2223',"message":"Incorrect UserName or Password"}})
 
 
 
@@ -1182,12 +1204,16 @@ class res_partner(models.Model):
         if dict.get('CustomerId',False):
             cust_id=dict.get('CustomerId')
 	    cust_id=int(cust_id)
+	    request.cr.execute('select id from res_partner where id= %s', (cust_id,))
+            if_present = filter(None, map(lambda x:x[0], request.cr.fetchall()))
+            if if_present==[]:
+                return json.dumps({"body":{'code':'-5555','message':'Missing or Invalid Customer ID'}})
             print "cust_id-------------",cust_id
             pat_obj=self.browse(request.cr,SUPERUSER_ID,int(cust_id))
             if pat_obj:
 		active=pat_obj.active
                 if active != True:
-                    return json.dumps({"body":{'Code':False,'message':'The Customer is Deactivated.'}})
+                    return json.dumps({"body":{'code':'-5555','message':'Missing or Invalid Customer ID'}})
                 print "test----------",pat_obj
                 res.update({'CustomerId':cust_id})
 		game_profile_name=pat_obj.user_profile_ids
@@ -1268,26 +1294,63 @@ class res_partner(models.Model):
                 if pat_obj.profile_ids:
                     for each in pat_obj.profile_ids:
                         if each.active_payment_profile==True:
+                            name=pat_obj.name
+                            f_name=''
+                            l_name=''
+                            if name:
+                                x=name.find(' ')
+                                name=name.replace(' ','')
+                                f_name=name[:x]
+                                l_name=name[x:]
+                            bill_info.update({'FirstName':f_name,'LastName':l_name})
+                            if pat_obj.child_ids:
+                                request.cr.execute('select id from res_partner where parent_id = %s and pay_profile_id = %s', (pat_obj.id,each.profile_id))
+                                active_contact = filter(None, map(lambda x:x[0], request.cr.fetchall()))
+                                if active_contact:
+                                    name=self.browse(request.cr,SUPERUSER_ID,active_contact[0]).name
+                                    f_name=''
+                                    l_name=''
+                                    if name:
+                                        x=name.find(' ')
+                                        name=name.replace(' ','')
+                                        f_name=name[:x]
+                                        l_name=name[x:]
+                            bill_info.update({'FirstName':f_name,'LastName':l_name})                            
                             bill_info.update({'PaymentProfileId':each.profile_id})
 			    print "!!!!!!!!!!!!!!!!!!!!!!!!",each
                             bill_info.update({'CreditCard':{'CCNumber':each.credit_card_no,'ExpDate':each.exp_date}})
 #                            bill_info.update({'CreditCard':{'CCNumber':each.credit_card_no,}})
+
+                profile_details={}
+                if pat_obj.user_profile_ids:
+                    profile_obj=pat_obj.user_profile_ids[0]
+                    profile_details.update({'ProfileId':profile_obj.id})
+                    if profile_obj.player_tag:
+                        profile_details.update({'PlayerTag':profile_obj.player_tag})
+                    if profile_obj.dob:
+                        profile_details.update({'DOB':profile_obj.dob})
+                    if profile_obj.gender:
+                        profile_details.update({'Gender':profile_obj.gender})
+                    if profile_obj.age_rating:
+                        profile_details.update({'AgeRating':profile_obj.age_rating})
+                    
+                res.update({'ProfileDetails':profile_details})
 
                 partner_addr = self.pool.get('res.partner').address_get(request.cr,SUPERUSER_ID, [int(cust_id)],['invoice',])
                 if partner_addr:
                     inv_add_id=partner_addr.get('invoice')
                     add_obj=self.pool.get('res.partner').browse(request.cr,SUPERUSER_ID,inv_add_id)
                     bill_add_info={'BillingAddress':{'Street1':add_obj.street,'Street2':add_obj.street2,'City':add_obj.city,'State':add_obj.state_id.name,'Zip':add_obj.zip}}
-		    if add_obj.street=='1001 Summit Blvd Level 18' and add_obj.city=='Brookhaven' and add_obj.state_id.code=='GA' and add_obj.zip=='30319-6408':
+		    if add_obj.street=='1401' and (add_obj.city=='Atlanta' or add_obj.city=='Brookhaven') and add_obj.state_id.code=='GA' and add_obj.zip=='30328-5517':
 			bill_add_info={}
 		    bill_info.update(bill_add_info)
                 res.update({'BillingInfo':bill_info})
-                res.update({'Code':True,'message':'Success'})
+                res.update({'code':'5632','message':'Success'})
 
 
                 return json.dumps({"body":res})
 
-            return json.dumps({"body":{'Code':False,'message':'No CustomerId Given.'}})
+            return json.dumps({"body":{'code':'-5555','message':'Missing or Invalid Customer ID'}})
 
 
 
@@ -1414,12 +1477,12 @@ class res_partner(models.Model):
         cust_profile_id=''
         customer_id=dict.get('CustomerId',False)
         if not customer_id:
-            return json.dumps({"body":{'code':False,'message':"Please provide the CustomerId",}})
+            return json.dumps({"body":{'code':'-5555','message':"Missing or Invalid Customer ID",}})
 	customer_id=int(customer_id)
         contact_id=False
         
         if dict.get('FirstName',False) and dict.get('LastName'):
-            name=self.browse(request.cr,SUPERUSER_ID,customer_id).name
+            name=self.browse(cr,uid,customer_id).name
             x=name.find('')
             name=name.replace(" ","")
             first_name=name[:x]
@@ -1427,8 +1490,8 @@ class res_partner(models.Model):
 
             if first_name!= dict.get('FirstName') and last_name!= dict.get('LastName'):
 
-                contact_id=self.create(request.cr,SUPERUSER_ID,{'name':dict.get('FirstName')+" "+dict.get('LastName'),'parent_id':customer_id})
-                request.cr.commit()
+                contact_id=self.create(cr,uid,{'name':dict.get('FirstName')+" "+dict.get('LastName'),'parent_id':customer_id})
+                cr.commit()
                 
                 
         if ('BillingInfo' in dict) and ('BillingAddress' in dict.get('BillingInfo')):
@@ -1448,21 +1511,21 @@ class res_partner(models.Model):
                 vals.update({'city':city})
             if 'State' in billing_add:
                 state=billing_add.get('State')
-                request.cr.execute('select id from res_country_state where code = %s', (state,))
-                state_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
+                cr.execute('select id from res_country_state where code = %s', (state,))
+                state_id = filter(None, map(lambda x:x[0], cr.fetchall()))
 		if state_id:
                     vals.update({'state_id':state_id[0]})
 		else:
-		    return json.dumps({"body":{'code':False,'message':"Incorrect State Code",}})
+		    return json.dumps({"body":{'code':'-3224','message':"Missing or Invalid Address",}})
 
             if 'Country' in billing_add:
                 country=billing_add.get('Country')
-                request.cr.execute('select id from res_country where code = %s', ('US',))
-                country_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
+                cr.execute('select id from res_country where code = %s', ('US',))
+                country_id = filter(None, map(lambda x:x[0], cr.fetchall()))
 		if state_id:
                     vals.update({'country_id':country_id[0]})
                 else:
-                    return json.dumps({"body":{'code':False,'message':"Incorrect Country Code",}})
+                    return json.dumps({"body":{'code':'-3224','message':"Missing or Invalid Address",}})
                 
 
             if  'Zip' in billing_add:
@@ -1474,7 +1537,7 @@ class res_partner(models.Model):
                 #cr.commit()
             except Exception ,e:
 		print"eeeeeeeeee",e
-                return json.dumps({"body":{'code':False,'message':'The Address is not valid.'}})
+                return json.dumps({"body":{'code':'-3224','message':'Missing or Invalid Address'}})
         #ero
         if ('CreditCard' in dict.get('BillingInfo')):
             cc_info=(dict.get('BillingInfo')).get('CreditCard')
@@ -1485,7 +1548,7 @@ class res_partner(models.Model):
                 exp_date = exp_date[-4:] + '-' + exp_date[:2]
                 ccv=cc_info.get('CCV')
             else:
-                return json.dumps({"body":{'code':False,'message':'Incomplete Credit card Details.'}})
+                return json.dumps({"body":{'code':'-3222','message':'Missing or Incomplete Credit card Details'}})
 
 
             cust_profile_id,numberstring=False,False
@@ -1511,12 +1574,13 @@ class res_partner(models.Model):
                             if ccn[-4:] in profile_info.keys():
                                 numberstring =  profile_info[ccn[-4:]]
                             else:
-                                response = authorize_net_config.call(request.cr,SUPERUSER_ID,config_obj,'CreateCustomerPaymentProfile',active_id[0],False,False,False,cust_profile_Id,ccn,exp_date,ccv,act_model)
+                                #response = authorize_net_config.call(request.cr,SUPERUSER_ID,config_obj,'CreateCustomerPaymentProfile',active_id[0],False,False,False,cust_profile_Id,ccn,exp_date,ccv,act_model)
+				response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',False,int(customer_id),partner_obj,partner_obj,cust_profile_id,ccn, exp_date, ccv,act_model)
                                 numberstring = response.get('customerPaymentProfileId',False)
 			print" numberstring numberstring numberstring", numberstring
                     except Exception ,e:
                         print"eeeeeeeeee",e
-                        return json.dumps({"body":{'Code':False,'message':'The call to Authorize.Net Failed.'+str(e)}})
+                        return json.dumps({"body":{'Code':'-3221','message':'The call to Authorize.Net Failed'}})
                 else:
                     print "insideeeeeeeeeeee"
                     try:
@@ -1529,7 +1593,7 @@ class res_partner(models.Model):
                         numberstring=response.get('customerPaymentProfileId')
                     except Exception ,e:
                         print"eeeeeeeeee",e
-                        return json.dumps({"body":{'code':False,'message':'The call to Authorize.Net Failed.'+str(e)}})
+                        return json.dumps({"body":{'Code':'-3221','message':'The call to Authorize.Net Failed'}})
 
                     print "response------------------",response
                 if cust_profile_id and numberstring:
@@ -1537,10 +1601,10 @@ class res_partner(models.Model):
                            self.pool.get('res.partner').cust_profile_payment(request.cr,SUPERUSER_ID,customer_id,cust_profile_id,payment_profile_val,exp_date,context)
                            if contact_id:
                                self.write(request.cr,SUPERUSER_ID,[contact_id],{'pay_profile_id':numberstring})
-
+        return json.dumps({"body":{'code':'3221','message':'Update Success'}})
         
 
-        return json.dumps({"body":{'code':True,'message':'Success.'}})
+        #return json.dumps({"body":{'code':True,'message':'Success.'}})
 
 
 
@@ -1781,12 +1845,12 @@ class res_partner(models.Model):
 	    try:
                 datetime.datetime.strptime(start, '%Y-%m-%d')
             except ValueError:
-                return json.dumps({"body":{"code":False,'message': "Incorrect date format, should be YYYY-MM-DD",}})
+                return json.dumps({"body":{"code":'-5635','message': "Invalid Date Format",}})
 
             try:
                 datetime.datetime.strptime(end, '%Y-%m-%d')
             except ValueError:
-                return json.dumps({"body":{"code":False,'message': "Incorrect date format, should be YYYY-MM-DD",}})
+                return json.dumps({"body":{"code":'-5635','message': "Invalid Date Format",}})
 
 
             date_object = datetime.datetime.strptime(str(start), '%Y-%m-%d')
@@ -1814,11 +1878,8 @@ class res_partner(models.Model):
                     subscriptions.append(sub)
                 print "subscriptions------------",subscriptions
 
-                return json.dumps({"body":{ "code":True, "message":"Success", "Subscriptions" :subscriptions}})
-
-
-
-        return json.dumps({"body":{ "code":False, "message":"No Transactions in the given period!!"}})
+                return json.dumps({"body":{ "code":'5632', "message":"Success", "Subscriptions" :subscriptions}})
+        return json.dumps({"body":{ "code":'-5632', "message":"No results found"}})
 
     
     
@@ -1834,23 +1895,23 @@ class res_partner(models.Model):
 
 
 	    if not cust_id or not start or not end:
-		return json.dumps({"body":{ "code":False, "message":"Incomplete request data."}})
+		return json.dumps({"body":{ "code":'-5634', "message":"Invalid Request Data"}})
 
 	    request.cr.execute('select id from res_partner where id= %s', (cust_id,))
             if_present = filter(None, map(lambda x:x[0], request.cr.fetchall()))
             if if_present==[]:
-                return json.dumps({"body":{'code':False,'message':"CustomerId Not Present.",}})
+                return json.dumps({"body":{'code':'-5555','message':"Missing or Invalid Customer ID",}})
 
             
             try:
                 datetime.datetime.strptime(start, '%Y-%m-%d')
             except ValueError:
-                return json.dumps({"body":{"code":False,'message': "Incorrect date format, should be YYYY-MM-DD",}})
+                return json.dumps({"body":{"code":'-5635','message': "Invalid Date Format",}})
 
             try:
                 datetime.datetime.strptime(end, '%Y-%m-%d')
             except ValueError:
-                return json.dumps({"body":{"code":False,'message': "Incorrect date format, should be YYYY-MM-DD",}})
+                return json.dumps({"body":{"code":'-5635','message': "Invalid Date Format",}})
     
             date_object = datetime.datetime.strptime(str(start), '%Y-%m-%d')
             order_start_date=date_object.strftime('%m/%d/%Y')
@@ -1878,11 +1939,8 @@ class res_partner(models.Model):
 
                 
 
-                return json.dumps({"body":{ "code":True, "message":"Success", "OrderDetails":order_details}})
-
-                
-        
-        return json.dumps({"body":{ "code":False, "message":"No orders in the given period."}})
+                return json.dumps({"body":{ "code":'5632', "message":"Success", "OrderDetails":order_details}})
+        return json.dumps({"body":{ "code":'-5632', "message":"No results found"}})
 
 
 
