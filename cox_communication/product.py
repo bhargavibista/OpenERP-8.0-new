@@ -116,7 +116,7 @@ class product_template(osv.osv):
                     raise osv.except_osv(_('Warning !'),_('Sale price should be equal total price of sub components'))
         return super(product_template,self).create(cr,uid,vals,context)
 
-    def write(self,cr,uid,ids,vals,context={})
+    def write(self,cr,uid,ids,vals,context={}):
         print"valsvalsvalsvalsvalsvals",vals
         if not isinstance(ids,list):
             ids=[ids]
