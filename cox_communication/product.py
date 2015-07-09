@@ -118,6 +118,8 @@ class product_template(osv.osv):
 
     def write(self,cr,uid,ids,vals,context={}):
         print"valsvalsvalsvalsvalsvals",vals
+        if not isinstance(ids,list):
+            ids=[ids]
         ids_obj=self.browse(cr,uid,ids[0])
         extra_prod_config = self.pool.get('extra.prod.config')
         price=0
