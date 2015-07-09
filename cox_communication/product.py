@@ -116,14 +116,10 @@ class product_template(osv.osv):
                     raise osv.except_osv(_('Warning !'),_('Sale price should be equal total price of sub components'))
         return super(product_template,self).create(cr,uid,vals,context)
 
-    def write(self,cr,uid,ids,vals,context={}):
-<<<<<<< HEAD
-        print"valsvalsvalsvalsvalsvals////////////////////////////////",vals,ids
-=======
+    def write(self,cr,uid,ids,vals,context={})
         print"valsvalsvalsvalsvalsvals",vals
         if not isinstance(ids,list):
             ids=[ids]
->>>>>>> 96d83066ac5b70ac9076ff2ee421c1063a5d629c
         ids_obj=self.browse(cr,uid,ids[0])
         extra_prod_config = self.pool.get('extra.prod.config')
         price=0
