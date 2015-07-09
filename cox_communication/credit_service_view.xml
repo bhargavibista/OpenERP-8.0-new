@@ -201,8 +201,8 @@
 <menuitem action="bista_order_returns.action_sales_return" id="bista_order_returns.menu_sale_return" parent="menu_returns_and_cancellation" sequence="2"
         groups="base.group_sale_salesman,base.group_sale_manager,group_retail_sales_manager,group_retail_sales_associate,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox,group_third_party_reseller"/>
 
-<menuitem action="action_credit_service" id="menu_credit_service" parent="menu_returns_and_cancellation" sequence="1"
-        groups="base.group_sale_manager,group_retail_sales_associate,group_retail_sales_manager,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox"/>
+<!--<menuitem action="action_credit_service" id="menu_credit_service" parent="menu_returns_and_cancellation" sequence="1"
+        groups="base.group_sale_manager,group_retail_sales_associate,group_retail_sales_manager,group_support,group_internal_operations,group_internal_operations_manager,group_warehouse_cox"/>-->
 
 <menuitem  name="Customers and Subscriptions" id="menu_cust_subscription"  parent="base.menu_base_partner" sequence="2" />
 <!--<menuitem  name="Customers and Subscriptions" id="menu_cust_subscription"  parent="base.menu_base_partner" sequence="2" groups="base.group_sale_manager,group_retail_sales_manager,group_retail_sales_associate"/>-->
