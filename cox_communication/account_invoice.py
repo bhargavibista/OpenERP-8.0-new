@@ -462,7 +462,6 @@ class account_invoice(models.Model):
                     if not capture_status:
                         ccv=''
                         #context['recurring_billing'] =True
-			print "msndc,sdnfcjkdfnkjdjvkdjvlkfdjvl",ids[0],transaction_type,amount,customer_profile_id,cust_payment_profile_id,config_obj
                         transaction_details =authorize_net_config.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',ids[0],transaction_type,amount,customer_profile_id,cust_payment_profile_id,'',ccv,act_model,'',context)
                         print"transaction_detailstransaction_detailstransaction_details",transaction_details
                         if transaction_details:
