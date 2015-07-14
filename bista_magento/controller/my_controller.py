@@ -6,7 +6,7 @@ import openerp.pooler as pooler
 import ast
 import urllib
 from openerp.modules.registry import RegistryManager
-
+database = 'odoo8_stable_2july'
 
 class Magento(http.Controller):
 
