@@ -414,7 +414,7 @@ class Magento(http.Controller):
 #            obj=request.registry['res.partner']
 #            result=obj.create_order_magento(request.cr,1,dict_req,{})
 
-            registry = RegistryManager.get('odoo_8')
+            registry = RegistryManager.get('odoo8_stable_2july')
             with registry.cursor() as cr:
                 u = registry['res.partner']
                 result = u.create_order_magento(dict_req)
