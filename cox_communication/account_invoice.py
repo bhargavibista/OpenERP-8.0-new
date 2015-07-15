@@ -25,7 +25,8 @@ class account_move_line(osv.osv):
                 vals.update({'partner_id': parent_id })
         print "parent_id---------",parent_id
         print "pat_id----------------",pat_id
-        res=super(account_move_line, self).create(cr, uid, vals, context=context)
+        print"vals",vals
+        res=super(account_move_line, self).create(cr, uid, vals, context)
         return res
     
     invoice_line_id=fields.Many2one('account.invoice.line','Invoice Lines')
@@ -36,13 +37,14 @@ account_move_line()
 class account_voucher(osv.osv):
     _inherit = "account.voucher"
     def onchange_journal(self, cr, uid, ids, journal_id, line_ids, tax_id, partner_id, date, amount, ttype, company_id, context=None):
-        print "partner_id-----------",partner_id
+        print "onchange partner_id-----------",partner_id
         if partner_id:
+            print"idffffffffffffffffffffffffffffff"
             parent_id=self.pool.get('res.partner').browse(cr,uid,partner_id).parent_id.id
             print "parent_id----------------",parent_id
             if parent_id:
                 partner_id=parent_id
-        res=super(account_voucher, self).onchange_journal( cr, uid, ids, journal_id, line_ids, tax_id, partner_id, date, amount, ttype, company_id, context=context)
+        res=super(account_voucher, self).onchange_journal(cr, uid, ids, journal_id, line_ids, tax_id, partner_id, date, amount, ttype, company_id, context)
         return res
 account_voucher()
 
@@ -180,6 +182,7 @@ class account_invoice(models.Model):
                                   price, context={'date':invoice.date_invoice}) 
         return amount
 
+    @api.one
     def _process_invoice_line(self,line, invoice):
         print"lineeeeeee",line
         
