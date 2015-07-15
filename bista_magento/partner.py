@@ -743,7 +743,7 @@ class res_partner(models.Model):
                             ship_list_price=product_obj.browse(request.cr,SUPERUSER_ID,ship_product_id[0]).list_price
                             if ship_list_price!=ship_dict_price:
                                 print "shipping price updated////////////////////////////"
-                                product_obj.write(cr,uid,ship_product_id[0],{'list_price':float(dict.get('Shipping'))})
+                                product_obj.write(request.cr, SUPERUSER_ID,ship_product_id[0],{'list_price':float(dict.get('Shipping'))})
                                 cr.commit()
                             ship_prdct_name=str(product_obj.browse(request.cr,SUPERUSER_ID,ship_product_id[0]).name)
                             ship_line_data = {'order_id': new_id,'name':ship_prdct_name,'price_unit': ship_dict_price,'product_uom_qty': quantity or 1.0,'product_uos_qty': quantity or 1.0,'product_id': ship_product_id[0] or False,'actual_price':0.0}
