@@ -6,7 +6,7 @@ import openerp.pooler as pooler
 import ast
 import urllib
 from openerp.modules.registry import RegistryManager
-database = 'odoo8_stable_2july'
+database = 'odoo_8_new'
 
 class Magento(http.Controller):
 
@@ -115,7 +115,7 @@ class Magento(http.Controller):
 
 #            obj=request.registry.get('user.auth')
 #            result=obj.register_user(request.cr,1,act_code,{})
-            registry = RegistryManager.get('odoo8_stable_2july')
+            registry = RegistryManager.get(database)
             with registry.cursor() as cr:
                 u = registry['user.auth']
                 result = u.register_user(act_code)
