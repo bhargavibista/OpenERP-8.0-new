@@ -22,7 +22,7 @@ class res_partner(models.Model):
     user_profile_ids = fields.One2many(comodel_name="user.profile", inverse_name="partner_id", string="User Profile")
     playjam_exported = fields.Boolean()
 
-    _sql_constraints = [('username_uniq', 'unique(name)', 'A partner already exists with this User Name')]
+#    _sql_constraints = [('username_uniq', 'unique(name)', 'A partner already exists with this User Name')]
 
     def get_wallet_update(self):
         url = "http://54.172.158.69/api/rest/flare/wallet/view.json"
