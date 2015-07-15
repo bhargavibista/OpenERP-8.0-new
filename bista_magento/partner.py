@@ -68,7 +68,7 @@ class res_partner(models.Model):
     use_wallet = fields.Char(string='Use Wallet',size=100)
     pay_profile_id = fields.Char('Payment Profile')    
     
-    _sql_constraints = [('username_uniq', 'unique(name)', 'A partner already exists with this User Name')]
+#    _sql_constraints = [('username_uniq', 'unique(name)', 'A partner already exists with this User Name')]
 
     _defaults={
     'magento_pwd':'ZmwyNDc2',
@@ -719,6 +719,7 @@ class res_partner(models.Model):
                 print"product_id",product_id
                 if product_id:
                     price=product_obj.browse(request.cr,SUPERUSER_ID,productid).list_price
+                    print"price",price,dict_price
                     if dict_price!=price:
                         result={"body":{ 'code':'False', 'message':"Price of the product doesnt match with the list price defined"}}
                         return json.dumps(result) 
@@ -736,18 +737,18 @@ class res_partner(models.Model):
                     print "sale line id...............................",sale_line_id
                     if dict.get('Shipping') and dict.get('Shipping')>0.0:
                         print "shipping line needs to be added//////////////////////"
-                        ship_product_id=product_obj.search(cr,uid,[('default_code','=','SHIP')])
+                        ship_product_id=product_obj.search(request.cr,SUPERUSER_ID,[('default_code','=','SHIP')])
                         if ship_product_id:
                             ship_dict_price=float(dict.get('Shipping'))
-                            ship_list_price=product_obj.browse(cr,uid,ship_product_id[0]).list_price
+                            ship_list_price=product_obj.browse(request.cr,SUPERUSER_ID,ship_product_id[0]).list_price
                             if ship_list_price!=ship_dict_price:
                                 print "shipping price updated////////////////////////////"
                                 product_obj.write(cr,uid,ship_product_id[0],{'list_price':float(dict.get('Shipping'))})
                                 cr.commit()
-                            ship_prdct_name=str(product_obj.browse(cr,uid,ship_product_id[0]).name)
+                            ship_prdct_name=str(product_obj.browse(request.cr,SUPERUSER_ID,ship_product_id[0]).name)
                             ship_line_data = {'order_id': new_id,'name':ship_prdct_name,'price_unit': ship_dict_price,'product_uom_qty': quantity or 1.0,'product_uos_qty': quantity or 1.0,'product_id': ship_product_id[0] or False,'actual_price':0.0}
                             ship_so_line_id=self.pool.get("sale.order.line").create(cr, uid, ship_line_data, context=context)
-                    sub_components = product_obj.browse(cr,uid,product_id[0]).ext_prod_config
+                    sub_components = product_obj.browse(request.cr,SUPERUSER_ID,product_id[0]).ext_prod_config
                     print "sub_componentssub_components",sub_components,product_id
                     print "sub_componentssub_components",sub_components,product_id
                     if sub_components:
