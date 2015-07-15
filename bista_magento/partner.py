@@ -747,7 +747,7 @@ class res_partner(models.Model):
                                 cr.commit()
                             ship_prdct_name=str(product_obj.browse(request.cr,SUPERUSER_ID,ship_product_id[0]).name)
                             ship_line_data = {'order_id': new_id,'name':ship_prdct_name,'price_unit': ship_dict_price,'product_uom_qty': quantity or 1.0,'product_uos_qty': quantity or 1.0,'product_id': ship_product_id[0] or False,'actual_price':0.0}
-                            ship_so_line_id=self.pool.get("sale.order.line").create(cr, uid, ship_line_data, context=context)
+                            ship_so_line_id=self.pool.get("sale.order.line").create(request.cr, SUPERUSER_ID, ship_line_data, context=context)
                     sub_components = product_obj.browse(request.cr,SUPERUSER_ID,product_id[0]).ext_prod_config
                     print "sub_componentssub_components",sub_components,product_id
                     print "sub_componentssub_components",sub_components,product_id
