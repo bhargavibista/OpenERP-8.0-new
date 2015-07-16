@@ -10,10 +10,7 @@
                     'partner.xml',
                     'product.xml',
     ],
-    "update_xml" : [
-
-
-                    ],
+    
     "active": False,
     "installable": True
 }
