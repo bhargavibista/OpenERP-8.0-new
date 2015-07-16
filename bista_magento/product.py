@@ -16,14 +16,14 @@ from openerp import SUPERUSER_ID
 class product_template(models.Model):
     _inherit = 'product.template'
     
-    exported = fields.Boolean(default=False)
+    exported = fields.Boolean('Exported')
     
 product_template()
 
 class product_product(models.Model):
     _inherit = 'product.product'
     
-    exported = fields.Boolean(default=False)
+    exported = fields.Boolean('Exported')
     
     
     _defaults={
