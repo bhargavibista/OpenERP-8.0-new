@@ -491,19 +491,8 @@
 "access_automatic_workflow_job_rsassociate","sale_automatic_workflow_payment_automatic_workflow_job_rsassociate","sale_automatic_workflow.model_automatic_workflow_job","group_retail_sales_associate",1,0,0,0
 "access_automatic_workflow_job_rsassociate","sale_automatic_workflow_payment_automatic_workflow_job_rsassociate","sale_automatic_workflow.model_automatic_workflow_job","group_retail_sales_associate",1,1,1,1
 ,,,,,,,
-"access_survey_request_rsassociate","survey.request rsassociate","survey.model_survey_request","group_retail_sales_associate",1,1,1,0
-"access_survey_tbl_column_heading_rsassociate","survey.tbl.column.heading rsassociate","survey.model_survey_tbl_column_heading","group_retail_sales_associate",1,1,1,0
-"access_survey_res_partner_rsassociate","survey.res.partner.rsassociate","base.model_res_partner","group_retail_sales_associate",1,1,1,0
-"access_survey_rsassociate","survey.rsassociate","survey.model_survey","group_retail_sales_associate",1,1,1,0
-"access_survey_page_rsassociate","survey.page rsassociate","survey.model_survey_page","group_retail_sales_associate",1,1,1,0
-"access_survey_question_rsassociate","survey.question rsassociate","survey.model_survey_question","group_retail_sales_associate",1,1,1,0
-"access_survey_answer_rsassociate","survey.answer rsassociate","survey.model_survey_answer","group_retail_sales_associate",1,1,1,0
-"access_survey_response_rsassociate","survey.response rsassociate","survey.model_survey_response","group_retail_sales_associate",1,1,1,0
-"access_survey_response_answer_rsassociate","survey.response.answer rsassociate","survey.model_survey_response_answer","group_retail_sales_associate",1,1,1,0
-"access_survey_history_rsassociate","survey.history.rsassociate","survey.model_survey_history","group_retail_sales_associate",1,1,1,0
-"access_survey_response_line_rsassociate","survey.response.line rsassociate","survey.model_survey_response_line","group_retail_sales_associate",1,1,1,0
-"access_survey_question_column_heading_survey_rsassociate","survey.question.column.heading.survey.rsassociate","survey.model_survey_question_column_heading","group_retail_sales_associate",1,1,1,0
-"access_survey_question_column_heading_rsassociate","survey.question.column.heading rsassociate","survey.model_survey_question_column_heading","group_retail_sales_associate",1,0,0,0
+
+
 ,,,,,,,
 "access_res_country_rsassociate","res_country_rsassociate","base.model_res_country","group_retail_sales_associate",1,1,1,1
 "access_res_country_state_rsassociate","res_country_state_rsassociate","base.model_res_country_state","group_retail_sales_associate",1,1,1,1
@@ -654,19 +643,7 @@
 "access_sale_workflow_process_rsmanager","sale_automatic_workflow_payment_sale_workflow_process_rsmanager","sale_automatic_workflow.model_sale_workflow_process","group_retail_sales_manager",1,1,1,1
 "access_automatic_workflow_job_rsmanager","sale_automatic_workflow_payment_automatic_workflow_job_rsmanager","sale_automatic_workflow.model_automatic_workflow_job","group_retail_sales_manager",1,0,0,0
 "access_automatic_workflow_job_rsmanager","sale_automatic_workflow_payment_automatic_workflow_job_rsmanager","sale_automatic_workflow.model_automatic_workflow_job","group_retail_sales_manager",1,1,1,1
-"access_survey_request_rsmanager","survey.request.rsmanager","survey.model_survey_request","group_retail_sales_manager",1,1,1,0
-"access_survey_tbl_column_heading_rsmanager","survey.tbl.column.heading.rsmanager","survey.model_survey_tbl_column_heading","group_retail_sales_manager",1,1,1,0
-"access_survey_res_partner_rsmanager","survey.res.partner.rsmanager","base.model_res_partner","group_retail_sales_manager",1,1,1,0
-"access_survey_rsmanager","survey.rsmanager","survey.model_survey","group_retail_sales_manager",1,1,1,0
-"access_survey_page_rsmanager","survey.page.rsmanager","survey.model_survey_page","group_retail_sales_manager",1,1,1,0
-"access_survey_question_rsmanager","survey.question.rsmanager","survey.model_survey_question","group_retail_sales_manager",1,1,1,0
-"access_survey_answer_rsmanager","survey.answer.rsmanager","survey.model_survey_answer","group_retail_sales_manager",1,1,1,0
-"access_survey_response_rsmanager","survey.response.rsmanager","survey.model_survey_response","group_retail_sales_manager",1,1,1,0
-"access_survey_response_answer_rsmanager","survey.response.answer.rsmanager","survey.model_survey_response_answer","group_retail_sales_manager",1,1,1,0
-"access_survey_history_rsmanager","survey.history.rsmanager","survey.model_survey_history","group_retail_sales_manager",1,1,1,0
-"access_survey_response_line_rsmanager","survey.response.line.rsmanager","survey.model_survey_response_line","group_retail_sales_manager",1,1,1,0
-"access_survey_res_partner_rsmanager","survey.res.partner.rsmanager","base.model_res_partner","group_retail_sales_manager",1,1,1,0
-"access_survey_question_column_heading_rsmanager","survey.question.column.heading.rsmanager","survey.model_survey_question_column_heading","group_retail_sales_manager",1,1,1,0
+
 "access_res_country_rsmanager","res_country_rsmanager","base.model_res_country","group_retail_sales_manager",1,1,1,1
 "access_res_country_state_rsmanager","res_country_state_rsmanager","base.model_res_country_state","group_retail_sales_manager",1,1,1,1
 "access_res_partner_group_rsmanager","res_partner_rsmanager","base.model_res_partner","group_retail_sales_manager",1,1,1,0
@@ -674,8 +651,8 @@
 "access_res_partner_bank_type_field_group_rsmanager","res_partner_bank_type_field_rsmanager","base.model_res_partner_bank_type_field","group_retail_sales_manager",1,1,1,0
 "access_res_partner_title_rsmanager","res_partner_title_rsmanager","base.model_res_partner_title","group_retail_sales_manager",1,1,1,0
 "access_res_bank_rsmanager","res_bank_rsmanager","base.model_res_bank","group_retail_sales_manager",1,1,1,1
-"access_partial_picking_all_rsmanager","partial_picking all_rsmanager","stock.model_stock_partial_picking","group_retail_sales_manager",1,1,1,1
-"access_partial_picking_line_all_rsmanager","partial_picking_line all_rsmanager","stock.model_stock_partial_picking_line","group_retail_sales_manager",1,1,1,1
+"access_partial_picking_all_rsmanager","partial_picking all_rsmanager","stock.model_stock_transfer_details","group_retail_sales_manager",1,1,1,1
+"access_partial_picking_line_all_rsmanager","partial_picking_line all_rsmanager","stock.model_stock_transfer_details_items","group_retail_sales_manager",1,1,1,1
 ,,,,,,,
 
 "access_sale_order_internal_ops","sale.order_internal_ops","sale.model_sale_order","group_internal_operations",1,1,1,0
@@ -813,30 +790,18 @@
 "access_sale_workflow_process_internal_ops","sale_automatic_workflow_payment_sale_workflow_process_internal_ops","sale_automatic_workflow.model_sale_workflow_process","group_internal_operations",1,1,1,1
 "access_automatic_workflow_job_internal_ops","sale_automatic_workflow_payment_automatic_workflow_job_internal_ops","sale_automatic_workflow.model_automatic_workflow_job","group_internal_operations",1,0,0,0
 "access_automatic_workflow_job_internal_ops","sale_automatic_workflow_payment_automatic_workflow_job_internal_ops","sale_automatic_workflow.model_automatic_workflow_job","group_internal_operations",1,1,1,1
-"access_survey_request_internal_ops","survey.request.internal_ops","survey.model_survey_request","group_internal_operations",1,1,1,0
-"access_survey_tbl_column_heading_internal_ops","survey.tbl.column.heading.internal_ops","survey.model_survey_tbl_column_heading","group_internal_operations",1,1,1,0
-"access_survey_res_partner_internal_ops","survey.res.partner.internal_ops","base.model_res_partner","group_internal_operations",1,1,1,0
-"access_survey_internal_ops","survey.internal_ops","survey.model_survey","group_internal_operations",1,1,1,0
-"access_survey_page_internal_ops","survey.page.internal_ops","survey.model_survey_page","group_internal_operations",1,1,1,0
-"access_survey_question_internal_ops","survey.question.internal_ops","survey.model_survey_question","group_internal_operations",1,1,1,0
-"access_survey_answer_internal_ops","survey.answer.internal_ops","survey.model_survey_answer","group_internal_operations",1,1,1,0
-"access_survey_response_internal_ops","survey.response.internal_ops","survey.model_survey_response","group_internal_operations",1,1,1,0
-"access_survey_response_answer_internal_ops","survey.response.answer.internal_ops","survey.model_survey_response_answer","group_internal_operations",1,1,1,0
-"access_survey_history_internal_ops","survey.history.internal_ops","survey.model_survey_history","group_internal_operations",1,1,1,0
-"access_survey_response_line_internal_ops","survey.response.line.internal_ops","survey.model_survey_response_line","group_internal_operations",1,1,1,0
-"access_survey_res_partner_internal_ops","survey.res.partner.internal_ops","base.model_res_partner","group_internal_operations",1,1,1,0
-"access_survey_question_column_heading_internal_ops","survey.question.column.heading.internal_ops","survey.model_survey_question_column_heading","group_internal_operations",1,1,1,0
+
+
 "access_crm_phonecall_report_internal_ops","crm.phonecall.report_internal_ops","crm.model_crm_phonecall_report","group_internal_operations",1,1,1,0
 "access_purchase_report_internal_ops","purchasereport_internal_ops","purchase.model_purchase_report","group_internal_operations",1,1,1,0
 "access_report_stock_lines_date_internal_ops","report.stock.lines.date.internal_ops","stock.model_report_stock_lines_date","group_internal_operations",1,1,1,0
-"access_report_stock_inventory_internal_ops","report.stock.inventory.internal_ops","stock.model_report_stock_inventory","group_internal_operations",1,1,1,0
+
 "access_project_task_history_cumulative_internal_ops","project.task.history.cumulative.internal_ops","project.model_project_task_history_cumulative","group_internal_operations",1,1,1,0
 "access_report_project_task_user_internal_ops","report.project.task.user_internal_ops","project.model_report_project_task_user","group_internal_operations",1,1,1,0
 "access_sale_receipt_report_internal_ops","sale.receipt.report_internal_ops","account_voucher.model_sale_receipt_report","group_internal_operations",1,1,1,0
 "access_account_treasury_report_internal_ops","account.treasury.report_internal_ops","account.model_account_treasury_report","group_internal_operations",1,1,1,0
 "access_account_entries_report_internal_ops","account.entries.report_internal_ops","account.model_account_entries_report","group_internal_operations",1,1,1,0
-"access_audittrail_rule_internal_ops","audittrail.rule_internal_ops","audittrail.model_audittrail_rule","group_internal_operations",1,1,1,0
-"access_audittrail_log_internal_ops","audittrail.log_internal_ops","audittrail.model_audittrail_log","group_internal_operations",1,1,1,0
+
 "access_res_company_internal_ops","res.company.internal_ops","base.model_res_company","group_internal_operations",1,1,1,0
 "access_fetchmail_server_internal_ops","fetchmail.server_internal_ops","fetchmail.model_fetchmail_server","group_internal_operations",1,1,1,1
 "access_ir_mail_server_internal_ops","ir.mail_server_internal_ops","base.model_ir_mail_server","group_internal_operations",1,1,1,1
@@ -850,8 +815,8 @@
 "access_res_partner_bank_type_field_group_internal_ops","res_partner_bank_type_field_internal_ops","base.model_res_partner_bank_type_field","group_internal_operations",1,1,1,0
 "access_res_partner_title_internal_ops","res_partner_title_internal_ops","base.model_res_partner_title","group_internal_operations",1,1,1,0
 "access_res_bank__internal_ops","res_bank_internal_ops","base.model_res_bank","group_internal_operations",1,1,1,1
-"access_partial_picking_all_internal_ops","partial_picking all_internal_ops","stock.model_stock_partial_picking","group_internal_operations",1,1,1,1
-"access_partial_picking_line_all_internal_ops","partial_picking_line all_internal_ops","stock.model_stock_partial_picking_line","group_internal_operations",1,1,1,1
+"access_partial_picking_all_internal_ops","partial_picking all_internal_ops","stock.model_stock_transfer_details","group_internal_operations",1,1,1,1
+"access_partial_picking_line_all_internal_ops","partial_picking_line all_internal_ops","stock.model_stock_transfer_details_items","group_internal_operations",1,1,1,1
 
 ,,,,,,,
 
@@ -931,7 +896,7 @@
 "access_pack_track_internal_ops_mgr","pack.track_internal_ops_mgr","bista_shipping.model_pack_track","group_internal_operations_manager",1,1,1,0
 "access_shipping_response_internal_ops_mgr","shipping.response_internal_ops_mgr","bista_shipping.model_shipping_response","group_internal_operations_manager",1,1,1,0
 "access_ir_model_data_internal_ops_mgr","ir.model.data_internal_ops_mgr","base.model_ir_model_data","group_internal_operations_manager",1,1,1,0
-"access_product_attribute_options_internal_ops_mgr","magerp.product_attribute_options_internal_ops_mgr","magentoerpconnect.model_magerp_product_attribute_options","group_internal_operations_manager",1,1,1,0
+
 "access_crm_helpdesk_internal_ops_mgr","crm.helpdesk_internal_ops_mgr","crm_helpdesk.model_crm_helpdesk","group_internal_operations_manager",1,1,1,0
 "access_report_internal_ops_mgr","report.stock.move.internal_ops_mgr","cox_communication.model_report_stock_move","group_internal_operations_manager",1,1,1,0
 "access_sale_report_internal_ops_mgr","sale.report_internal_ops_mgr","sale.model_sale_report","group_internal_operations_manager",1,1,1,0
@@ -992,30 +957,18 @@
 "access_sale_workflow_process_internal_ops_mgr","sale_automatic_workflow_payment_sale_workflow_process_internal_ops_mgr","sale_automatic_workflow.model_sale_workflow_process","group_internal_operations_manager",1,1,1,1
 "access_automatic_workflow_job_internal_ops_mgr","sale_automatic_workflow_payment_automatic_workflow_job_internal_ops_mgr","sale_automatic_workflow.model_automatic_workflow_job","group_internal_operations_manager",1,0,0,0
 "access_automatic_workflow_job_internal_ops_mgr","sale_automatic_workflow_payment_automatic_workflow_job_internal_ops_mgr","sale_automatic_workflow.model_automatic_workflow_job","group_internal_operations_manager",1,1,1,1
-"access_survey_request_internal_ops_mgr","survey.request.internal_ops_mgr","survey.model_survey_request","group_internal_operations_manager",1,1,1,1
-"access_survey_tbl_column_heading_internal_ops_mgr","survey.tbl.column.heading.internal_ops_mgr","survey.model_survey_tbl_column_heading","group_internal_operations_manager",1,1,1,1
-"access_survey_res_partner_internal_ops_mgr","survey.res.partner.internal_ops_mgr","base.model_res_partner","group_internal_operations_manager",1,1,1,1
-"access_survey_internal_ops_mgr","survey.internal_ops_mgr","survey.model_survey","group_internal_operations_manager",1,1,1,1
-"access_survey_page_internal_ops_mgr","survey.page.internal_ops_mgr","survey.model_survey_page","group_internal_operations_manager",1,1,1,1
-"access_survey_question_internal_ops_mgr","survey.question.internal_ops_mgr","survey.model_survey_question","group_internal_operations_manager",1,1,1,1
-"access_survey_answer_internal_ops_mgr","survey.answer.internal_ops_mgr","survey.model_survey_answer","group_internal_operations_manager",1,1,1,1
-"access_survey_response_internal_ops_mgr","survey.response.internal_ops_mgr","survey.model_survey_response","group_internal_operations_manager",1,1,1,1
-"access_survey_response_answer_internal_ops_mgr","survey.response.answer.internal_ops_mgr","survey.model_survey_response_answer","group_internal_operations_manager",1,1,1,1
-"access_survey_history_internal_ops_mgr","survey.history.internal_ops_mgr","survey.model_survey_history","group_internal_operations_manager",1,1,1,1
-"access_survey_response_line_internal_ops_mgr","survey.response.line.internal_ops_mgr","survey.model_survey_response_line","group_internal_operations_manager",1,1,1,1
-"access_survey_res_partner_internal_ops_mgr","survey.res.partner.internal_ops_mgr","base.model_res_partner","group_internal_operations_manager",1,1,1,1
-"access_survey_question_column_heading_internal_ops_mgr","survey.question.column.heading.internal_ops_mgr","survey.model_survey_question_column_heading","group_internal_operations_manager",1,1,1,1
+
+
 "access_crm_phonecall_report_internal_ops_mgr","crm.phonecall.report_internal_ops_mgr","crm.model_crm_phonecall_report","group_internal_operations_manager",1,1,1,0
 "access_purchase_report_internal_ops_mgr","purchasereport_internal_ops_mgr","purchase.model_purchase_report","group_internal_operations_manager",1,1,1,0
 "access_report_stock_lines_date_internal_ops_mgr_mgr","report.stock.lines.date.internal_ops_mgr","stock.model_report_stock_lines_date","group_internal_operations_manager",1,1,1,0
-"access_report_stock_inventory_internal_ops_mgr","report.stock.inventory.internal_ops_mgr","stock.model_report_stock_inventory","group_internal_operations_manager",1,1,1,0
+
 "access_project_task_history_cumulative_internal_ops_mgr","project.task.history.cumulative.internal_ops_mgr","project.model_project_task_history_cumulative","group_internal_operations_manager",1,1,1,0
 "access_report_project_task_user_internal_ops_mgr","report.project.task.user_internal_ops_mgr","project.model_report_project_task_user","group_internal_operations_manager",1,1,1,0
 "access_sale_receipt_report_internal_ops_mgr","sale.receipt.report_internal_ops_mgr","account_voucher.model_sale_receipt_report","group_internal_operations_manager",1,1,1,0
 "access_account_treasury_report_internal_ops_mgr","account.treasury.report_internal_ops_mgr","account.model_account_treasury_report","group_internal_operations_manager",1,1,1,0
 "access_account_entries_report_internal_ops_mgr","account.entries.report_internal_ops_mgr","account.model_account_entries_report","group_internal_operations_manager",1,1,1,0
-"access_audittrail_rule_internal_ops_mgr","audittrail.rule_internal_ops_mgr","audittrail.model_audittrail_rule","group_internal_operations_manager",1,1,1,0
-"access_audittrail_log_internal_ops_mgr","audittrail.log_internal_ops_mgr","audittrail.model_audittrail_log","group_internal_operations_manager",1,1,1,0
+
 "access_res_company_internal_ops_mgr","res.company.internal_ops_mgr","base.model_res_company","group_internal_operations_manager",1,1,1,0
 "access_fetchmail_server_internal_ops_mgr","fetchmail.server_internal_ops_mgr","fetchmail.model_fetchmail_server","group_internal_operations_manager",1,1,1,1
 "access_ir_mail_server_internal_ops_mgr","ir.mail_server_internal_ops_mgr","base.model_ir_mail_server","group_internal_operations_manager",1,1,1,1
@@ -1030,8 +983,8 @@
 "access_res_partner_title_internal_ops_mgr","res_partner_title_internal_ops_mgr","base.model_res_partner_title","group_internal_operations_manager",1,1,1,1
 "access_res_bank__internal_ops_mgr","res_bank_internal_ops_mgr","base.model_res_bank","group_internal_operations_manager",1,1,1,1
 "access_res_users_all_internal_managaer","res_users all_internal_manager","base.model_res_users","group_internal_operations_manager",1,1,1,1
-"access_partial_picking_all_internal_managaer","partial_picking all_internal_manager","stock.model_stock_partial_picking","group_internal_operations_manager",1,1,1,1
-"access_partial_picking_line_all_internal_managaer","partial_picking_line all_internal_manager","stock.model_stock_partial_picking_line","group_internal_operations_manager",1,1,1,1
+"access_partial_picking_all_internal_managaer","partial_picking all_internal_manager","stock.model_stock_transfer_details","group_internal_operations_manager",1,1,1,1
+"access_partial_picking_line_all_internal_managaer","partial_picking_line all_internal_manager","stock.model_stock_transfer_details_items","group_internal_operations_manager",1,1,1,1
 ,,,,,,,
 
 "access_board_board_all_internal_mgr","board.board_board_internal_mgr","board.model_board_board","group_support",1,0,0,0
@@ -1170,30 +1123,18 @@
 "access_sale_workflow_process_support","sale_automatic_workflow_payment_sale_workflow_process_support","sale_automatic_workflow.model_sale_workflow_process","group_support",1,1,1,1
 "access_automatic_workflow_job_support","sale_automatic_workflow_payment_automatic_workflow_job_support","sale_automatic_workflow.model_automatic_workflow_job","group_support",1,0,0,0
 "access_automatic_workflow_job_support","sale_automatic_workflow_payment_automatic_workflow_job_support","sale_automatic_workflow.model_automatic_workflow_job","group_support",1,1,1,1
-"access_survey_request_support","survey.request.support","survey.model_survey_request","group_support",1,1,1,1
-"access_survey_tbl_column_heading_support","survey.tbl.column.heading.support","survey.model_survey_tbl_column_heading","group_support",1,1,1,1
-"access_survey_res_partner_support","survey.res.partner.support","base.model_res_partner","group_support",1,1,1,1
-"access_survey_support","survey.support","survey.model_survey","group_support",1,1,1,1
-"access_survey_page_support","survey.page.support","survey.model_survey_page","group_support",1,1,1,1
-"access_survey_question_support","survey.question.support","survey.model_survey_question","group_support",1,1,1,1
-"access_survey_answer_support","survey.answer.support","survey.model_survey_answer","group_support",1,1,1,1
-"access_survey_response_support","survey.response.support","survey.model_survey_response","group_support",1,1,1,1
-"access_survey_response_answer_support","survey.response.answer.support","survey.model_survey_response_answer","group_support",1,1,1,1
-"access_survey_history_support","survey.history.support","survey.model_survey_history","group_support",1,1,1,1
-"access_survey_response_line_support","survey.response.line.support","survey.model_survey_response_line","group_support",1,1,1,1
-"access_survey_res_partner_support","survey.res.partner.support","base.model_res_partner","group_support",1,1,1,1
-"access_survey_question_column_heading_support","survey.question.column.heading.support","survey.model_survey_question_column_heading","group_support",1,1,1,1
+
+
 "access_crm_phonecall_report_support","crm.phonecall.report_support","crm.model_crm_phonecall_report","group_support",1,1,1,0
 "access_purchase_report_support","purchasereport_support","purchase.model_purchase_report","group_support",1,1,1,0
 "access_report_stock_lines_date_support_mgr","report.stock.lines.date.support","stock.model_report_stock_lines_date","group_support",1,1,1,0
-"access_report_stock_inventory_support","report.stock.inventory.support","stock.model_report_stock_inventory","group_support",1,1,1,0
+
 "access_project_task_history_cumulative_support","project.task.history.cumulative.support","project.model_project_task_history_cumulative","group_support",1,1,1,0
 "access_report_project_task_user_support","report.project.task.user_support","project.model_report_project_task_user","group_support",1,1,1,0
 "access_sale_receipt_report_support","sale.receipt.report_support","account_voucher.model_sale_receipt_report","group_support",1,1,1,0
 "access_account_treasury_report_support","account.treasury.report_support","account.model_account_treasury_report","group_support",1,1,1,0
 "access_account_entries_report_support","account.entries.report_support","account.model_account_entries_report","group_support",1,1,1,0
-"access_audittrail_rule_support","audittrail.rule_support","audittrail.model_audittrail_rule","group_support",1,1,1,0
-"access_audittrail_log_support","audittrail.log_support","audittrail.model_audittrail_log","group_support",1,1,1,0
+
 "access_res_company_support","res.company.support","base.model_res_company","group_support",1,1,1,0
 "access_fetchmail_server_support","fetchmail.server_support","fetchmail.model_fetchmail_server","group_support",1,1,1,1
 "access_ir_mail_server_support","ir.mail_server_support","base.model_ir_mail_server","group_support",1,1,1,1
@@ -1208,8 +1149,8 @@
 "access_res_partner_title_support","res_partner_title_support","base.model_res_partner_title","group_support",1,1,1,1
 "access_res_bank__support","res_bank_support","base.model_res_bank","group_support",1,1,1,1
 "access_res_users_all_support","res_users all_support","base.model_res_users","group_support",1,1,1,1
-"access_partial_picking_all_support","partial_picking all_support","stock.model_stock_partial_picking","group_support",1,1,1,1
-"access_partial_picking_line_all_support","partial_picking_line all_support","stock.model_stock_partial_picking_line","group_support",1,1,1,1
+"access_partial_picking_all_support","partial_picking all_support","stock.model_stock_transfer_details","group_support",1,1,1,1
+"access_partial_picking_line_all_support","partial_picking_line all_support","stock.model_stock_transfer_details_items","group_support",1,1,1,1
 ,,,,,,,
 
 "access_sale_order_warehouse_cox","sale.order_warehouse_cox","sale.model_sale_order","group_warehouse_cox",1,1,1,0
@@ -1280,7 +1221,7 @@
 "access_tr_barcode_warehouse_cox","tr.barcode_warehouse_cox","tr_barcode.model_tr_barcode","group_warehouse_cox",1,1,1,0
 "access_reasons_title_warehouse_cox","reasons.title_warehouse_cox","model_reasons_title","group_warehouse_cox",1,1,1,0
 "access_account_invoice_report_warehouse_cox","account.invoice.report_warehouse_cox","account.model_account_invoice_report","group_warehouse_cox",1,1,1,0
-"access_magento_attributes_warehouse_cox","magerp.product_attribute_set_warehouse_cox","magentoerpconnect.model_magerp_product_attribute_set","group_warehouse_cox",1,1,1,0
+
 "access_ir_attachment_warehouse_cox","ir.attachment_warehouse_cox","base.model_ir_attachment","group_warehouse_cox",1,1,1,0
 "access_ir_property_warehouse_cox","ir.property_warehouse_cox","base.model_ir_property","group_warehouse_cox",1,1,1,0
 "access_payment_method_warehouse_cox","payment.method_warehouse_cox","sale_quick_payment.model_payment_method","group_warehouse_cox",1,1,1,0
@@ -1348,19 +1289,8 @@
 "access_sale_workflow_process_warehouse_cox","sale_automatic_workflow_payment_sale_workflow_process_warehouse_cox","sale_automatic_workflow.model_sale_workflow_process","group_warehouse_cox",1,1,1,1
 "access_automatic_workflow_job_warehouse_cox","sale_automatic_workflow_payment_automatic_workflow_job_warehouse_cox","sale_automatic_workflow.model_automatic_workflow_job","group_warehouse_cox",1,0,0,0
 "access_automatic_workflow_job_warehouse_cox","sale_automatic_workflow_payment_automatic_workflow_job_warehouse_cox","sale_automatic_workflow.model_automatic_workflow_job","group_warehouse_cox",1,1,1,1
-"access_survey_request_warehouse_cox","survey.request.warehouse_cox","survey.model_survey_request","group_warehouse_cox",1,1,1,0
-"access_survey_tbl_column_heading_warehouse_cox","survey.tbl.column.heading.warehouse_cox","survey.model_survey_tbl_column_heading","group_warehouse_cox",1,1,1,0
-"access_survey_res_partner_warehouse_cox","survey.res.partner.warehouse_cox","base.model_res_partner","group_warehouse_cox",1,1,1,0
-"access_survey_warehouse_cox","survey.warehouse_cox","survey.model_survey","group_warehouse_cox",1,1,1,0
-"access_survey_page_warehouse_cox","survey.page.warehouse_cox","survey.model_survey_page","group_warehouse_cox",1,1,1,0
-"access_survey_question_warehouse_cox","survey.question.warehouse_cox","survey.model_survey_question","group_warehouse_cox",1,1,1,0
-"access_survey_answer_warehouse_cox","survey.answer.warehouse_cox","survey.model_survey_answer","group_warehouse_cox",1,1,1,0
-"access_survey_response_warehouse_cox","survey.response.warehouse_cox","survey.model_survey_response","group_warehouse_cox",1,1,1,0
-"access_survey_response_answer_warehouse_cox","survey.response.answer.warehouse_cox","survey.model_survey_response_answer","group_warehouse_cox",1,1,1,0
-"access_survey_history_warehouse_cox","survey.history.warehouse_cox","survey.model_survey_history","group_warehouse_cox",1,1,1,0
-"access_survey_response_line_warehouse_cox","survey.response.line.warehouse_cox","survey.model_survey_response_line","group_warehouse_cox",1,1,1,0
-"access_survey_res_partner_warehouse_cox","survey.res.partner.warehouse_cox","base.model_res_partner","group_warehouse_cox",1,1,1,0
-"access_survey_question_column_heading_warehouse_cox","survey.question.column.heading.warehouse_cox","survey.model_survey_question_column_heading","group_warehouse_cox",1,1,1,0
+
+
 ,,,,,,,
 "access_res_country_warehouse_cox","res_country_warehouse_cox","base.model_res_country","group_warehouse_cox",1,1,1,1
 "access_res_country_state_warehouse_cox","res_country_state_warehouse_cox","base.model_res_country_state","group_warehouse_cox",1,1,1,1
@@ -1369,8 +1299,8 @@
 "access_res_partner_bank_type_field_group_warehouse_cox","res_partner_bank_type_field_warehouse_cox","base.model_res_partner_bank_type_field","group_warehouse_cox",1,1,1,0
 "access_res_partner_title_warehouse_cox","res_partner_title_warehouse_cox","base.model_res_partner_title","group_warehouse_cox",1,1,1,0
 "access_res_bank__warehouse_cox","res_bank_warehouse_cox","base.model_res_bank","group_warehouse_cox",1,1,1,1
-"access_partial_picking_all_warehouse_cox","partial_picking all_warehouse_cox","stock.model_stock_partial_picking","group_warehouse_cox",1,1,1,1
-"access_partial_picking_line_all_warehouse_cox","partial_picking_line all_warehouse_cox","stock.model_stock_partial_picking_line","group_warehouse_cox",1,1,1,1
+"access_partial_picking_all_warehouse_cox","partial_picking all_warehouse_cox","stock.model_stock_transfer_details","group_warehouse_cox",1,1,1,1
+"access_partial_picking_line_all_warehouse_cox","partial_picking_line all_warehouse_cox","stock.model_stock_transfer_details_items","group_warehouse_cox",1,1,1,1
 ,,,,,,,
 ,,,,,,,
 ,,,,,,,
@@ -1451,7 +1381,7 @@
 "access_pack_track_third_party_reseller","pack.track_third_party_reseller","bista_shipping.model_pack_track","group_third_party_reseller",1,1,1,0
 "access_shipping_response_third_party_reseller","shipping.response_third_party_reseller","bista_shipping.model_shipping_response","group_third_party_reseller",1,1,1,0
 "access_ir_model_data_third_party_reseller","ir.model.data_third_party_reseller","base.model_ir_model_data","group_third_party_reseller",1,1,1,0
-"access_product_attribute_options_third_party_reseller","magerp.product_attribute_options_third_party_reseller","magentoerpconnect.model_magerp_product_attribute_options","group_third_party_reseller",1,1,1,0
+
 "access_crm_helpdesk_third_party_reseller","crm.helpdesk_third_party_reseller","crm_helpdesk.model_crm_helpdesk","group_third_party_reseller",1,1,1,0
 "access_report_third_party_reseller","report.stock.move.third_party_reseller","cox_communication.model_report_stock_move","group_third_party_reseller",1,1,1,0
 "access_sale_report_third_party_reseller","sale.report_third_party_reseller","sale.model_sale_report","group_third_party_reseller",1,1,1,0
@@ -1490,20 +1420,7 @@
 "access_delivery_carrier_third_party_reseller","delivery.carrirer_third_party_reseller","delivery.model_delivery_carrier","group_third_party_reseller",1,1,1,0
 "access_cancel_service_third_party_reseller","cancel.service.third_party_reseller","model_cancel_service","group_third_party_reseller",1,1,1,0
 "access_purchase_order_third_party_reseller","purchase.order.third_party_reseller","purchase.model_purchase_order","group_third_party_reseller",1,0,0,0
-"access_survey_request_third_party_reseller","survey.request.third_party_reseller","survey.model_survey_request","group_third_party_reseller",1,1,1,0
-"access_survey_tbl_column_heading_third_party_reseller","survey.tbl.column.heading.third_party_reseller","survey.model_survey_tbl_column_heading","group_third_party_reseller",1,1,1,0
-"access_survey_res_partner_third_party_reseller","survey.res.partner.third_party_reseller","base.model_res_partner","group_third_party_reseller",1,1,1,0
-"access_survey_third_party_reseller","survey.third_party_reseller","survey.model_survey","group_third_party_reseller",1,1,1,0
-"access_survey_page_third_party_reseller","survey.page.third_party_reseller","survey.model_survey_page","group_third_party_reseller",1,1,1,0
-"access_survey_question_third_party_reseller","survey.question.third_party_reseller","survey.model_survey_question","group_third_party_reseller",1,1,1,0
-"access_survey_answer_third_party_reseller","survey.answer.third_party_reseller","survey.model_survey_answer","group_third_party_reseller",1,1,1,0
-"access_shipping_response_returns_third_party_reseller","shipping.response.returns_third_party_reseller","model_shipping_response_returns","group_third_party_reseller",1,1,1,1
-"access_survey_response_third_party_reseller","survey.response.third_party_reseller","survey.model_survey_response","group_third_party_reseller",1,1,1,0
-"access_survey_response_answer_third_party_reseller","survey.response.answer.third_party_reseller","survey.model_survey_response_answer","group_third_party_reseller",1,1,1,0
-"access_survey_history_third_party_reseller","survey.history.third_party_reseller","survey.model_survey_history","group_third_party_reseller",1,1,1,0
-"access_survey_response_line_third_party_reseller","survey.response.line.third_party_reseller","survey.model_survey_response_line","group_third_party_reseller",1,1,1,0
-"access_survey_res_partner_third_party_reseller","survey.res.partner.third_party_reseller","base.model_res_partner","group_third_party_reseller",1,1,1,0
-"access_survey_question_column_heading_third_party_reseller","survey.question.column.heading.third_party_reseller","survey.model_survey_question_column_heading","group_third_party_reseller",1,1,1,0
+
 "access_pre_shipping_process_third_party_reseller","pre.shipping.process.third_party_reseller","model_pre_shipping_process","group_third_party_reseller",1,1,1,0
 "access_shipping_response_processing_third_party_reseller","shipping.response.processing_third_party_reseller","model_shipping_response_processing","group_third_party_reseller",1,1,1,1
 "access_shipping_order_processing_third_party_reseller","shipping.order.processing.third_party_reseller","model_shipping_order_processing","group_third_party_reseller",1,1,1,0
@@ -1535,16 +1452,6 @@
 "access_upgrade_downgrade_policy_third_party_reseller","upgrade.downgrade.policy.group_third_party_reseller","cox_up_down_service.model_upgrade_downgrade_policy","group_third_party_reseller",1,1,1,0
 "access_upgrade_downgrade_policy_vista_warehouse","upgrade.downgrade.policy.group_vista_warehouse","cox_up_down_service.model_upgrade_downgrade_policy","group_vista_warehouse",1,1,1,0
 "access_upgrade_downgrade_policy_call_center","upgrade.downgrade.policy.group_call_center","cox_up_down_service.model_upgrade_downgrade_policy","group_call_center",1,1,1,0
-"access_auth_user_gcluster","auth.user.group_gcluster","model_auth_user","group_gcluster",1,1,1,0
+
 "access_stock_production_lot_gcluster","stock.production.lot_retail_store","stock.model_stock_production_lot","group_gcluster",1,1,1,0
 
-"access_auth_user_retail_store","auth.user.retail_store","model_auth_user","group_retail_store",1,1,1,0
-"access_auth_user_call_center","auth.user.call_center","model_auth_user","group_call_center",1,1,1,0
-"access_auth_user_vista_warehouse","auth.user.vista_warehouse","model_auth_user","group_vista_warehouse",1,1,1,0
-"access_auth_user_third_party_reseller","auth.user.third_party_reseller","model_auth_user","group_third_party_reseller",1,1,1,0
-"access_auth_user_rsassociate","auth.user.rsassociate","model_auth_user","group_retail_sales_associate",1,1,1,0
-"access_auth_user_rsmanager","auth.user.rsmanager","model_auth_user","group_retail_sales_manager",1,1,1,0
-"access_auth_user_internal_ops","auth.user.internal_ops","model_auth_user","group_internal_operations",1,1,1,0
-"access_auth_user_internal_operations_manager","auth.user.internal_operations_manager","model_auth_user","group_internal_operations_manager",1,1,1,0
-"access_auth_user_support","auth.user.support","model_auth_user","group_support",1,1,1,0
-"access_auth_user_warehouse_cox","auth.user.warehouse_cox","model_auth_user","group_warehouse_cox",1,1,1,0
