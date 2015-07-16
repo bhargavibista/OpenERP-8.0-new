@@ -39,7 +39,7 @@ This module is built to handle requirements of Cox Communication.
         'security/departments_security.xml',
         'security/new_cox_security.xml',
         
-#        'security/ir.model.access.csv',  cox gen2
+        'security/ir.model.access.csv',  ##cox gen2
         'wizard/active_recurring_billing_view.xml',
         'wizard/pre_requisites.xml',
         'sale_view.xml',
@@ -48,7 +48,7 @@ This module is built to handle requirements of Cox Communication.
         'board_purchase_view.xml',   ##cox gen2 added
         'board_crm_view.xml', ##cox gen2 added
         'board_account_view.xml',  ##cox gen2 added
-#        'board_project_view.xml', ##cox gen2 added
+        'board_project_view.xml', ##cox gen2 added
         'board_warehouse_view.xml', ##cox gen2 added
         'board_view.xml',  ##cox gen2
         'partner_policy_view.xml',
@@ -113,7 +113,7 @@ This module is built to handle requirements of Cox Communication.
 	
 	'sale_import_view.xml',
         'mrp_view.xml',
-#        'service_config_view.xml',
+        'service_config_view.xml',
         'wizard/import_serials.xml',
         'wizard/procurement_wizard_view.xml'
     ],
