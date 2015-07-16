@@ -486,10 +486,7 @@
 "access_shipping_send_mail_rsassociate","shipping.send.mail_rsassociate","model_shipping_send_mail","group_retail_sales_associate",1,1,1,0
 "access_attach_shipping_label_rsassociate","attach.shipping.label_rsassociate","model_attach_shipping_label","group_retail_sales_associate",1,1,1,0
 ,,,,,,,
-"access_sale_workflow_process_rsassociate","sale_automatic_workflow_payment_sale_workflow_process_rsassociate","sale_automatic_workflow.model_sale_workflow_process","group_retail_sales_associate",1,0,0,0
-"access_sale_workflow_process_rsassociate","sale_automatic_workflow_payment_sale_workflow_process_rsassociate","sale_automatic_workflow.model_sale_workflow_process","group_retail_sales_associate",1,1,1,1
-"access_automatic_workflow_job_rsassociate","sale_automatic_workflow_payment_automatic_workflow_job_rsassociate","sale_automatic_workflow.model_automatic_workflow_job","group_retail_sales_associate",1,0,0,0
-"access_automatic_workflow_job_rsassociate","sale_automatic_workflow_payment_automatic_workflow_job_rsassociate","sale_automatic_workflow.model_automatic_workflow_job","group_retail_sales_associate",1,1,1,1
+
 ,,,,,,,
 
 
