@@ -194,10 +194,10 @@ class account_invoice(models.Model):
         if invoice.recurring==True:
             return
         for each_line in line:
-            line_brw = self.pool.get('account.move.line').browse(request.cr,request.uid,each_line)
+            line_brw = self.pool.get('account.move.line').browse(request.cr,self._uid,each_line)
             # Get the revenue recognition journal
             domain = [('code','=',_('RCJ')),'|',('company_id','=',invoice.company_id.id),('company_id','=',False)]
-            journal_ids = self.pool.get('account.journal').search(request.cr,request.uid, domain) 
+            journal_ids = self.pool.get('account.journal').search(request.cr,self._uid, domain) 
             print"journal_idsjournal_idsjournal_idsjournal_ids",journal_ids
             if len(journal_ids)==0:
                 raise osv.except_osv(_("Error in Invoice Line '%s'" % line_brw.name), _("Cannot find the Recognition Journal for this company."))
