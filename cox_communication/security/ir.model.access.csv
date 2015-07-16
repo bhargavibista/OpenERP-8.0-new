@@ -636,10 +636,7 @@
 "access_send_mail_option_rsmanager","send.mail.option_rsmanager","model_send_mail_option","group_retail_sales_manager",1,1,1,0
 "access_shipping_send_mail_rsmanager","shipping.send.mail_rsmanager","model_shipping_send_mail","group_retail_sales_manager",1,1,1,0
 "access_attach_shipping_label_rsmanager","attach.shipping.label_rsmanager","model_attach_shipping_label","group_retail_sales_manager",1,1,1,0
-"access_sale_workflow_process_rsmanager","sale_automatic_workflow_payment_sale_workflow_process_rsmanager","sale_automatic_workflow.model_sale_workflow_process","group_retail_sales_manager",1,0,0,0
-"access_sale_workflow_process_rsmanager","sale_automatic_workflow_payment_sale_workflow_process_rsmanager","sale_automatic_workflow.model_sale_workflow_process","group_retail_sales_manager",1,1,1,1
-"access_automatic_workflow_job_rsmanager","sale_automatic_workflow_payment_automatic_workflow_job_rsmanager","sale_automatic_workflow.model_automatic_workflow_job","group_retail_sales_manager",1,0,0,0
-"access_automatic_workflow_job_rsmanager","sale_automatic_workflow_payment_automatic_workflow_job_rsmanager","sale_automatic_workflow.model_automatic_workflow_job","group_retail_sales_manager",1,1,1,1
+
 
 "access_res_country_rsmanager","res_country_rsmanager","base.model_res_country","group_retail_sales_manager",1,1,1,1
 "access_res_country_state_rsmanager","res_country_state_rsmanager","base.model_res_country_state","group_retail_sales_manager",1,1,1,1
@@ -783,10 +780,7 @@
 "access_send_mail_option_internal_ops","send.mail.option_internal_ops","model_send_mail_option","group_internal_operations",1,1,1,0
 "access_shipping_send_mail_internal_ops","shipping.send.mail_internal_ops","model_shipping_send_mail","group_internal_operations",1,1,1,0
 "access_attach_shipping_label_internal_ops","attach.shipping.label_internal_ops","model_attach_shipping_label","group_internal_operations",1,1,1,0
-"access_sale_workflow_process_internal_ops","sale_automatic_workflow_payment_sale_workflow_process_internal_ops","sale_automatic_workflow.model_sale_workflow_process","group_internal_operations",1,0,0,0
-"access_sale_workflow_process_internal_ops","sale_automatic_workflow_payment_sale_workflow_process_internal_ops","sale_automatic_workflow.model_sale_workflow_process","group_internal_operations",1,1,1,1
-"access_automatic_workflow_job_internal_ops","sale_automatic_workflow_payment_automatic_workflow_job_internal_ops","sale_automatic_workflow.model_automatic_workflow_job","group_internal_operations",1,0,0,0
-"access_automatic_workflow_job_internal_ops","sale_automatic_workflow_payment_automatic_workflow_job_internal_ops","sale_automatic_workflow.model_automatic_workflow_job","group_internal_operations",1,1,1,1
+
 
 
 "access_crm_phonecall_report_internal_ops","crm.phonecall.report_internal_ops","crm.model_crm_phonecall_report","group_internal_operations",1,1,1,0
@@ -950,10 +944,7 @@
 "access_send_mail_option_internal_ops_mgr","send.mail.option_internal_ops_mgr","model_send_mail_option","group_internal_operations_manager",1,1,1,0
 "access_shipping_send_mail_internal_ops_mgr","shipping.send.mail_internal_ops_mgr","model_shipping_send_mail","group_internal_operations_manager",1,1,1,0
 "access_attach_shipping_label_internal_ops_mgr","attach.shipping.label_internal_ops_mgr","model_attach_shipping_label","group_internal_operations_manager",1,1,1,0
-"access_sale_workflow_process_internal_ops_mgr","sale_automatic_workflow_payment_sale_workflow_process_internal_ops_mgr","sale_automatic_workflow.model_sale_workflow_process","group_internal_operations_manager",1,0,0,0
-"access_sale_workflow_process_internal_ops_mgr","sale_automatic_workflow_payment_sale_workflow_process_internal_ops_mgr","sale_automatic_workflow.model_sale_workflow_process","group_internal_operations_manager",1,1,1,1
-"access_automatic_workflow_job_internal_ops_mgr","sale_automatic_workflow_payment_automatic_workflow_job_internal_ops_mgr","sale_automatic_workflow.model_automatic_workflow_job","group_internal_operations_manager",1,0,0,0
-"access_automatic_workflow_job_internal_ops_mgr","sale_automatic_workflow_payment_automatic_workflow_job_internal_ops_mgr","sale_automatic_workflow.model_automatic_workflow_job","group_internal_operations_manager",1,1,1,1
+
 
 
 "access_crm_phonecall_report_internal_ops_mgr","crm.phonecall.report_internal_ops_mgr","crm.model_crm_phonecall_report","group_internal_operations_manager",1,1,1,0
@@ -1116,10 +1107,7 @@
 "access_send_mail_option_support","send.mail.option_support","model_send_mail_option","group_support",1,1,1,0
 "access_shipping_send_mail_support","shipping.send.mail_support","model_shipping_send_mail","group_support",1,1,1,0
 "access_attach_shipping_label_support","attach.shipping.label_support","model_attach_shipping_label","group_support",1,1,1,0
-"access_sale_workflow_process_support","sale_automatic_workflow_payment_sale_workflow_process_support","sale_automatic_workflow.model_sale_workflow_process","group_support",1,0,0,0
-"access_sale_workflow_process_support","sale_automatic_workflow_payment_sale_workflow_process_support","sale_automatic_workflow.model_sale_workflow_process","group_support",1,1,1,1
-"access_automatic_workflow_job_support","sale_automatic_workflow_payment_automatic_workflow_job_support","sale_automatic_workflow.model_automatic_workflow_job","group_support",1,0,0,0
-"access_automatic_workflow_job_support","sale_automatic_workflow_payment_automatic_workflow_job_support","sale_automatic_workflow.model_automatic_workflow_job","group_support",1,1,1,1
+
 
 
 "access_crm_phonecall_report_support","crm.phonecall.report_support","crm.model_crm_phonecall_report","group_support",1,1,1,0
@@ -1282,10 +1270,7 @@
 "access_send_mail_option_warehouse_cox","send.mail.option_warehouse_cox","model_send_mail_option","group_warehouse_cox",1,1,1,0
 "access_shipping_send_mail_warehouse_cox","shipping.send.mail_warehouse_cox","model_shipping_send_mail","group_warehouse_cox",1,1,1,0
 "access_attach_shipping_label_warehouse_cox","attach.shipping.label_warehouse_cox","model_attach_shipping_label","group_warehouse_cox",1,1,1,0
-"access_sale_workflow_process_warehouse_cox","sale_automatic_workflow_payment_sale_workflow_process_warehouse_cox","sale_automatic_workflow.model_sale_workflow_process","group_warehouse_cox",1,0,0,0
-"access_sale_workflow_process_warehouse_cox","sale_automatic_workflow_payment_sale_workflow_process_warehouse_cox","sale_automatic_workflow.model_sale_workflow_process","group_warehouse_cox",1,1,1,1
-"access_automatic_workflow_job_warehouse_cox","sale_automatic_workflow_payment_automatic_workflow_job_warehouse_cox","sale_automatic_workflow.model_automatic_workflow_job","group_warehouse_cox",1,0,0,0
-"access_automatic_workflow_job_warehouse_cox","sale_automatic_workflow_payment_automatic_workflow_job_warehouse_cox","sale_automatic_workflow.model_automatic_workflow_job","group_warehouse_cox",1,1,1,1
+
 
 
 ,,,,,,,
