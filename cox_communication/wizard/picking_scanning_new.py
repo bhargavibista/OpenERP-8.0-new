@@ -458,6 +458,9 @@ class picking_scanning(osv.osv_memory):
                                         return True
                                 if test_serial:
                                     return {'value': {'default_code': False, 'note':'Product Already Scanned', 'new_product_id':False, 'start_range': 0, 'range_scan': False}}
+#                                if default_code:
+#                                    if default_code[:1]!='F' and default_code[:2]!='FG' or default_code[:2]!='FS':
+#                                        raise osv.except_osv(_('Serial Number  ERROR !'), _('Invalid serial number name'))
                                 total_scanned_moves = 0
                                 for each_move in obj_stock_moves:
                                     if each_move.status == 'done':
