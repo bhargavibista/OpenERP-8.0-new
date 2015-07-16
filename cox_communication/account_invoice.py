@@ -194,9 +194,11 @@ class account_invoice(models.Model):
         if invoice.recurring==True:
             return
         for each_line in line:
+	    print"request.uid",self._uid
             line_brw = self.pool.get('account.move.line').browse(request.cr,request.uid,each_line)
             # Get the revenue recognition journal
             domain = [('code','=',_('RCJ')),'|',('company_id','=',invoice.company_id.id),('company_id','=',False)]
+	    print"request.uid", request.uid
             journal_ids = self.pool.get('account.journal').search(request.cr,request.uid, domain) 
             print"journal_idsjournal_idsjournal_idsjournal_ids",journal_ids
             if len(journal_ids)==0:
