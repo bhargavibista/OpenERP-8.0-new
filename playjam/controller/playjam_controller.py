@@ -6,7 +6,7 @@ import ast
 import urllib
 from openerp.modules.registry import RegistryManager
 from openerp import SUPERUSER_ID
-database = 'odoo8_stable_2july'
+database = 'odoo_8_new'
 
 class Playjam(http.Controller):
 
