@@ -338,7 +338,7 @@
             <field name="inherit_id" ref="base.view_partner_form" />
             <field name="priority" eval="20"/>
             <field name="arch" type="xml">
-                <xpath expr="//div[@name='buttons']" position="inside">
+                <xpath expr="//group" position="inside">
                     <button name="show_serial_number" type="object" string="Serial Numbers"
                          attrs="{'invisible': [('customer', '=', False)]}"/>
                 </xpath>
