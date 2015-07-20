@@ -156,6 +156,32 @@
             <field name="act_window_id" ref="pick_up_deliveries"/>
         </record>
         <menuitem action="pick_up_deliveries" id="in_store_pick_up" parent="stock.menu_stock_warehouse_mgmt" groups="group_retail_store,group_call_center,stock.group_stock_manager"/>
+        
+        
+        <record id="stock.action_picking_tree" model="ir.actions.act_window">
+            <field name="name">Transfers</field>
+            <field name="res_model">stock.picking</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="domain"></field>
+            <field name="context">{
+                    
+                    'contact_display': 'partner_address',
+            }
+            </field>
+            <field name="search_view_id" ref="stock.view_picking_internal_search"/>
+            <field name="help" type="html">
+              <p class="oe_view_nocontent_create">
+                Click to create a stock operation. 
+              </p><p>
+                Most operations are prepared automatically by Odoo according
+                to your preconfigured logistics rules, but you can also record
+                manual stock movements.
+              </p>
+            </field>
+        </record>
+        
 <!-- To make sale_id field as readonly in the stock view-->
 
         <!--cox gen2-->
@@ -248,7 +274,11 @@
                 </xpath>
                 <field name="ref" position="after">
                     <field name="qty_avail"/>
-                    <field name="location_id"/> 
+                    <field name="location_id"/>
+		    <field name="used"/>
+		    <field name="order_created"/>
+		    <field name="created_during_activation"/>
+ 
                 </field>
 		</field>
         </record>
@@ -274,6 +304,7 @@
             <field name="arch" type="xml">
                 <xpath expr="/form/group/group/field[@name='scrap_location']" position="after">
                       <field name="return_location"/>
+                      <field name="tru"/>
                 </xpath>
 
             </field>
