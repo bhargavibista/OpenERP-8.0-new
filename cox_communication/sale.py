@@ -2332,8 +2332,10 @@ class schedular_function(osv.osv):
                         return_obj.write(cr,uid,[each_return.id],{'state':'done'})
     def charge_weekly_exceptions(self,cr,uid,context={}):
         self.pool.get('partner.payment.error').charge_weekly_exceptions(cr,uid,[],{})
-
-    
+    ##### scheduler to generate recurring journal entry
+    def post_revenue_recognition(self,cr,uid,context={}):
+        print"post_revenue_recognition"
+        self.pool.get('account.invoice').post_revenue_recognition(cr,uid,[],{})
     def cancel_service_not_paid(self,cr,uid,context={}):
         self.pool.get('partner.payment.error').cancel_service_not_paid(cr,uid,[],{})
 ##### schedular to export partners log
