@@ -107,7 +107,7 @@ class res_partner(models.Model):
                                     order_dict.update({'ShippingAddress':delivery_add})
                             order_dict.update({'wallet_purchase':True})
                             print "1111111111111111111111------",order_dict
-                            if product_id and order_dict and service_product:
+                            if product_id and order_dict and service_product and each.get('delta'):
  #                               order_res=self.pool.get('res.partner').create_order_magento(request.cr,SUPERUSER_ID,order_dict,{})
                                 order_res=self.pool.get('res.partner').create_order_magento(order_dict)
                                 print"order_res-----------------",order_res
@@ -124,8 +124,8 @@ class res_partner(models.Model):
                                 if (ord_res.get('body')).has_key('OrderNo'):
                                     order_no=(ord_res.get('body')).get('OrderNo')
                                 print"(ord_res.get('body')=============----------++++",ord_res.get('body')
-                                if (ord_res.get('body')).get('code')!=True:
-                                    return json.dumps({'body':{"code":False, "message":"Order Not Created!!"}})
+                                #if (ord_res.get('body')).get('code')!=True:
+                                 #   return json.dumps({'body':{"code":False, "message":"Order Not Created!!"}})
        return json.dumps({'body':{'result':123,'Message':'Success.'}})
 
 
