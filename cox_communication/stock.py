@@ -636,7 +636,7 @@ class stock_move(osv.osv):
         @return: True or False
         """
         for move in self.browse(cr, uid, ids, context=context):
-            if not move.stock_prod_lots and \
+            if not move.stock_prod_lots and (move.picking_id.skip_barcode==False and \
                (move.state == 'done' and \
                ( \
                    (move.product_id.track_production and move.location_id.usage == 'production') or \
@@ -644,7 +644,7 @@ class stock_move(osv.osv):
                    (move.product_id.track_incoming and move.location_id.usage == 'supplier') or \
                    (move.product_id.track_outgoing and move.location_dest_id.usage == 'customer') or \
                    (move.product_id.track_incoming and move.location_id.usage == 'inventory') \
-               )):
+               ))):
                 return False
         return True
 
