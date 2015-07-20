@@ -16,16 +16,29 @@ from openerp import SUPERUSER_ID
 class product_template(models.Model):
     _inherit = 'product.template'
     
-    exported = fields.Boolean(default=False)
+    exported = fields.Boolean('Exported')
     
 product_template()
 
 class product_product(models.Model):
     _inherit = 'product.product'
     
-    exported = fields.Boolean(default=False)
+    exported = fields.Boolean('Exported')
     
     
+    _defaults={
+        'exported':False
+    }
+    def write(self, cr, uid, ids, vals, context={}):
+	print "ids-----------------------------------",ids,type(ids)
+	if isinstance(ids,(int,str)) :
+	    ids=int(ids)
+            ids = [ids]
+        vals.update({'exported':False})
+  	print "ids......................878787...",ids
+        res = super(product_product, self).write(cr, uid, ids, vals, context)
+
+        return res
     
     
     def get_product_info(self, context=None):
@@ -71,8 +84,13 @@ class product_product(models.Model):
 
     def update_product_info(self, context=None):
 #        cr.execute('select id from product_product where exported = %s', (False,))
-        request.cr.execute("update product_product set exported=True where id in (select id from product_product where exported = False)")
-        return json.dumps({"body":{'code':True,'message':'Success.'}})
+	try:
+
+	    request.cr.execute("update product_product set exported=True where id in (select id from product_product where exported = False)")
+        except Exception ,e:
+            return json.dumps({"body":{'code':'-2231','message':'Update Failed'}})
+
+        return json.dumps({"body":{'code':'2231','message':'Update Success'}})
 
 
 

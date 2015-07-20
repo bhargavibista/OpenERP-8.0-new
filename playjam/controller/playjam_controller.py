@@ -6,7 +6,7 @@ import ast
 import urllib
 from openerp.modules.registry import RegistryManager
 from openerp import SUPERUSER_ID
-
+database = 'odoo_8_new'
 
 class Playjam(http.Controller):
 
@@ -49,7 +49,7 @@ class Playjam(http.Controller):
             print "wc-------",type(wc)
             if wc==u'True':
                 want_code=True            
-            registry = RegistryManager.get('test_odoo8_1')
+            registry = RegistryManager.get(database)
             with registry.cursor() as cr:
                 u = registry['user.auth']
                 result = u.get_key_code(dev_id, wc)
@@ -91,7 +91,7 @@ class Playjam(http.Controller):
 #                auth_reply=""
             print "a-----",device_id
             print "wc-------",type(auth_reply),auth_reply
-            registry = RegistryManager.get('test_odoo8_1')
+            registry = RegistryManager.get(database)
             with registry.cursor() as cr:
                 u = registry['user.auth']
                 result = u.user_login(dict_req)
@@ -107,7 +107,7 @@ class Playjam(http.Controller):
         f='false'
         print "aaaaaaaaaa------",self,kw,req
         want_code=False
-        osv_pool = pooler.get_pool('playjam_test')
+#        osv_pool = pooler.get_pool('playjam_test')
         user = osv_pool.get('user.auth')
 
         if 'request' in kw:
@@ -131,7 +131,7 @@ class Playjam(http.Controller):
             print "request---------",dict_req,type(dict_req)
             session_token=dict_req.get('deviceId')
             auth_reply=dict_req.get('authReply')
-            registry = RegistryManager.get('test_odoo8_1')
+            registry = RegistryManager.get(database)
             with registry.cursor() as cr:
                 u = registry['user.auth']
                 result = u.wallet_top_up(dict_req)            
@@ -149,7 +149,7 @@ class Playcast(http.Controller):
         f='false'
         print "aaaaaaaaaa------",self,kw
         want_code=False
-        osv_pool = pooler.get_pool('test_odoo8_1')
+#        osv_pool = pooler.get_pool('test_odoo8_1')
 #        user = osv_pool.get('user.auth')
 
         if 'request' in kw:
@@ -176,7 +176,7 @@ class Playcast(http.Controller):
             print "request---------",dict_req,type(dict_req)
 	    token=dict_req.get('Token')
             
-            registry = RegistryManager.get('test_odoo8_1')
+            registry = RegistryManager.get(database)
             with registry.cursor() as cr:
                 user = registry['user.auth']
                 result=user.validate_insecure_token(token,{})
@@ -217,7 +217,7 @@ class Playcast(http.Controller):
         f='false'
         print "aaaaaaaaaa------",self,kw
         want_code=False
-        osv_pool = pooler.get_pool('stable_8_openerp')
+        osv_pool = pooler.get_pool(database)
         user = osv_pool.get('res.partner')
 
         if kw.has_key('request'):
@@ -243,7 +243,7 @@ class Playcast(http.Controller):
                 return req.make_response(str({"body":{'result':-1537}}), [('Content-Type', 'application/json; charset=UTF-8')])
             print "request---------",dict_req,type(dict_req)
             #a=dict_req.get('deviceId')
-            registry = RegistryManager.get('stable_8_openerp')
+            registry = RegistryManager.get(database)
             with registry.cursor() as cr:
                 u = registry['res.partner']
                 result = u.push_transactions(dict_req)            

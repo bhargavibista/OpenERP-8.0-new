@@ -394,9 +394,11 @@
                     <attribute name="on_change">onchange_name(name, context)</attribute>
                 </xpath>
                 <xpath expr="//div[@name='buttons']" position="inside">
-                    <button name="%(partner_credits_service)d" type="action"
+                    <group>
+                        <button name="%(partner_credits_service)d" type="action"
                        string="Credits and Cancellation"
-                       attrs="{'invisible': [('customer', '=', False)]}"/>
+                       attrs="{'invisible': [('customer', '=', False)]}" sequence="15"/>
+                    </group>
                 </xpath>
 <!--                <xpath expr="/form/sheet/notebook" position="inside">
                     <page string="Valid User Info">

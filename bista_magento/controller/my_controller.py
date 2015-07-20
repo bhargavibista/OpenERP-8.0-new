@@ -6,7 +6,7 @@ import openerp.pooler as pooler
 import ast
 import urllib
 from openerp.modules.registry import RegistryManager
-
+database = 'odoo_8_new'
 
 class Magento(http.Controller):
 
@@ -115,7 +115,7 @@ class Magento(http.Controller):
 
 #            obj=request.registry.get('user.auth')
 #            result=obj.register_user(request.cr,1,act_code,{})
-            registry = RegistryManager.get('odoo8_stable_2july')
+            registry = RegistryManager.get(database)
             with registry.cursor() as cr:
                 u = registry['user.auth']
                 result = u.register_user(act_code)
@@ -288,7 +288,7 @@ class Magento(http.Controller):
 #            obj=request.registry['res.partner']
 #            result=obj.create_update_profile(request.cr,1,dict_req,{})
 
-            registry = RegistryManager.get('odoo8_stable_2july')
+            registry = RegistryManager.get(database)
             with registry.cursor() as cr:
                 u = registry['res.partner']
                 result = u.create_update_profile(dict_req)
@@ -351,7 +351,7 @@ class Magento(http.Controller):
 #            obj=request.registry['res.partner']
 #            result=obj.update_billing_info(request.cr,1,dict_req,{})
 
-            registry = RegistryManager.get('odoo8_stable_2july')
+            registry = RegistryManager.get(database)
             with registry.cursor() as cr:
                 u = registry['res.partner']
                 result = u.update_billing_info(dict_req)
@@ -414,7 +414,7 @@ class Magento(http.Controller):
 #            obj=request.registry['res.partner']
 #            result=obj.create_order_magento(request.cr,1,dict_req,{})
 
-            registry = RegistryManager.get('odoo_8')
+            registry = RegistryManager.get(database)
             with registry.cursor() as cr:
                 u = registry['res.partner']
                 result = u.create_order_magento(dict_req)
@@ -529,7 +529,7 @@ class Magento(http.Controller):
 #            obj=request.registry['res.partner']
 #            result=obj.get_transactions_magento(request.cr,1,dict_req,{})
 
-            registry = RegistryManager.get('odoo8_stable_2july')
+            registry = RegistryManager.get(database)
             with registry.cursor() as cr:
                 u = registry['res.partner']
                 result = u.get_transactions_magento(dict_req)

@@ -1170,6 +1170,7 @@ class sale_order(osv.osv):
     def write_selected_agreement(self, cr, uid, ids,context={}):
         if context is None:
             context = {}
+            
         sale_id_brw = self.browse(cr,uid,ids[0])
         policy_object=self.pool.get('res.partner.policy')
         line_obj =self.pool.get('sale.order.line')
@@ -1179,7 +1180,6 @@ class sale_order(osv.osv):
         so_name=sale_id_brw.name
         partner_id=sale_id_brw.partner_id.id
         confirm_date=sale_id_brw.date_confirm
-        print"date_confirm",confirm_date
         sales_channel = sale_id_brw.cox_sales_channels
         if sale_id_brw.cox_sales_channels == 'ecommerce':
            confirm_date=sale_id_brw.date_order
