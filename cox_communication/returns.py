@@ -502,17 +502,27 @@ class return_order(osv.osv):
            search_policy_id = policy_obj.search(cr,uid,[('sale_id','=',linked_sale_id),('agmnt_partner','=',partner_id),('active_service','=',True)])
            if search_policy_id:
                policy_brw=policy_obj.browse(cr,uid,search_policy_id[0])
-               if policy_brw.cancel_date or policy_brw.suspension_date or policy_brw.return_date:
-                   warning = {
-                           'title': _('Error !'),
-                           'message': _("You Cannot Place a Return for this Sale Order since its service is already cancelled.")
-                   }
-                   vals = {'order_line':[],'linked_sale_order':False,'partner_id':False,
-                   'partner_invoice_id':False,'partner_order_id':False,'partner_shipping_id':False,'pricelist_id':False,'show_components':False,'bundle_configuration':False}
-                   return {'value': vals, 'warning': warning}
+               if return_type == "exchange":
+                    if policy_brw.cancel_date or policy_brw.suspension_date or policy_brw.return_date:
+                        warning = {
+                                'title': _('Error !'),
+                                'message': _("You Cannot Place exchange for this Sale Order since its service is already cancelled.")
+                        }
+                        vals = {'order_line':[],'linked_sale_order':False,'partner_id':False,
+                        'partner_invoice_id':False,'partner_order_id':False,'partner_shipping_id':False,'pricelist_id':False,'show_components':False,'bundle_configuration':False}
+                        return {'value': vals, 'warning': warning}
+               else:
+                    if policy_brw.cancel_date or policy_brw.suspension_date or policy_brw.return_date or policy_brw.active_service == False:
+                        warning = {
+                                'title': _('Error !'),
+                                'message': _("You Cannot Place a Return for this Sale Order since its service is already cancelled or hasn't been activated.")
+                        }
+                        vals = {'order_line':[],'linked_sale_order':False,'partner_id':False,
+                        'partner_invoice_id':False,'partner_order_id':False,'partner_shipping_id':False,'pricelist_id':False,'show_components':False,'bundle_configuration':False}
+                        return {'value': vals, 'warning': warning}
 #                   raise osv.except_osv(_('Error !'),_('You Cannot Place a Return for this Sale Order since its service is already cancelled.'))
            print"obj_sale_link_order",obj_sale_link_order
-           days = self.no_of_days_passed(cr,uid,obj_sale_link_order)
+           days = self.no_of_days_passed(cr,uid,obj_sale_link_order,{})
            
 	  # if days <= 30:
 	#	message = 'This order is within policy. Early Termination Fee will be incurred if ALL hardware is not returned.'
@@ -558,7 +568,7 @@ class return_order(osv.osv):
                        warning = { 'title': _('Alert!'),
                                'message': warn_msg }
                        res['linked_sale_order'] = ''
-                       return {'value': res}
+                       return {'value': res, 'warning': warning}
                 else:
                     warn_msg = _("Delivery is not yet done for the selected sale order")
                     warning = { 'title': _('Alert!'),
@@ -1055,6 +1065,7 @@ class return_order(osv.osv):
                         #print "diffdiffdiffdiffdiffdiffdiff",diff
                         if diff:
                             policy.write({'extra_days':int(diff.days),'next_billing_date':new_billing_date})
+        partner_obj.cal_next_billing_amount(cr,uid,partner_id)
         return True
     #Function is inherited because want to make entry in the return_order_line and sale_order_line
     def manual_invoice_return(self,cr,uid,ids,context={}):
