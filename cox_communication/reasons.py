@@ -14,3 +14,20 @@ class reasons_title(osv.osv):
     'active': True
     }
 reasons_title()
+
+class tru_subscription_options(osv.osv):
+    '''Gift Card Subscription Details'''
+    _name = 'tru.subscription.options'
+    _description = 'TRU Subscriptions'
+    _columns={
+        'product_id': fields.many2one('product.product', 'Product', ondelete='set null', select=True),
+        'sales_channel_tru': fields.selection([
+            ('tru', 'TRU'),
+            ], 'Sales Channels'),
+
+
+    }
+    _defaults={
+    }
+
+tru_subscription_options()
