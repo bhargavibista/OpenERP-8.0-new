@@ -12,6 +12,7 @@ from openerp.tools.translate import _
 import random
 from openerp import netsvc
 import string
+import time
 import ast
 import uuid
 from validate_email import validate_email
@@ -28,7 +29,7 @@ class res_partner(osv.Model):
             string="Deferred Revenue Account",
             help="This account will be used instead of the default one as the receivable account for the current partner",
             required=True),
-    'email': fields.char('Email', size=240,required=False),
+    'email': fields.char('Email', size=240),
     'emailid':fields.char('Email Address', size=100, help="Ecommerce site uses this email ID to match the customer. If filled, if a Magento customer is imported from the selected website with the exact same email, he will be bound with this partner and this latter will be updated with Ecommerce site values."), ###cox gen2
 #    'name': fields.char('Name', size=128, select=True),
 #    'zip': fields.related('address', 'zip', type='char', size=256, string='ZIP'),
@@ -56,6 +57,7 @@ class res_partner(osv.Model):
     'sales_return_ref': fields.one2many('return.order', 'partner_id', 'Sales Return'),#Preeti for Dashboard
     'customer_invoice_ref': fields.one2many('account.invoice', 'partner_id', 'Customer Invoices'),#Preeti for Dashboard
     'next_billing_amount':fields.float('Next Billing Amount'),########cox gen2 changes by yogita
+    'billing_reminder':fields.boolean('Billing Reminder'),
 #    'cable': fields.boolean('Essential Tier Cox Cable'),
 #    'flare_account': fields.boolean('Flare Account'),
     }
@@ -70,7 +72,7 @@ class res_partner(osv.Model):
         partner_ids=filter(None, map(lambda x:x[0], cr.fetchall()))
         print"partner_ids========>",partner_ids
         if partner_ids:
-            for partner_idb in self.browse(cr,uid,partner_ids):
+            for partner_id in self.browse(cr,uid,partner_ids):
                 email_to = self.browse(cr,uid,partner_id.id).emailid
                 print "email======>",email_to
                 res=self.pool.get('sale.order').email_to_customer(cr, uid, partner_id,'res.partner','advance_billing_notice',email_to,context)
@@ -972,6 +974,14 @@ class res_partner(osv.Model):
             return {'value':{'high_speed_internet':'yes','cable':'yes','flare_account':check_all_data}}
         else:
             return {'value':{'high_speed_internet':'no','cable':'no','flare_account':check_all_data}}
+    def create(self, cr, uid, vals, context=None):
+        print "vals////////////////////////",vals
+        email_id=vals.get('emailid')
+        print "email_dd///////////////////////////",email_id
+        print(email_id.lower())
+        vals.update({'emailid':email_id.lower()})
+        res = super(res_partner, self).create(cr, uid, vals, context=context)
+        return res
 
 #    def create(self, cr, uid, vals, context=None):
 #        if vals.get('address',False):
@@ -1270,11 +1280,36 @@ class res_partner_policy(osv.osv):
     'no_recurring':fields.boolean('No Recurring'),
     'recurring_reminder':fields.boolean('Recurring Reminder'),
     'next_billing_date':fields.date('Next Billing Date'),
+    'rental_response':fields.boolean('Rental Response'),
     'adv_paid':fields.boolean('Upfornt Payment'),
     }
     _defaults={
+    'rental_response':True,
     'adv_paid':False,
     }
+    #Start code Preeti for RMA
+    def name_get(self,cr,uid,ids,context=None):
+        if context is None:
+            context ={}
+        res=[]
+        record_name=self.browse(cr,uid,ids,context)
+        for object in record_name:            
+            if object.sale_order != False:                
+                res.append((object.id,object.service_name+" ["+object.sale_order+"]"))                  
+        return res
+    
+    def name_search(self, cr, user, name='', args=None, operator='ilike', context=None, limit=100):
+        search_by_name = []
+        if not args:
+            args = []
+        if name:
+            search_by_name = self.search(cr, user, [('sale_order',operator,name)]+ args, limit=limit, context=context)            
+        else:
+            search_by_name = self.search(cr, user, args, limit=limit, context=context)
+        search_by_name = list(set(search_by_name))
+        result = self.name_get(cr, user, search_by_name, context=context)
+        return result
+#End code Preeti for RMA
 ########## function to set cancel_date for all customers whose no_recurring is true
     def cancellation_for_no_recurring(self,cr,uid,ids,context=None):
         today=datetime.datetime.now()
@@ -1632,9 +1667,17 @@ class partner_payment_error(osv.osv):
         sale_obj = self.pool.get("sale.order")
         return_obj= self.pool.get('return.order')
         policy_obj = self.pool.get("res.partner.policy")
+        config_obj=self.pool.get('service.configuration')
+        user_auth_obj=self.pool.get('user.auth')
+        config_ids=config_obj.search(cr,uid,[('scheduler_type','=','cancel_service_not_paid')])
+        print"config_idsconfig_idsconfig_idsconfig_ids",config_ids
+        if config_ids:
+            no_days=config_obj.browse(cr,uid,config_ids[0]).no_days
+        else:
+            no_days=30
         today = datetime.date.today()
-        lastMonth = today + relativedelta(months=-1)
-#	print"lastMonth-------",lastMonth
+        lastMonth = today + relativedelta(days=-no_days)
+	print"lastMonth-------",lastMonth
         so_name=[]
         final_dict,service_to_cancel = {},[]
         payment_exce = self.search(cr, uid, [('invoice_date','<=',lastMonth),('active_payment','=',True),('status','=',False)])
@@ -1653,35 +1696,48 @@ class partner_payment_error(osv.osv):
                         each_rec = sale_obj.browse(cr,uid,sale_ids[0])
                         if each_rec and each_rec.order_line:
                             need_to_update_data = []
+                            user_id=partner_id
+                            app_id=policy_brw.product_id.app_id
+                            print "user_id---------",user_id,policy_brw
+                            print "app_id---------",app_id
+                            print "expiry_epoch---------",start_date
+                            expiry_epoch=time.mktime(datetime.datetime.strptime(str(today), "%Y-%m-%d").timetuple())
+                            print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch
+                            expiry_epoch=expiry_epoch+3600.0
+                            print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
+                            rental_result = user_auth_obj.rental_playjam(cr,uid,user_id,app_id,expiry_epoch)
+                            print "voucher_return----------",old_policy_result
+            #                    result=4113
+                            if ast.literal_eval(str(rental_result)).has_key('body') and ast.literal_eval(str(rental_result)).get('body')['result'] == 4113:
                             #Code to write cancellation data and marking service as deactive
-                            additional_info = str({'source':'COX','cancel_return_reason':"Recurring Charges not Paid."})
+                                additional_info = str({'source':'COX','cancel_return_reason':"Recurring Charges not Paid."})
 #                            cancellation_data = return_obj.additional_info(cr,uid,additional_info)
-                            cr.execute("update res_partner_policy set active_service=False,additional_info=%s,suspension_date=%s,return_cancel_reason='Recurring Charges not Paid.' where id=%s",(additional_info,today,policy_id[0]))
-                            return_obj.update_billing_date(cr,uid,pay_error.partner_id.id,pay_error.partner_id.billing_date,policy_brw.sale_line_id)
-                            sale_obj.email_to_customer(cr,uid,pay_error,'partner.payment.error','cancel_service',each_rec.partner_id.emailid,context)
+                                cr.execute("update res_partner_policy set active_service=False,additional_info=%s,suspension_date=%s,return_cancel_reason='Recurring Charges not Paid.' where id=%s",(additional_info,today,policy_id[0]))
+                                return_obj.update_billing_date(cr,uid,pay_error.partner_id.id,pay_error.partner_id.billing_date,policy_brw.sale_line_id)
+                                sale_obj.email_to_customer(cr,uid,pay_error,'partner.payment.error','cancel_service',each_rec.partner_id.emailid,context)
                             ######################
-                            if each_rec.magento_so_id:
-                                data={}
-                                data = {'customer_id':each_rec.partner_id.ref,
-                                'order_id':each_rec.magento_so_id}
-                                if 'mag' not in each_name:
-                                    data.update({'product_id': policy_obj.browse(cr, uid, policy_id[0]).product_id.magento_product_id})
-                                if data:
-                                    need_to_update_data.append(data)
-                                if not each_rec.shop_id.referential_id.id in final_dict.iterkeys():
-                                    final_dict[each_rec.shop_id.referential_id.id] = need_to_update_data
-                                else:
-                                    value = final_dict[each_rec.shop_id.referential_id.id]
-                                    new_value = value + need_to_update_data
-                                    final_dict[each_rec.shop_id.referential_id.id] = new_value
+         #                   if each_rec.magento_so_id:
+          #                      data={}
+           #                     data = {'customer_id':each_rec.partner_id.ref,
+           #                     'order_id':each_rec.magento_so_id}
+           #                     if 'mag' not in each_name:
+           #                         data.update({'product_id': policy_obj.browse(cr, uid, policy_id[0]).product_id.magento_product_id})
+            #                    if data:
+            #                        need_to_update_data.append(data)
+            #                    if not each_rec.shop_id.referential_id.id in final_dict.iterkeys():
+            #                        final_dict[each_rec.shop_id.referential_id.id] = need_to_update_data
+             #                   else:
+              #                      value = final_dict[each_rec.shop_id.referential_id.id]
+              #                      new_value = value + need_to_update_data
+               #                     final_dict[each_rec.shop_id.referential_id.id] = new_value
             self.write(cr,uid,pay_error.id,{'active_payment':False,'next_retry_date':False})
-        if final_dict:
-            referential_obj = self.pool.get('external.referential')
-            for each_key in final_dict.iterkeys():
-                value = final_dict[each_key]
-                referential_id_obj = referential_obj.browse(cr,uid,each_key)
-                attr_conn = referential_id_obj.external_connection(True)
-                deactived_services = attr_conn.call('sales_order.recurring_services', ['update',value,''])
+       # if final_dict:
+        #    referential_obj = self.pool.get('external.referential')
+        #    for each_key in final_dict.iterkeys():
+        #        value = final_dict[each_key]
+        #        referential_id_obj = referential_obj.browse(cr,uid,each_key)
+        #        attr_conn = referential_id_obj.external_connection(True)
+	#       deactived_services = attr_conn.call('sales_order.recurring_services', ['update',value,''])
 
 partner_payment_error()
 
