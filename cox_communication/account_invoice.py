@@ -313,6 +313,7 @@ class account_invoice(models.Model):
         Reads the revenue recognition records for the run date (or older) and post financial journals for
         the draft schedule records.
         """
+        today=datetime.date.today()
         logger = netsvc.Logger()
         logger.notifyChannel('post_revenue', netsvc.LOG_INFO,'Generating revenue recognition journals')
         acc_move_obj=self.pool.get('account.move')
@@ -322,9 +323,14 @@ class account_invoice(models.Model):
         if len(journal_ids)==0:
             raise osv.except_osv(_("Error in Invoice Line '%s'" % line.name), _("Cannot find the Recognition Journal for this company."))
         # Get the scheduled revenue recognition records for today
-        move_ids=acc_move_obj.search(cr,uid,[('state','=','draft'),('date','<=','2015-06-12'),('journal_id','=',journal_ids[0])])
+        move_ids=acc_move_obj.search(cr,uid,[('state','=','draft'),('date','<=',today),('journal_id','=',journal_ids[0])])
         if move_ids:
-            self.pool.get('account.move').post(request.cr, request.uid, move_ids) 
+            move_obj=self.pool.get('account.move')
+            for each_move in move_obj.browse(cr,uid,move_ids):
+                period_id = self._period_get(cr, uid, each_move.company_id.id,each_move.date)
+                print"period_idperiod_idperiod_idperiod_idperiod_id",period_id
+                each_move.write({'period_id':period_id})
+            move_obj.post(cr, uid, move_ids)
         logger.notifyChannel('post_revenue', netsvc.LOG_INFO,'Completed revenue recognition journals')
 
     def line_get_convert(self, cr, uid, x, part, date, context=None):
@@ -550,6 +556,8 @@ class account_invoice(models.Model):
         return lines
         
     ########*
+    gift_card_no = fields.Char()
+    processesd_by = fields.Selection([('wallet','Wallet'),('authorize','Authorize'),('giftcard','GiftCard')],string='Processed By',readonly=True),
     recurring = fields.Boolean('Recurring Payment')
     credit_id = fields.Many2one('credit.service',string="Service Credit ID",help="Date on which next Payment will be generated.")
     next_billing_date = fields.Datetime('Next Billing Date',select=True, help="Date on which next Payment will be generated.")

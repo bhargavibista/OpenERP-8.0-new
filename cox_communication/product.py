@@ -80,6 +80,8 @@ class product_template(osv.osv):
     'prod_width': fields.float('Width', digits_compute= dp.get_precision('Stock Weight')),
     'prod_height': fields.float('Height', digits_compute= dp.get_precision('Stock Weight')),   	
     'unique_offer_id': fields.char('Unique Offer ID',size=256),
+    'location_id':fields.many2one('stock.location','Location'),
+    'magento_product_id':fields.integer('Product ID'),#field to store product id of the Magento
     'start_date':fields.date('Start Date'),
 #    'standard_price': fields.property(type = 'float', digits_compute=dp.get_precision('Product Price'), 
 #                                          help="Cost price of the product template used for standard stock valuation in accounting and used as a base price on purchase orders. "
@@ -93,6 +95,8 @@ class product_template(osv.osv):
                                             ],'Catalog Type'),
                                             
     'app_id':fields.integer('App Id'),#field to set app id of playjam side
+    'exported':fields.boolean('Exported'),
+    'pj_product':fields.boolean('PJ Product'),
     'property_account_line_prepaid_revenue': fields.property(
         type='many2one',
         relation='account.account',
@@ -103,7 +107,12 @@ class product_template(osv.osv):
     }
     _defaults={
     'recurring_service':True,
+    'exported':False
     }
+    _sql_constraints = [
+        ('default_code_uniq', 'unique(default_code)', 'Product Reference must be unique!'),
+	('appid_uniq', 'unique(app_id)', 'A product with the same AppId already exists.'),
+    ]
     def create(self,cr,uid,vals,context={}):
         price=0
         if vals.get('ext_prod_config',[]):

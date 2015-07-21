@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<openerp>
+    <data>
+    <!--<menuitem id="authentication_menu" name="Playjam" sequence="5" />-->
+    <record id="tru_serial_tree_view" model="ir.ui.view">
+            <field name="name">Tru Serials</field>
+            <field name="model">tru.serial</field>
+            <field name="arch" type="xml">
+                <tree string="Authentication">
+                    <!--<field name="tru_sno"/>-->
+		    <field name="serial_no" />
+		    <field name="location_id"/>
+                    
+                </tree>
+            </field>
+        </record>
+
+
+
+        <record id="view_tru_serial_form" model="ir.ui.view">
+            <field name="name">tru.serial.form</field>
+            <field name="model">tru.serial</field>
+            <field eval="8" name="priority"/>
+            <field name="arch" type="xml">
+                <form string="Tru Serial" version="7.0">
+                    
+                    <sheet>
+                        <group>
+                                <!--<field name="tru_sno"/>-->
+				<field name="serial_no" />
+				 <field name="location_id" /> 
+                                
+                         </group>
+                        
+
+
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+
+        <record id="action_tru_serial_form" model="ir.actions.act_window">
+            <field name="name">Tru Serials</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">tru.serial</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="tru_serial_tree_view"/>
+            <field name="help" type="html">
+              <p class="oe_view_nocontent_create">
+                 .
+              </p><p>
+                OpenERP helps you easily track all activities related to
+                Fax.
+              </p>
+            </field>
+        </record>
+
+        <menuitem action="action_tru_serial_form"  id="tru_serial_menu" sequence="5" parent="stock.menu_traceability" name="Tru Serials"/>
+<!--        <menuitem action="action_tru_serial_form" id="menu_action_production_lot_form"
+            parent="menu_traceability" groups="stock.group_production_lot"
+            sequence="1"/>-->
+        <!--<menuitem id="user_auth_menu_two" action="action_send_auth_form" sequence="2" parent="user_auth_menu"/>-->
+
+
+    </data>
+</openerp>

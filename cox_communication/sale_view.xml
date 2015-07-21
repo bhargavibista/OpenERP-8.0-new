@@ -102,7 +102,7 @@
                     
                     <attribute name="context"> {'partner_id':parent.partner_id, 'all_lines':parent.order_line, 'quantity':product_uom_qty, 'pricelist':parent.pricelist_id,  'uom':product_uom,'partner_shipping_id':parent.partner_shipping_id,'partner_invoice_id':parent.partner_invoice_id,'search_default_filter_to_category':1,'call_center_pickup':parent.call_center_pickup,'order_line':parent.order_line}</attribute>
 	                <attribute name="on_change">product_id_change(parent.pricelist_id, product_id, product_uom_qty, product_uom, product_uos_qty, product_uos, name, parent.partner_id, parent.order_line ,False, True, parent.date_order, False, parent.fiscal_position, False, context)</attribute>
-                    
+                    <attribute name="required">True</attribute>
                 </xpath>
                  <!--Xpath to make user id as readonly all the time -->
                <!-- <xpath expr="/form/sheet/notebook/page[@string='Other Information']/group/group/[1]/field[@name='user_id']" position="attributes">
@@ -1040,6 +1040,9 @@
                 <xpath expr="//field[@name='sub_components']/tree/field[@name='price']" position="after">
                     <!--<field name="recurring_price" readonly="1"/>-->
                     <field name="no_recurring" readonly="1"/>
+                </xpath>
+                <xpath expr="//field[@name='sub_components']/tree/field[@name='price']" position="after">
+                    <field name="recurring_price" readonly="1"/>
                 </xpath>
             </field>
         </record>

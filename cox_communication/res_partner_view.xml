@@ -340,8 +340,9 @@
                     <attribute name="context">{}</attribute>
                 </xpath>
                 <!--cox gen2-->
-                <xpath expr="/form/sheet/group/group[2]/field[@name='phone']" position="after">
-                    <field name="emailid"/>
+                <xpath expr="/form/sheet/group/group[2]/field[@name='fax']" position="after">
+                    <newline/>
+                    <field name="emailid" required="1" on_change="onchange_emailid(emailid)"/> 
                 </xpath>
                 <xpath expr="/form/sheet/group/group[1]/div[2]/field[@name='street']" position="attributes">
                     <attribute name="required">1</attribute>
@@ -360,6 +361,7 @@
                 </xpath>
                 <xpath expr="/form/sheet/group/group[1]/div[2]/div/field[@name='state_id']" position="attributes">
                     <attribute name="required">1</attribute>
+                   <attribute name="options">{'limit': 7, 'create': false, 'create_edit': false ,'always_reload': True}</attribute>
                 </xpath>
                <!-- xpath to make required fields in the contacts tab in res.partner-->
                 <xpath expr="/form/sheet/notebook/page[@string='Contacts']/field[@name='child_ids']/form/sheet/group[1]/field[@name='phone']" position="attributes">
@@ -393,11 +395,13 @@
                 <xpath expr="/form/sheet/notebook/page[@string='Contacts']/field[@name='child_ids']/form/sheet/div[1]/h1/field[@name='name']" position="attributes">
                     <attribute name="on_change">onchange_name(name, context)</attribute>
                 </xpath>
-                <xpath expr="//div[@name='buttons']" position="inside">
-                    <button name="%(partner_credits_service)d" type="action"
+                <!--<xpath expr="//div[@name='buttons']" position="inside">
+                    <group>
+                        <button name="%(partner_credits_service)d" type="action"
                        string="Credits and Cancellation"
-                       attrs="{'invisible': [('customer', '=', False)]}"/>
-                </xpath>
+                       attrs="{'invisible': [('customer', '=', False)]}" sequence="15"/>
+                    </group>
+                </xpath>-->
 <!--                <xpath expr="/form/sheet/notebook" position="inside">
                     <page string="Valid User Info">
                         <field name="auth_user" nolabel="1">

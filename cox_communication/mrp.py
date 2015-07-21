@@ -16,8 +16,16 @@ class stock_production_lot(osv.osv):
             ondelete='cascade'),
        'location_id':fields.many2one('stock.location', 'Source Location',select=True, help="Sets a location for this serial number"), ###changes for assigning serial number according to location
        'move_prod_lot_ids': fields.many2many('stock.move','stock_move_lot', 'production_lot','stock_move_id','Serial numbers',readonly=True),
+       'used':fields.boolean('Used'),
+       'order_created':fields.boolean('Order Created'),
+       'created_during_activation':fields.boolean('Activation Create'),
+       'scanning_id':fields.many2one('manual.scanning','Scanning'),
     }
 
+    _sql_constraints = [
+        ('nameunique', 'unique(name)', 'Serial Already Exists!'),
+        
+    ]
     '''def onchange_serial_num (self, cr, uid, ids,name, product_id):
         mrp_obj = self.pool.get('mrp.production')
         print"name",name,product_id
@@ -257,15 +265,15 @@ class mrp_production(osv.osv):
                     main_production_move = produce_product.id
             
             for produce_product in production.move_lines:
-                if context.get('csv',False)==True:
+                    if context.get('csv',False)==True or context.get('scan',False)==True:
                         serial_no_list=context.get('serial_number_list',False)
-                else:
-                    print"elseeeeeeeeeee",production.product_id.id
-                    serial_no = self.pool.get('stock.production.lot').search(cr,uid,[('product_id','=',produce_product.product_id.id),('location_id','=',production.location_src_id.id),('serial_used','=',False)]) 
-                    print"serial_nooooooooooooooooooo",serial_no
-#                    serial_no = self.pool.get('stock.production.lot').search(cr,uid,[('product_id','=',scheduled.product_id.id),('location_id','=',production.location_src_id.id),('serial_used','=',False)]) 
-                    serial_no_list += serial_no
-                print"serial_no_list",serial_no_list
+                #else:
+                #    print"elseeeeeeeeeee",production.product_id.id
+                #    serial_no = self.pool.get('stock.production.lot').search(cr,uid,[('product_id','=',produce_product.product_id.id),('location_id','=',production.location_src_id.id),('serial_used','=',False)]) 
+                #    print"serial_nooooooooooooooooooo",serial_no
+#                #    serial_no = self.pool.get('stock.production.lot').search(cr,uid,[('product_id','=',scheduled.product_id.id),('location_id','=',production.location_src_id.id),('serial_used','=',False)]) 
+                 #   serial_no_list += serial_no
+                #print"serial_no_list",serial_no_list
                     
         if not serial_no_list:
             raise osv.except_osv(_('Warning!'), _('Please assign serial Number.'))
