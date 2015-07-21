@@ -274,6 +274,7 @@
             <field name="arch" type="xml">
                 <xpath expr="/form/group/group/field[@name='scrap_location']" position="after">
                       <field name="return_location"/>
+		      <field name="tru"/>
                 </xpath>
 
             </field>
