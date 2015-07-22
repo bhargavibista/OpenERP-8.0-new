@@ -24,6 +24,7 @@ class refund_customer_payment(osv.osv_memory):
     'diff_cc_refund': fields.boolean('Refund on Different CC/CC Expire'),
     'refund_cc_number' :fields.char('New CC',size=256,help="Credit Card Number"),
     'refund_cc_expiration_date' :fields.char('CC Exp Date [MMYYYY]',size=6,help="Credit Card Expiration Date"),
+    'ccv':fields.char('CCV',size=64), ##ccv changes
     'active_payment_profile':fields.char('Active Payment Profile',size=256,help="Active Card details"),
     'active_cc_number':fields.char('Active Credit Card',size=256,help="Active Credit Card No."),
     }
@@ -43,6 +44,7 @@ class refund_customer_payment(osv.osv_memory):
                 total= return_obj.amount_total
                 wizard_obj = self.browse(cr, uid, ids[0])
                 cc_number = wizard_obj.cc_number
+                ccv=''
                 cust_profile_id = return_obj.linked_sale_order.partner_id.customer_profile_id
                 cust_payment_profile_id = wizard_obj.active_payment_profile
                 linked_payment_profile_id = return_obj.linked_sale_order.customer_payment_profile_id
@@ -61,11 +63,19 @@ class refund_customer_payment(osv.osv_memory):
     #                    print "transaction_status",transaction_status
                         if (transaction_status) and (transaction_status.get('transactionStatus') == 'settledSuccessfully'):
                             if wizard_obj.diff_cc_refund and wizard_obj.refund_cc_number:
-                                cust_payment_profile_id = self.pool.get('custmer.payment.profile').create_payment_profile(cr,uid,return_obj.partner_id.id,return_obj.partner_invoice_id,return_obj.partner_shipping_id,cust_profile_id,wizard_obj.refund_cc_number,wizard_obj.refund_cc_expiration_date,context)
+                                exp_date = wizard_obj.refund_cc_expiration_date[-4:] + '-' + wizard_obj.refund_cc_expiration_date[:2]
+                                cust_payment_profile_id = self.pool.get('custmer.payment.profile').create_payment_profile(cr,uid,return_obj.partner_id.id,return_obj.partner_invoice_id,return_obj.partner_shipping_id,cust_profile_id,wizard_obj.refund_cc_number,exp_date,wizard_obj.ccv,context)
+#                                print "cust_payment_profile_id",cust_payment_profile_id
                                 cc_number = wizard_obj.refund_cc_number[-4:]
-                                cc_number='XXXX'+''+str(cc_number)
-                                context['linked_refund'] = False
-                            api_call =authorize_obj.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',return_obj.id,'profileTransRefund',total,cust_profile_id,cust_payment_profile_id,auth_transaction_id,'',act_model,cc_number,context)
+                                ccv=wizard_obj.ccv
+#            maxmind api call to check for restricting prpeaid cards by bhargavi
+                                maxmind_response=self.pool.get('customer.profile.payment').maxmind_call(cr,uid,wizard_obj.refund_cc_number,return_obj.partner_id.id)
+                                if maxmind_response:
+                                    cc_number='XXXX'+''+str(cc_number)
+                                    context['linked_refund'] = False
+                                else:
+                                    raise osv.except_osv('Warning!', 'Refund not processed, please use another card. If problem persists, please contact the contact center.')
+                            api_call =authorize_obj.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',return_obj.id,'profileTransRefund',total,cust_profile_id,cust_payment_profile_id,auth_transaction_id,ccv,act_model,cc_number,context)
                         elif (transaction_status) and (transaction_status.get('transactionStatus') == 'expired'):
                             cr.execute("select id from account_invoice where (recurring=False or recurring is Null) and id in (select invoice_id from sale_order_invoice_rel where order_id in %s)",(tuple([return_obj.linked_sale_order.id]),))
                             invoice_id = cr.fetchone()
@@ -170,9 +180,9 @@ class refund_customer_payment(osv.osv_memory):
 #                                state = 'progress'
                             return_object.write(cr,uid,[return_obj.id],{'manual_invoice_invisible': True,'state':state,'return_option':'refund'})
                             #will Update service as inactive on the magento site
-                            if need_to_update_data:
-                                attr_conn = return_obj.linked_sale_order.shop_id.referential_id.external_connection(True)
-                                deactived_services = attr_conn.call('sales_order.recurring_services', ['update',need_to_update_data,''])
+                            #if need_to_update_data:
+                             #   attr_conn = return_obj.linked_sale_order.shop_id.referential_id.external_connection(True)
+                              #  deactived_services = attr_conn.call('sales_order.recurring_services', ['update',need_to_update_data,''])
 			    return {
                                     'view_type': 'form',
                                     'view_mode': 'form',
