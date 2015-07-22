@@ -2119,6 +2119,28 @@ class schedular_function(osv.osv):
                                         #print "error string",e
                                         invoice_obj.write(cr,uid,[each_invoice.id],{'comment':str(e)})
 
+    ######## scheduler to activate subscription if error comes while placing SO for it.
+    def rental_call_for_subscription(self,cr,uid,context={}):
+        print"context;;;;;;;;;;",context
+        user_auth_obj=self.pool.get('user.auth')
+        policy_obj=self.pool.get('res.partner.policy')
+        sale_obj=self.pool.get('sale.order')
+        policy_ids=policy_obj.search(cr,uid,[('rental_response','=',False)])
+        print"policy_idspolicy_idspolicy_idspolicy_idspolicy_ids",policy_ids
+        if policy_ids:
+            for each_policy in policy_obj.browse(cr,uid,policy_ids):
+                expiry_epoch=time.mktime(datetime.strptime('2020-12-31', "%Y-%m-%d").timetuple())
+                print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch
+                rental_response=user_auth_obj.rental_playjam(cr,uid,each_policy.agmnt_partner.id,each_policy.product_id.app_id,expiry_epoch)
+                print"rental_responserental_responserental_responserental_response",rental_response
+#                result=4113
+                if ast.literal_eval(str(rental_response)).has_key('body') and ast.literal_eval(str(rental_response)).get('body')['result'] == 4113:
+#                if result==4113:
+                    print"sucessssssssssssssssssssssssss"
+                    context['update']=True
+                    sale_obj.write_selected_agreement(cr,uid,each_policy.sale_id,context)
+            return True
+        
     def recurring_billing(self,cr,uid,context={}):
         print"context",context
         self.pool.get('res.partner').recurring_billing(cr,uid,context)
