@@ -15,7 +15,7 @@
                 </xpath>
                 <xpath expr="/form/group[1]" position="after">
                 <field name="active_cc_number" readonly="1"/>
-                <field name="diff_cc_refund"/>
+                <!--<field name="diff_cc_refund"/>
                 <newline/>
                 <group attrs="{'invisible':[('diff_cc_refund','=',False)]}">
                 <separator string="New Credit Card Information" />
@@ -23,7 +23,7 @@
                 <group col="4" colspan="4" >
                 <field name="refund_cc_number" attrs="{'invisible':[('diff_cc_refund','=',False)],'required':[('diff_cc_refund','=',True)]}"/>
                 <field name="refund_cc_expiration_date" attrs="{'invisible':[('diff_cc_refund','=',False)],'required':[('diff_cc_refund','=',True)]}"/>
-                </group>
+                </group>-->
                 <button name="refund_customer" string="Refund" type="object" icon="gtk-ok"/>
                 </xpath>
                 </field>
