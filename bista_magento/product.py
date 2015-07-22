@@ -23,12 +23,6 @@ product_template()
 class product_product(models.Model):
     _inherit = 'product.product'
     
-    exported = fields.Boolean('Exported')
-    
-    
-    _defaults={
-        'exported':False
-    }
     def write(self, cr, uid, ids, vals, context={}):
 	print "ids-----------------------------------",ids,type(ids)
 	if isinstance(ids,(int,str)) :
@@ -43,7 +37,7 @@ class product_product(models.Model):
     
     def get_product_info(self, context=None):
         result=[]
-        request.cr.execute('select id from product_product where exported = %s', (False,))
+	cr.execute('select id from product_product where exported = %s and pj_product=%s', (False,False))
         product_ids = filter(None, map(lambda x:x[0], request.cr.fetchall()))
         print "product_id-------",product_ids
          
@@ -79,7 +73,7 @@ class product_product(models.Model):
                     item_products.append(sub_dict)
                 dict.update({'ItemProducts':item_products})
             result.append(dict)
-        return json.dumps({"body":{"code":True,'message':'Success.','ProductInfo':result}})
+        return json.dumps({"body":{"code":'2221','message':'Success.','ProductInfo':result}})
 
 
     def update_product_info(self, context=None):
