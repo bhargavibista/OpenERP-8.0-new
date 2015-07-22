@@ -38,4 +38,5 @@ import active_recurring_billing
 import import_serials
 import mrp_product_produce
 import procurement_wizard
+import warning_message
 #http://reservations.hcrivers.com/support/index.php?pg=kb.page&id=42
