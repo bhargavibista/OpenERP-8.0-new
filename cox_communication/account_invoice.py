@@ -163,7 +163,7 @@ class account_invoice(models.Model):
                     if inv.type in ('out_invoice','in_invoice'):
                         move_line_obj=self.pool.get('account.move.line')
                         print'inv.move_id.idinv.move_id.idinv.move_id.id',inv.move_id.id
-                        request.cr.execute("select id from account_move_line where product_id in (select id from product_product where product_tmpl_id in (select id from product_template where product_type='service')) and move_id=%s"%(inv.move_id.id))
+                        request.cr.execute("select id from account_move_line where credit!=0.00 and product_id in (select id from product_product where product_tmpl_id in (select id from product_template where product_type='service')) and move_id=%s"%(inv.move_id.id))
                         move_line_ids=filter(None, map(lambda x:x[0], request.cr.fetchall()))
                         print"move_objmove_objmove_objmove_obj",move_line_ids
                         if move_line_ids:
@@ -194,7 +194,7 @@ class account_invoice(models.Model):
         if invoice.recurring==True:
             return
         for each_line in line:
-
+            print"request.cr,request.uidrequest.cr,request.uid",request.cr,request.uid
             line_brw = self.pool.get('account.move.line').browse(request.cr,self._uid,each_line)
             # Get the revenue recognition journal
             domain = [('code','=',_('RCJ')),'|',('company_id','=',invoice.company_id.id),('company_id','=',False)]
@@ -276,16 +276,16 @@ class account_invoice(models.Model):
                         'debit': period_amount})
                 move_lines.append((0,0,ml_debit))
                 print"ml_creditml_creditml_creditml_credit",ml_credit,ml_debit
-                period_id = self._period_get(invoice.company_id.id,last_day)
-                print"period_idperiod_idperiod_idperiod_idperiod_idperiod_id",period_id
+#                period_id = self._period_get(invoice.company_id.id,last_day)
+#                print"period_idperiod_idperiod_idperiod_idperiod_idperiod_id",period_id
             move = {
                 'ref': invoice.move_id.name,
                 'line_id': move_lines,
                 'journal_id': journal_id,
                 'date':last_day,
-                'period_id': period_id,
+#                'period_id': period_id,
                 }
-            context = {'journal_id': journal_id, 'period_id': invoice.period_id.id}
+            context = {'journal_id': journal_id}
             move_id = self.pool.get('account.move').create(request.cr, request.uid, move, context=context)
             this_date = last_day
             print"move_idmove_idmove_idmove_id",move_id
@@ -321,16 +321,17 @@ class account_invoice(models.Model):
         journal_ids = self.pool.get('account.journal').search(cr, uid, domain)
         print"journal_idsjournal_idsjournal_idsjournal_ids",journal_ids
         if len(journal_ids)==0:
-            raise osv.except_osv(_("Error in Invoice Line '%s'" % line.name), _("Cannot find the Recognition Journal for this company."))
+            raise osv.except_osv(_("Error"), _("Cannot find the Recognition Journal for this company."))
         # Get the scheduled revenue recognition records for today
         move_ids=acc_move_obj.search(cr,uid,[('state','=','draft'),('date','<=',today),('journal_id','=',journal_ids[0])])
         if move_ids:
             move_obj=self.pool.get('account.move')
-            for each_move in move_obj.browse(cr,uid,move_ids):
-                period_id = self._period_get(cr, uid, each_move.company_id.id,each_move.date)
+            for each_move in move_obj.browse(request.cr, request.uid,move_ids):
+                period_id = self._period_get(request.cr, request.uid, each_move.company_id.id,each_move.date) 
                 print"period_idperiod_idperiod_idperiod_idperiod_id",period_id
                 each_move.write({'period_id':period_id})
-            move_obj.post(cr, uid, move_ids)
+            move_obj.post(request.cr, request.uid, move_ids)
+
         logger.notifyChannel('post_revenue', netsvc.LOG_INFO,'Completed revenue recognition journals')
 
     def line_get_convert(self, cr, uid, x, part, date, context=None):
@@ -761,11 +762,12 @@ class account_invoice_line(osv.osv):
                 account_id = so_line_id_brw.product_id.property_account_income.id
             else:
                 account_id = so_line_id_brw.product_id.categ_id.property_account_income_categ.id
-            if so_line_id_brw.product_id.type=='service' and context.get('free_trail_days',False)>0:
-                if so_line_id_brw.product_id.property_account_line_prepaid_revenue.id:
-                    account_id = so_line_id_brw.product_id.property_account_line_prepaid_revenue.id
-                else:
-                    account_id = so_line_id_brw.product_id.categ_id.property_account_line_prepaid_revenue_categ.id
+            if so_line_id_brw.price_unit!=0.00:
+                if so_line_id_brw.product_id.type=='service' and context.get('free_trail_days',False)>0:
+                    if so_line_id_brw.product_id.property_account_line_prepaid_revenue.id:
+                        account_id = so_line_id_brw.product_id.property_account_line_prepaid_revenue.id
+                    else:
+                        account_id = so_line_id_brw.product_id.categ_id.property_account_line_prepaid_revenue_categ.id
             print"account_idaccount_idaccount_idaccount_idaccount_id",account_id
             return {
             'type':'src',

@@ -1,5 +1,6 @@
 from openerp.osv import fields, osv
 import datetime 
+import sys
 from dateutil.relativedelta import relativedelta
 from psycopg2.extensions import ISOLATION_LEVEL_READ_COMMITTED
 import calendar
@@ -30,6 +31,9 @@ from passlib.hash import pbkdf2_sha256
 from openerp import models, fields, api, _
 from openerp.http import request
 from openerp import SUPERUSER_ID
+import random
+import string
+
 #~ from datetime import datetime
 
 
@@ -622,8 +626,8 @@ class res_partner(models.Model):
             print "dict_existdict_existdict_existdict_exist",dict_exist
 #            if dict.get('tru'):
             dict_exist.pop('magento_orderid')
-            context['tru']=True
-            context['wallet_purchase']=True
+#            context['tru']=True
+#            context['wallet_purchase']=True
         for key, value in dict_exist.iteritems():
             if value is '':
                 result={"body":{ 'code':'-5634', 'message':"Invalid Request Data"}}
@@ -735,19 +739,19 @@ class res_partner(models.Model):
                     print "line data........................................",line_data
                     sale_line_id=self.pool.get("sale.order.line").create(request.cr, SUPERUSER_ID, line_data, context=context)
                     print "sale line id...............................",sale_line_id
-                    if dict.get('Shipping') and dict.get('Shipping')>0.0:
-                        print "shipping line needs to be added//////////////////////"
-                        ship_product_id=product_obj.search(request.cr,SUPERUSER_ID,[('default_code','=','SHIP')])
-                        if ship_product_id:
-                            ship_dict_price=float(dict.get('Shipping'))
-                            ship_list_price=product_obj.browse(request.cr,SUPERUSER_ID,ship_product_id[0]).list_price
-                            if ship_list_price!=ship_dict_price:
-                                print "shipping price updated////////////////////////////"
-                                product_obj.write(request.cr, SUPERUSER_ID,ship_product_id[0],{'list_price':float(dict.get('Shipping'))})
-                                cr.commit()
-                            ship_prdct_name=str(product_obj.browse(request.cr,SUPERUSER_ID,ship_product_id[0]).name)
-                            ship_line_data = {'order_id': new_id,'name':ship_prdct_name,'price_unit': ship_dict_price,'product_uom_qty': quantity or 1.0,'product_uos_qty': quantity or 1.0,'product_id': ship_product_id[0] or False,'actual_price':0.0}
-                            ship_so_line_id=self.pool.get("sale.order.line").create(request.cr, SUPERUSER_ID, ship_line_data, context=context)
+#                    if dict.get('Shipping') and dict.get('Shipping')>0.0:
+#                        print "shipping line needs to be added//////////////////////"
+#                        ship_product_id=product_obj.search(request.cr,SUPERUSER_ID,[('default_code','=','SHIP')])
+#                        if ship_product_id:
+#                            ship_dict_price=float(dict.get('Shipping'))
+#                            ship_list_price=product_obj.browse(request.cr,SUPERUSER_ID,ship_product_id[0]).list_price
+#                            if ship_list_price!=ship_dict_price:
+#                                print "shipping price updated////////////////////////////"
+#                                product_obj.write(request.cr, SUPERUSER_ID,ship_product_id[0],{'list_price':float(dict.get('Shipping'))})
+#                                cr.commit()
+#                            ship_prdct_name=str(product_obj.browse(request.cr,SUPERUSER_ID,ship_product_id[0]).name)
+#                            ship_line_data = {'order_id': new_id,'name':ship_prdct_name,'price_unit': ship_dict_price,'product_uom_qty': quantity or 1.0,'product_uos_qty': quantity or 1.0,'product_id': ship_product_id[0] or False,'actual_price':0.0}
+#                            ship_so_line_id=self.pool.get("sale.order.line").create(request.cr, SUPERUSER_ID, ship_line_data, context=context)
                     sub_components = product_obj.browse(request.cr,SUPERUSER_ID,product_id[0]).ext_prod_config
                     print "sub_componentssub_components",sub_components,product_id
                     print "sub_componentssub_components",sub_components,product_id
@@ -770,23 +774,39 @@ class res_partner(models.Model):
                     return json.dumps(result)
             so_name=sale_brw.name
     #        call at Authorize end for an existing profile
+	    if dict.get('Shipping') and dict.get('Shipping')>0.0:
+		print "shipping line needs to be added//////////////////////"
+		ship_product_id=product_obj.search(request.cr,SUPERUSER_ID,[('default_code','=','SHIP')])
+		if ship_product_id:
+		    ship_dict_price=float(dict.get('Shipping'))
+		    ship_list_price=product_obj.browse(cr,uid,ship_product_id[0]).list_price
+		    if ship_list_price!=ship_dict_price:
+		        print "shipping price updated////////////////////////////"
+			product_obj.write(cr,uid,ship_product_id[0],{'list_price':float(dict.get('Shipping'))})
+			cr.commit()
+		    ship_prdct_name=str(product_obj.browse(cr,uid,ship_product_id[0]).name)
+		    ship_line_data = {'order_id': new_id,'name':ship_prdct_name,'price_unit': ship_dict_price,'product_uom_qty': quantity or 1.0,'product_uos_qty': quantity or 1.0,'product_id': ship_product_id[0] or False,'actual_price':0.0}
+		    ship_so_line_id=self.pool.get("sale.order.line").create(cr, uid, ship_line_data, context=context)
+		    print "ship so line id////////////////////////////////////",ship_so_line_id
             if payment_profile_id:
                 print"payment_profile_id",payment_profile_id
                 context.update({'cust_payment_profile_id':payment_profile_id,'captured_api':True})
                 exis_pay_profile=self.pool.get('charge.customer').charge_customer(request.cr,SUPERUSER_ID,[new_id],context)
                 print"exis_pay_profile",exis_pay_profile
                 result={"body":{ 'code':'1111', 'message':"Order Created Successfully",'OrderNo':so_name}}
-            elif dict.has_key('tru') or dict.has_key('wallet_purchase'):
+            elif dict.has_key('tru') or dict.has_key('wallet_purchase') or dict.has_key('free_subscription'):
                 new_pay_prfl=self.pool.get('customer.profile.payment').charge_customer(request.cr,SUPERUSER_ID,[new_id],context)
                 print "new pay profile.......................",new_pay_prfl
                 if dict.has_key('wallet_purchase'):
                     #amount_deduct=float(new_pay_prfl.get('context').get('default_amount'))
-                    exist_wallet_quantity=float(partner_brw.wal_bal)
-                    if amount_deduct:
-                        if exist_wallet_quantity:
-                            amnt_after_deduction=float(exist_wallet_quantity)-float(sale_brw.amount_total)
-                        else:
-                            amnt_after_deduction=float(sale_brw.amount_total)
+                    exist_wallet_quantity=partner_brw.wal_bal
+		    print "exist_wallet qunatity////////////////////////////////",exist_wallet_quantity
+ #                   if amount_deduct:
+                    if exist_wallet_quantity:
+                        amnt_after_deduction=float(exist_wallet_quantity)-float(sale_brw.amount_total)
+                    else:
+                        amnt_after_deduction=float(sale_brw.amount_total)
+		    print "amount afterd ecdededbkjhfnkjfdhkjvfdgjknb",amnt_after_deduction
                     partner_obj.write(cr,uid,int(dict_exist.get('partner_id')),{'wal_bal':amnt_after_deduction})
                 result={"body":{ 'code':'1111', 'message':"Order Created Successfully",'OrderNo':so_name}}
     #        call at Authorize for a new profile creation
@@ -930,33 +950,42 @@ class res_partner(models.Model):
     #                                    user_id='FLARE1124'
                     print"billing_dt_objbilling_dt_objbilling_dt_objbilling_dt_obj",billing_dt_obj
                     user_id=partner_id[0]
-                    app_id=old_policy_brw.product_id.app_id
-    #                                    app_id=284
-                    print "user_id---------",user_id
-                    print "app_id---------",app_id
-                    print "expiry_epoch---------",start_date
-                    print"datetime.datetime.today()",datetime.datetime.today()
-                    today =  str(datetime.datetime.today()).split(' ')[0]
-                    expiry_epoch=time.mktime(datetime.datetime.now().timetuple())
-                    print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch
-                    expiry_epoch1=(int(expiry_epoch)+3600)
-                    print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch1
-                    old_policy_result = user_auth_obj.rental_playjam(user_id,app_id,expiry_epoch1)
-                    print "voucher_return----------",old_policy_result
-                    if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
-                        #4113 is the result response value for successfull rental update
-                        additional_info = {'source':source,'cancel_return_reason':'downgrade'}
-                        cancel_reason = return_obj.additional_info(request.cr,SUPERUSER_ID,additional_info)
-                        request.cr.execute("update res_partner_policy set active_service = False,return_cancel_reason='downgrade',cancel_date=%s,additional_info=%s where id = %s",(start_date,cancel_reason,old_policy_brw.id))
-                        app_id=new_pack_oe_brw.app_id
-    #                                    app_id=284
-                        expiry_epoch=time.mktime(datetime.datetime.strptime(str('2050-12-31'), "%Y-%m-%d").timetuple())
-                        expiry_epoch=int(expiry_epoch)
-                        print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch122",expiry_epoch
-                        new_policy_result = user_auth_obj.rental_playjam( user_id, app_id, expiry_epoch)
-                        print "voucher_return-------------++++++++++++++",new_policy_result
-                        if ast.literal_eval(str(new_policy_result)).has_key('body') and ast.literal_eval(str(new_policy_result)).get('body')['result'] == 4113:
+                    app_id=new_pack_oe_brw.app_id
+                    expiry_epoch=time.mktime(datetime.datetime.strptime(str('2050-12-31'), "%Y-%m-%d").timetuple())
+                    expiry_epoch=int(expiry_epoch)
+                    print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
+                    new_policy_result = user_auth_obj.rental_playjam(cr,uid,user_id,app_id,expiry_epoch)
+                    print "voucher_return-------------++++++++++++++",new_policy_result
+#                        if result==4113:
+                    if ast.literal_eval(str(new_policy_result)).has_key('body') and ast.literal_eval(str(new_policy_result)).get('body')['result'] == 4113:
+                        app_id=old_policy_brw.product_id.app_id
+        #                                    app_id=284
+                        print "user_id---------",user_id
+                        print "app_id---------",app_id
+                        print "expiry_epoch---------",start_date
+                        print"datetime.datetime.today()",datetime.datetime.today()
+                        today =  str(datetime.datetime.today()).split(' ')[0]
+                        expiry_epoch=time.mktime(datetime.datetime.now().timetuple())
+                        print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch
+                        expiry_epoch1=(int(expiry_epoch)+3600)
+                        print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch1
+                        old_policy_result = user_auth_obj.rental_playjam(user_id,app_id,expiry_epoch1)
+                        print "voucher_return----------",old_policy_result
+                        if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
                             #4113 is the result response value for successfull rental update
+                            additional_info = {'source':source,'cancel_return_reason':'downgrade'}
+                            cancel_reason = return_obj.additional_info(request.cr,SUPERUSER_ID,additional_info)
+                            request.cr.execute("update res_partner_policy set active_service = False,return_cancel_reason='downgrade',cancel_date=%s,additional_info=%s where id = %s",(start_date,cancel_reason,old_policy_brw.id))
+                            app_id=new_pack_oe_brw.app_id
+        #                                    app_id=284
+    #                        expiry_epoch=time.mktime(datetime.datetime.strptime(str('2050-12-31'), "%Y-%m-%d").timetuple())
+    #			expiry_epoch=int(expiry_epoch)
+    #                        print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
+    #                        new_policy_result = user_auth_obj.rental_playjam(cr,uid,user_id,app_id,expiry_epoch)
+    #                        print "voucher_return-------------++++++++++++++",new_policy_result
+    ##                        if result==4113:
+    #                        if ast.literal_eval(str(new_policy_result)).has_key('body') and ast.literal_eval(str(new_policy_result)).get('body')['result'] == 4113:
+                                #4113 is the result response value for successfull rental update
                             policy_id=partner_policy.create(request.cr,SUPERUSER_ID,{
                             'service_name':new_pack_oe_brw.name,
                             'active_service':True,
@@ -972,6 +1001,7 @@ class res_partner(models.Model):
                             'sale_order':old_policy_brw.sale_order,
                             'source':source,
                             'no_recurring':False,
+                            'next_billing_date':billing_dt_obj,
                             })
                             if flag==True:
                                 result1=partner_brw.write({'billing_date':billing_dt_obj})
@@ -992,7 +1022,9 @@ class res_partner(models.Model):
                             if policy_id:
                                     return json.dumps({'body':{'code':'4113','message':'Subscription Updated'}})
                         else:
-                               return json.dumps({'body':{'code':'-4113','message':'Subscription Update Failed'}})
+                            new_policy_cancel_result = user_auth_obj.rental_playjam(user_id,new_pack_oe_brw.app_id,expiry_epoch)
+                            print "new_policy_cancel_resultnew_policy_cancel_resultnew_policy_cancel_result",new_policy_cancel_result
+			    return json.dumps({'body':{'code':'-4113','message':'Subscription Update Failed'}})
                     else:
                             return json.dumps({'body':{'code':'-4113','message':'Subscription Update Failed'}})
                 else:
