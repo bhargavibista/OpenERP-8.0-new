@@ -116,10 +116,12 @@ class manual_scanning(osv.osv):
         new_product_ids,move_prod_id = [],[]
         if context.get('manufacture_id',False):
             manufacture_id = context.get('manufacture_id',False)
-            cr.execute("select move_id from mrp_production_move_ids where production_id='%s'"%(manufacture_id[0]))
+            cr.execute("select id from stock_move where raw_material_production_id='%s'"%(manufacture_id[0]))
             move_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
+            print"move_ids",move_ids
             cr.execute("select product_id from stock_move where id in %s and state not in ('done','cancel')", (tuple(move_ids),))
             product_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
+            print"product_ids",product_ids
             if product_ids:
                 for each_prod_id in product_obj.browse(cr,uid,product_ids): 
                     if each_prod_id.track_incoming==True or each_prod_id.track_production==True:
