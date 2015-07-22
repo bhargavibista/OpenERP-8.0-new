@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+<!--    <menuitem id="authentication_menu" name="Authentication Details" sequence="2" />-->
+    <record id="topup_tree_view" model="ir.ui.view">
+            <field name="name">Topup Options</field>
+            <field name="model">topup.options</field>
+            <field name="arch" type="xml">
+                <tree string="Topup Options">
+<!--                    <field name="name"/>-->
+                    <field name="name" />
+                    <field name="credit"/>
+                    <field name="value"/>
+                </tree>
+            </field>
+        </record>
+
+
+
+        <record id="topup_form_view" model="ir.ui.view">
+            <field name="name">topup.options.form</field>
+            <field name="model">topup.options</field>
+            <field eval="8" name="priority"/>
+            <field name="arch" type="xml">
+                <form string="Topup Options" version="7.0">
+
+                    <sheet>
+                        <group>
+                                <field name="name"/>
+                                <field name="credit" />
+                                <field name="value"/>
+                         </group>
+
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+
+        <record id="action_topup_form" model="ir.actions.act_window">
+            <field name="name">Topup Options</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">topup.options</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="topup_tree_view"/>
+            <field name="help" type="html">
+              <p class="oe_view_nocontent_create">
+                 .
+              </p><p>
+                OpenERP helps you easily track all activities related to
+                Fax.
+              </p>
+            </field>
+        </record>
+    <record id="playjam_config_tree_view" model="ir.ui.view">
+            <field name="name">Playjam Configuration</field>
+            <field name="model">playjam.config.menu</field>
+            <field name="arch" type="xml">
+                <tree string="Topup Options">
+<!--                    <field name="name"/>-->
+                    <field name="wallet_playjam" />
+                    <field name="rental_playjam"/>
+                    <field name="account_playjam"/>
+                    <field name="device_playjam"/>
+                    <field name="profile_playjam"/>
+                    <field name="obtain_transactions_playjam"/>
+                </tree>
+            </field>
+        </record>
+
+
+
+        <record id="playjam_form_view" model="ir.ui.view">
+            <field name="name">playjam.form.view</field>
+            <field name="model">playjam.config.menu</field>
+            <field eval="8" name="priority"/>
+            <field name="arch" type="xml">
+                <form string="Playjam Configuration" version="7.0">
+
+                    <sheet>
+                        <group>
+                            <field name="wallet_playjam" />
+                            <field name="rental_playjam"/>
+                            <field name="account_playjam"/>
+                            <field name="profile_playjam"/>
+                            <field name="device_playjam"/>
+                            <field name="obtain_transactions_playjam"/>
+                         </group>
+
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+
+        <record id="action_playjam_form" model="ir.actions.act_window">
+            <field name="name">Playjam Configuration</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">playjam.config.menu</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="playjam_config_tree_view"/>
+            <field name="help" type="html">
+              <p class="oe_view_nocontent_create">
+                 .
+              </p><p>
+                OpenERP helps you easily track all activities related to
+                Fax.
+              </p>
+            </field>
+        </record>
+        
+
+<!--        <menuitem id="user_auth_menu" sequence="2" parent="authentication_menu" name="Authentication Details"/>-->
+        <menuitem id="topup_menu" action="action_topup_form" sequence="6" parent="user_auth_menu" name="Topup Options"/>
+        <menuitem id="playjam_menu" action="action_playjam_form" sequence="5" parent="user_auth_menu" name="Playjam Configuration"/>
+
+    </data>
+</openerp>

@@ -57,6 +57,59 @@
             <field name="search_view_id" ref="reasons_title_search"/>
             <field name="domain">[('module','=','tech_supp')]</field>
         </record>
+                <!--menu item for TRU Subscriptions-->
+        <!--TRU TRee view-->
+    <record id="tru_subscriptions_tree_view" model="ir.ui.view">
+            <field name="name">TRU Subscription Options</field>
+            <field name="model">tru.subscription.options</field>
+            <field name="arch" type="xml">
+                <tree string="TRU Subscription Options">
+                    <field name="product_id"/>
+                    <field name="sales_channel_tru" />
+                </tree>
+            </field>
+        </record>
+
+
+<!--TRU form view-->
+        <record id="topup_form_view" model="ir.ui.view">
+            <field name="name">tru.subscription.options.form</field>
+            <field name="model">tru.subscription.options</field>
+            <field eval="8" name="priority"/>
+            <field name="arch" type="xml">
+                <form string="TRU Subscription Options" version="7.0">
+
+                    <sheet>
+                        <group>
+                                <field name="product_id"/>
+                                <field name="sales_channel_tru" />
+                         </group>
+
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+<!--TRU ACtion Details-->
+        <record id="action_tru_subscription_form" model="ir.actions.act_window">
+            <field name="name">TRU Subscription Options</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">tru.subscription.options</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="tru_subscriptions_tree_view"/>
+            <field name="help" type="html">
+              <p class="oe_view_nocontent_create">
+                 .
+              </p><p>
+                OpenERP helps you easily track all activities related to
+                Fax.
+              </p>
+            </field>
+        </record>
+
+<!--        <menuitem id="user_auth_menu" sequence="2" parent="authentication_menu" name="Authentication Details"/>-->
+        <menuitem id="tru_subscription_menu" action="action_tru_subscription_form" sequence="7" parent="base.menu_base_config" name="TRU Subscriptions"/>
         <menuitem id="menu_reason_returns_master" name="Returns Reasons" parent="base.menu_base_config" action="action_returns_reasons_master" />
         <menuitem id="menu_reason_helpdesk_master" name="Technical Support Reasons" parent="base.menu_base_config" action="action_returns_helpdesk_master"/>
     </data>

@@ -301,5 +301,147 @@
             <field name="act_window_id" ref="survey.action_survey_form1"/>
         </record>-->
 
+        <!--cox gen2 changes by yogita-->
+        <!--Start Code Preeti-->
+        <record id="view_partner_dashboard_form" model="ir.ui.view">
+            <field name="name">view.partner.dashboard.form</field>
+            <field name="model">res.partner</field>
+            <field name="arch" type="xml">
+                <form string="Customer Details" version="7.0">
+                    <button name="%(sale.act_res_partner_2_sale_order)d" type="action"
+                        string="Quotations and Sales"/>
+                        <button name="%(action_partner_sales_return)d" type="action"
+                        string="Sales Returns"
+                        context="{'search_default_partner_id': active_id,'default_partner_id': active_id}"/>
+                        <button type="action" string="Invoices" 
+                        name="%(account.action_invoice_tree)d" 
+                        context="{'search_default_partner_id': active_id,'default_partner_id': active_id}"/>
+                       
+                        <separator string="" colspan="4"/>
+                        <hr/>
+                    <group>
+                        <group>
+                            <field name="name" readonly='1' string="Customer"/>
+                            <label for="street" string="Address" />
+                            <div>
+                                <field name="street" placeholder="Street..." readonly='1'/>
+                                <field name="street2" readonly='1'/>
+                                <div class="address_format">
+                                    <field name="city" placeholder="City" style="width: 28%%" readonly='1'/>
+                                    <field name="state_id" class="oe_no_button" placeholder="State" style="width: 15%%" on_change="onchange_state(state_id)" readonly='1'/>
+                                    <field name="zip" placeholder="ZIP" style="width: 20%%" readonly='1'/>
+                                </div>
+                                <field name="country_id" placeholder="Country" class="oe_no_button" readonly='1'/>
+                            </div>
+                            <field name = "phone" readonly='1'/>
+                            <field name="emailid" readonly='1'/>
+                            <field name="billing_date" readonly='1'/>
+                        </group>
+                        <group>
+                            <field name = "customer_profile_id" readonly='1'/>
+                            <separator string="Payment Profiles" colspan="2"/>
+                            <field name = "profile_ids" readonly='1' nolabel="1" colspan="2"/>
+                        </group>
+                        <group string="Selected Service">
+                            <field name="agreement_policy" readonly='1' nolabel='1' options="{'limit':5}">
+                                <tree string="Selected Service">
+                                    <field name="service_name"/>
+                                    <field name="active_service" string="Active/Deactive"/>
+                                    <field name="sale_order"/>
+                                    <field name="start_date"/>
+                                    <field name="free_trial_date"/>
+                                    <field name="cancel_date" string="Cancellation/Return Date"/>
+                                </tree>
+                            </field>
+                        </group>
+                        <group string="Customer Invoices">
+                            <field name="customer_invoice_ref" readonly='1' nolabel='1' options='{"limit":5}'>
+                                <tree string="Customer Invoices" >
+                                    <field name="name"/>
+                                    <field  name="date_invoice"/>
+                                    <field  name="user_id"/>
+                                    <field  name="origin"/>
+                                    <field  name="amount_total"/>
+                                    <field  name="state"/>
+                                </tree>
+                            </field>
+                        </group>
+                        <group string="Sales Return">
+                            <field name="sales_return_ref" readonly='1' nolabel='1' options="{'limit':5}">
+                                <tree string="Sales Return">
+                                    <field name="name"/>
+                                    <field  name="user_id"/>
+                                    <field name="date_order"/>
+                                    <field name="return_type"/>
+                                    <field name="linked_sale_order"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </group>
+
+                        <group string="Sale Orders">
+                            <field name = "sale_order_refrence" readonly='1' nolabel='1' options="{'limit':5}">
+                                <tree string="Sale Orders" >
+                                    <field name="name"/>
+                                    <field  name="cox_sales_channels"/>
+                                    <field  name="amount_total"/>
+                                    <field name="date_order"/>
+                                    <field  name="state"/>
+                                </tree>
+                            </field>
+                        </group>
+                        <group string="Credits and Cancellations">
+                            <field name="credit_cancel_ref" readonly='1' nolabel='1' options="{'limit':5}">
+                                <field name="name"/>
+                                <field  name="cancellation_type"/>
+                                <field name="user_id"/>
+                                <field  name="amount_total"/>
+                                <field name="date_order"/>
+                                <field  name="state"/>
+                            </field>
+                        </group>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_partner_dashboard_tree" model="ir.ui.view">
+            <field name="name">view.partner.dashboard.tree</field>
+            <field name="model">res.partner</field>
+            <field name="arch" type="xml">
+                <tree string="Customer Dashboard">
+                    <field name = "name" string="Customer"/>
+                    <field name="ref" string="Customer No"/>
+                    <field name = "phone"/>
+                    <field name = "emailid"/>
+                    <field name = "city"/>
+                    <field name = "billing_date"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_partner_dashboard" model="ir.actions.act_window">
+            <field name="name">Customer Dashboard</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <!--<field name="view_id" ref="view_partner_dashboard_tree"/>-->
+        </record>
+
+        <record id="action_partner_dashboard_tree" model="ir.actions.act_window.view">
+            <field eval="0" name="sequence"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_partner_dashboard_tree"/>
+            <field name="act_window_id" ref="action_partner_dashboard"/>
+        </record>
+        <record id="action_partner_dashboard_form" model="ir.actions.act_window.view">
+            <field eval="1" name="sequence"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_partner_dashboard_form"/>
+            <field name="act_window_id" ref="action_partner_dashboard"/>
+        </record>
+        <menuitem id="menu_partner_dashboard" name="Customer Dashboard" parent="menu_cust_subscription" action="action_partner_dashboard"/>
+        <!--End Code Preeti-->
     </data>
 </openerp>

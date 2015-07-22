@@ -45,12 +45,12 @@ class import_serials(osv.osv_memory):
             print "linesss",lines.product_qty
             total_qty_in_shipment += lines.product_qty
             for each in partner_data[1:-1]:
-                partno = each.split(';')[0]
+                partno = each.split(',')[0]
                 print"partno",partno
                 prod_id = product_obj.search(cr, uid, [('default_code','=', partno)])
                 print"prod_id",prod_id
                 if prod_id and prod_id[0] ==  lines.product_id.id:
-                    qty =  int(each.split(';')[1])
+                    qty =  int(each.split(',')[1])
                     total_qty_in_csv += qty
         print "total_qty_in_csv",total_qty_in_csv,total_qty_in_shipment
         if total_qty_in_csv < total_qty_in_shipment:
@@ -77,7 +77,7 @@ class import_serials(osv.osv_memory):
                         continue
                     part_number = partner_single_row[0].replace(" ","")
                     part_number = partner_single_row[0].replace("\"","")
-                    print "part_numberrrrrrrrrrrrr",part_number.split(';')[0],part_number
+                    print "part_numberrrrrrrrrrrrr",part_number.split(',')[0],part_number
                     ### search for the part number mentioned in the csv
                     part_ids = product_obj.search(cr, uid, [('default_code','=',part_number.split(';')[0])])
 
@@ -420,7 +420,7 @@ class import_serials(osv.osv_memory):
         for each_move in move_lines:
             for each in partner_data[1:-1]:
                 print"each",each
-                partno = each.split(';')[0]
+                partno = each.split(',')[0]
                 print"partno",partno
 #                serial_no = each.split(',')[2]
                 prod_id = product_obj.search(cr, uid, [('default_code','=',partno)])
@@ -429,7 +429,7 @@ class import_serials(osv.osv_memory):
                 if prod_id[0] !=  each_move.product_id.id:
                     continue
                 else:
-                    qty =  int(each.split(';')[1])
+                    qty =  int(each.split(',')[1])
                     serial_num = prodlot_obj.search(cr,uid,[('name','=',each.split(';')[2])])
                     if serial_num and not  serial_num in serial_no_list:
                         serial_no_list.append(serial_num[0])
@@ -443,7 +443,7 @@ class import_serials(osv.osv_memory):
                     for i in range(1,len(partner_data)):
                         dict = {}
                         partner_data_line = partner_data[i]
-                        partner_single_row = partner_data_line.split(';')
+                        partner_single_row = partner_data_line.split(',')
                         logger.info('CSV single row %s'%(partner_single_row))
                         if len(partner_single_row)==3:
                             if partner_single_row[0] == ''  or partner_single_row[0] == '\n' :

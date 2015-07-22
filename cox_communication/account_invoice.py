@@ -331,6 +331,7 @@ class account_invoice(models.Model):
                 print"period_idperiod_idperiod_idperiod_idperiod_id",period_id
                 each_move.write({'period_id':period_id})
             move_obj.post(request.cr, request.uid, move_ids)
+
         logger.notifyChannel('post_revenue', netsvc.LOG_INFO,'Completed revenue recognition journals')
 
     def line_get_convert(self, cr, uid, x, part, date, context=None):
@@ -556,6 +557,8 @@ class account_invoice(models.Model):
         return lines
         
     ########*
+    gift_card_no = fields.Char()
+    processesd_by = fields.Selection([('wallet','Wallet'),('authorize','Authorize'),('giftcard','GiftCard')],string='Processed By',readonly=True),
     recurring = fields.Boolean('Recurring Payment')
     credit_id = fields.Many2one('credit.service',string="Service Credit ID",help="Date on which next Payment will be generated.")
     next_billing_date = fields.Datetime('Next Billing Date',select=True, help="Date on which next Payment will be generated.")

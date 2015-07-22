@@ -34,9 +34,11 @@
                             <field name="free_trail_days" attrs="{'invisible':[('type','&lt;&gt;','service')]}"/>
                             <field name="product_type" required="1"/>
                             <field name="recurring_service" attrs="{'invisible':[('type','&lt;&gt;','service')]}"/>
+                            
                             <field name="app_id" attrs="{'invisible':[('type','&lt;&gt;','service')],'required':[('type','=','service')]}"/>
-                            <!--<label for="recurring_service"/>-->
+                            
 <!--		       <field name="start_date"/>-->
+			<field name="location_id"/>
                         </group>
                     </xpath>
                    <!--<xpath expr="/form/sheet/div/div/label[@for='purchase_ok']" position="after">
@@ -89,20 +91,17 @@
             </field>
         </record>
         <!--cox gen2-->
-<!--        <record model="ir.ui.view" id="view_product_real_quantity_cox">
+        <record model="ir.ui.view" id="view_product_real_quantity_cox">
             <field name="name">view.product.real.quantity.cox</field>
             <field name="model">product.product</field>
             <field name="inherit_id" ref="product.product_product_tree_view" />
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <xpath expr="/tree/field[@name='type']" position="after">
-                    <field name="real_qty_available"/>
-                </xpath>
                 <xpath expr="/tree/field[@name='state']" position="after">
-                    <field name="magento_product_id" string="Magento Product ID"/>
-                </xpath>
+                   <field name="magento_product_id" string="Magento Product ID"/>
+               </xpath>
             </field>
-        </record>-->
+        </record>
 
 <!-- View for Pre-Requisites for the Product Category-->
         <record id="product_category_pre_requisites_cox" model="ir.ui.view">
@@ -130,19 +129,26 @@
             </field>
         </record>
         <!--code done by yogita-->
-<!--        <record id="product_normal_extra_configuration_recurring" model="ir.ui.view">
+        <record id="product_normal_extra_configuration_recurring" model="ir.ui.view">
             <field name="name">product.normal.extra.configuration.recurring</field>
             <field name="model">product.product</field>
             <field name="inherit_id" ref="sub_product_combination.product_normal_extra_configuration" />
             <field name="arch" type="xml">
                 <xpath expr="//form/group/field[@name='price']" position="after">
+                    <!--<field name="offer_discount" invisible='1'/>Preeti for product configuration-->
                     <field name="show_recurring"/>
+                    <field name="recurring_price" attrs="{'required':[('show_recurring','!=',False)],'invisible':[('show_recurring','=',False)]}" />
                     <field name="no_recurring" attrs="{'invisible':[('show_recurring','=',False)]}"/>
-                </xpath>
+                 </xpath>
                 <xpath expr="//tree/field[@name='price']" position="after">
+                    <!--<field name="offer_discount"/>Preeti for product configuration-->
+                    <field name="recurring_price"/>
                     <field name="no_recurring"/>
-                </xpath>
+                 </xpath>
+                 <xpath expr="//form/group/field[@name='comp_product_id']" position="attributes">
+                     <attribute name="domain">[('product_type','&lt;&gt;','offer')]</attribute>
+                 </xpath><!--do not allow to select offer product in sub components by yogita-->
             </field>
-        </record>-->
+        </record>
     </data>
 </openerp>
