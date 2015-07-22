@@ -47,6 +47,7 @@ class import_serials(osv.osv_memory):
             for each in partner_data[1:-1]:
                 partno = each.split(',')[0]
                 print"partno",partno
+                partno=(partno.replace("\n","")).lstrip().rstrip()
                 prod_id = product_obj.search(cr, uid, [('default_code','=', partno)])
                 print"prod_id",prod_id
                 if prod_id and prod_id[0] ==  lines.product_id.id:
@@ -61,7 +62,7 @@ class import_serials(osv.osv_memory):
                 print "linesssssssssssssssssssssssss",lines.id
                 for i in range(1,len(partner_data)):
                     partner_data_line = partner_data[i]
-                    partner_single_row = partner_data_line.split(';')
+                    partner_single_row = partner_data_line.split(',')
                     logger.info('CSV single row %s'%(partner_single_row))
                     if len(partner_single_row)==3:
                         if partner_single_row[0] == ''  or partner_single_row[0] == '\n' :
@@ -78,8 +79,9 @@ class import_serials(osv.osv_memory):
                     part_number = partner_single_row[0].replace(" ","")
                     part_number = partner_single_row[0].replace("\"","")
                     print "part_numberrrrrrrrrrrrr",part_number.split(',')[0],part_number
+                    part_number = (part_number.replace("\n","")).lstrip().rstrip()
                     ### search for the part number mentioned in the csv
-                    part_ids = product_obj.search(cr, uid, [('default_code','=',part_number.split(';')[0])])
+                    part_ids = product_obj.search(cr, uid, [('default_code','=',part_number.split(',')[0])])
 
                     if not part_ids:
                         raise osv.except_osv(_('Error!'), _('Product %s does not exist in database.Please correct the csv file!.'%(part_number)))
@@ -87,6 +89,7 @@ class import_serials(osv.osv_memory):
                         raise osv.except_osv(_('Error!'), _('You have same %s product more than one time!.'%(part_number)))
                     if part_ids[0] == lines.product_id.id:                        
                     ### check the quantity in the csv
+                        print"partner_single_row",partner_single_row
                         quantity = partner_single_row[1].replace(" ","")
                         quantity = partner_single_row[1].replace("\"", "")
                         print"quantity",quantity
@@ -206,7 +209,7 @@ class import_serials(osv.osv_memory):
                 print "part_numberrrrrrr",part_number
                 ### search for the part number mentioned in the csv
                 part_ids = product_obj.search(cr, uid, [('default_code','=',part_number.strip())])
-                
+                part_number = (part_number.replace("\n",""))
                 if not part_ids:
                     raise osv.except_osv(_('Error!'), _('Part number %s does not exist in database.Please correct the csv file!.'%(part_number)))
                 if len(part_ids)>1:
@@ -430,7 +433,7 @@ class import_serials(osv.osv_memory):
                     continue
                 else:
                     qty =  int(each.split(',')[1])
-                    serial_num = prodlot_obj.search(cr,uid,[('name','=',each.split(';')[2])])
+                    serial_num = prodlot_obj.search(cr,uid,[('name','=',each.split(',')[2])])
                     if serial_num and not  serial_num in serial_no_list:
                         serial_no_list.append(serial_num[0])
                     total_qty += qty
