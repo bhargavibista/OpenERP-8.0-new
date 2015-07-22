@@ -321,7 +321,7 @@ class account_invoice(models.Model):
         journal_ids = self.pool.get('account.journal').search(cr, uid, domain)
         print"journal_idsjournal_idsjournal_idsjournal_ids",journal_ids
         if len(journal_ids)==0:
-            raise osv.except_osv(_("Error in Invoice Line '%s'" % line.name), _("Cannot find the Recognition Journal for this company."))
+            raise osv.except_osv(_("Error"), _("Cannot find the Recognition Journal for this company."))
         # Get the scheduled revenue recognition records for today
         move_ids=acc_move_obj.search(cr,uid,[('state','=','draft'),('date','<=',today),('journal_id','=',journal_ids[0])])
         if move_ids:
