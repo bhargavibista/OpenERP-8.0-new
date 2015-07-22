@@ -37,7 +37,9 @@ class charge_termination_fee(osv.osv_memory):
             config_ids = authorize_net_config.search(cr,uid,[])
             if config_ids and customer_profile_id and cust_payment_profile_id:
                 config_obj = authorize_net_config.browse(cr,uid,config_ids[0])
-                transaction_response =authorize_net_config.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',invoice_id,'profileTransAuthCapture',amount,customer_profile_id,cust_payment_profile_id,'','account.invoice','',context)
+                ccv=''
+
+                transaction_response =authorize_net_config.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',invoice_id,'profileTransAuthCapture',amount,customer_profile_id,cust_payment_profile_id,'',ccv,'account.invoice','',context)
                 cr.execute("select credit_card_no from custmer_payment_profile where profile_id='%s'"%(cust_payment_profile_id))
                 cc_number = filter(None, map(lambda x:x[0], cr.fetchall()))
                 if cc_number:
@@ -165,8 +167,10 @@ class charge_termination_fee(osv.osv_memory):
             cust_profile_id =  return_id_brw.partner_id.customer_profile_id
             if diff_cc and cust_profile_id:
                 new_cc_number = id_brw.new_cc_number
+                ccv=''
                 cc_expiration_date = id_brw.cc_expiration_date
-                cust_payment_profile_id = self.pool.get('custmer.payment.profile').create_payment_profile(cr,uid,return_id_brw.partner_id.id,return_id_brw.partner_invoice_id,return_id_brw.partner_shipping_id,cust_profile_id,new_cc_number,cc_expiration_date,context)
+                exp_date = cc_expiration_date[-4:] + '-' + cc_expiration_date[:2]
+                cust_payment_profile_id = self.pool.get('custmer.payment.profile').create_payment_profile(cr,uid,return_id_brw.partner_id.id,return_id_brw.partner_invoice_id,return_id_brw.partner_shipping_id,cust_profile_id,new_cc_number,exp_date,ccv,context)
             if return_id_brw and cust_payment_profile_id and cust_profile_id:
                 context['cust_payment_profile_id'] = cust_payment_profile_id
                 context['customer_profile_id'] = cust_profile_id
