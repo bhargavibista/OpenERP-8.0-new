@@ -14,6 +14,7 @@ import vista_delivery
 import sale_import
 import mrp
 import service_config
+# import purchase
 #import sale_bundle_product
 #import test_svn
 
