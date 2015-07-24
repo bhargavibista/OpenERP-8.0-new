@@ -2134,7 +2134,7 @@ class schedular_function(osv.osv):
             for each_policy in policy_obj.browse(cr,uid,policy_ids):
                 expiry_epoch=time.mktime(datetime.strptime('2020-12-31', "%Y-%m-%d").timetuple())
                 print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch
-                rental_response=user_auth_obj.rental_playjam(cr,uid,each_policy.agmnt_partner.id,each_policy.product_id.app_id,expiry_epoch)
+                rental_response=user_auth_obj.rental_playjam(each_policy.agmnt_partner.id,each_policy.product_id.app_id,expiry_epoch)
                 print"rental_responserental_responserental_responserental_response",rental_response
 #                result=4113
                 if ast.literal_eval(str(rental_response)).has_key('body') and ast.literal_eval(str(rental_response)).get('body')['result'] == 4113:
