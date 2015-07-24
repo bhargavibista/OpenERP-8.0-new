@@ -80,7 +80,7 @@ class retail_delivery(osv.osv_memory):
                 context={'procurement_id':procurement_ids}
         return result
     
-     def delivery_later(self,cr,uid,ids,context={}): 
+    def delivery_later(self,cr,uid,ids,context={}): 
         warning =self.pool.get('warning').info(cr, uid, title='Delivery Message', message="Your Order will be processed by Warehouse")
         return warning
     
