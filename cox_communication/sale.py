@@ -831,6 +831,7 @@ class sale_order(osv.osv):
                                                                         order.name, 'SalesOrder', order.partner_id, address,
                                                                         order.partner_invoice_id.id, lines, order.shipcharge, order.user_id,
                                                                         context=context).TotalTax
+                        print"tax_amount",tax_amount
                     self.write(cr, uid, [order.id], {'tax_amount': tax_amount, 'order_line': []})
         return True
     #Function is to delete shipping and costs product on selecting of Pick UP
@@ -1361,9 +1362,10 @@ class sale_order(osv.osv):
         if o.order_type and o.cox_sales_channels == 'retail':
             if not o.agreement_approved:
                 raise osv.except_osv(_('Error !'),_('The Customer must accept the retail agreements before confirming the order.'))
+        self.compute_tax(cr, uid, ids, context=context)##Function to Get tax from the Avalara
 #        if o.amount_total <= 0.0:
 #            raise osv.except_osv(_('Error !'),_('Total Cannot be Zero'))
-        self.compute_tax(cr, uid, ids, context=context)##Function to Get tax from the Avalara
+        
 #        self.validations_export_order(cr,uid,ids,context)
 	#To check smtp permission
         '''smtp_obj = self.pool.get('email.smtpclient')
