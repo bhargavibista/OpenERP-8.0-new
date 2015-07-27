@@ -1,6 +1,7 @@
 from openerp.osv import fields, osv
 from openerp.tools.translate import _
 import datetime
+from dateutil.relativedelta import relativedelta
 
 class active_recurring_billing(osv.osv_memory):
     _name='active.recurring.billing'
@@ -47,18 +48,25 @@ class active_recurring_billing(osv.osv_memory):
                     no_recurring=each_policy.no_recurring
                     if no_recurring==False:
                         policy_brw=policy_obj.browse(cr,uid,each_policy.policy_id.id)
- #                       print"policy_brwpolicy_brwpolicy_brw",policy_brw.id
+                        start_date=datetime.datetime.strptime(str(policy_brw.free_trial_date), "%Y-%m-%d").date()+relativedelta(days=1)
                         if policy_brw.no_recurring==True:
-                            cr.execute("update res_partner_policy set no_recurring=False,cancel_date=Null,additional_info=Null,return_cancel_reason=Null where id=%d"%policy_brw.id)
-                            cancellation_ids=cancel_service_obj.search(cr,uid,[('sale_line_id','=',policy_brw.sale_line_id),('cancellation_reason','=','Opt Out for Recurring Billing.'),('partner_policy_id','=',policy_brw.id)])
-  #                          print"cancellation_idscancellation_idscancellation_ids",cancellation_ids
-                            if cancellation_ids:
-                                today=datetime.datetime.today()
-   #                             print"todayyyyyyyyyyyy",today,today.date()
-                                res=rb_activation_obj.create(cr,uid,{'partner_id':policy_brw.agmnt_partner.id,'policy_id':policy_brw.id,'user_id':uid,'rb_activation_date':today.date()})
-                                result=cancel_service_obj.unlink(cr,uid,cancellation_ids[0])
-                                return_obj.update_billing_date(cr,uid,policy_brw.agmnt_partner.id,policy_brw.agmnt_partner.billing_date,policy_brw.sale_line_id)
-    #                            print"resiurrrrrrrrrrrrrrrrrrrttttttttttttt",result,res
+                            if policy_brw.cancel_date:
+                                result=policy_obj.create(cr,uid,{
+                                'service_name':policy_brw.service_name,
+                                'active_service':True,
+                                'sale_id': policy_brw.sale_id,
+                                'start_date': start_date,
+                                'agmnt_partner':policy_brw.agmnt_partner.id,
+                                'product_id': policy_brw.product_id.id,
+                                'from_package_id':policy_brw.id,
+                                'free_trial_date': start_date,
+                                'sale_line_id':policy_brw.sale_line_id,
+                                'sale_order':policy_brw.sale_order,
+                                'no_recurring':False,
+                                })
+                            policy_brw.write({'no_recurring':False})
+                            today=datetime.datetime.today()
+                            res=rb_activation_obj.create(cr,uid,{'partner_id':policy_brw.agmnt_partner.id,'policy_id':policy_brw.id,'user_id':uid,'rb_activation_date':today.date()})
 
 
         return True

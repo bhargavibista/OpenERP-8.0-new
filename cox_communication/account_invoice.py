@@ -374,12 +374,16 @@ class account_invoice(models.Model):
             ###Ends Here###############
             #Code to skip avalara tax calculation for the magento Orders
             if invoice.origin:
+                print"invoice.origin",invoice.origin
                 self._cr.execute("select cox_sales_channels from sale_order where name='%s'"%(invoice.origin))
                 sales_channel = filter(None, map(lambda x:x[0], self._cr.fetchall()))
                 if sales_channel and len(sales_channel) > 0:
                     if sales_channel[0] == 'ecommerce':
                         res[invoice.id] = False
                         return res
+                if 'PO' in invoice.origin:
+                    res[invoice.id] = False
+                    return res
             #Ends Here
             ####Code Ends here
             if invoice.type in ['out_invoice', 'out_refund'] and \
@@ -589,6 +593,7 @@ class account_tax(osv.osv):
     def _check_compute_tax(self, cr, uid, avatax_config, doc_date, doc_code, doc_type, partner, ship_from_address_id, billing_address_id,
                           lines, shipping_charge, user=None, commit=False, invoice_date=False, reference_code=False, context=None):
         address_obj = self.pool.get('res.partner')
+        print"ship_from_address_id",ship_from_address_id
         if not ship_from_address_id:
             raise osv.except_osv(_('No Ship from Address Defined !'), _('There is no company address defined.'))
         if not billing_address_id:
@@ -815,7 +820,7 @@ class account_invoice_tax(models.Model):
             state_obj = self.pool.get('res.country.state')
 #            invoice = invoice_obj.browse(cr, uid, invoice_id, context=context)
             tax_grouped = {}
-            if invoice._avatax_calc():
+            if invoice.avatax_calc:
                 print"invoice111111111111"
                 cur = invoice.currency_id
                 company_currency = invoice.company_id.currency_id.id
@@ -832,6 +837,7 @@ class account_invoice_tax(models.Model):
                                                                   lines, invoice.shipcharge, invoice.user_id, False,
                                                                   invoice.date_invoice or time.strftime('%Y-%m-%d'),
                                                                   context=context).TaxSummary[0]:
+                        print"taxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",tax
                         val = {}
                         state_ids = state_obj.search(cr, uid, [('code', '=', tax.Region)], context=context)
                         state_id = state_ids and state_ids[0] or False

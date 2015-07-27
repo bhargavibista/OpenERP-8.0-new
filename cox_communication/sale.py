@@ -1289,7 +1289,7 @@ class sale_order(osv.osv):
                             rental_resp=user_auth_obj.rental_playjam(partner_id,order_line.product_id.product_tmpl_id.app_id,duration)
 #                            rental_res=ast.literal_eval(rental_resp)
                             if ast.literal_eval(str(rental_resp)).has_key('body') and ast.literal_eval(str(rental_resp)).get('body')['result'] == 4113:
-                                print "rentalres---------------------",rental_res
+                                print "rentalres---------------------",rental_resp
 #                            if rental_res.has_key('body') and (rental_res.get('body')).has_key('result'):
                                 vals.update({
                                 'start_date':order_date,
@@ -1297,7 +1297,10 @@ class sale_order(osv.osv):
                                 'free_trial_date':(False if sale_id_brw.cox_sales_channels == 'call_center' else free_trial_date),
                                 'next_billing_date':billing_date if billing_date >=free_trial_date else free_trial_date+relativedelta(days=1),
                                 'rental_response':True,})
-                                context['update']=True
+                                if not context:
+                                    context={'update':True}
+                                else:
+                                    context['update']=True
                             else:
                                 vals.update({'rental_response':False})
                             print"valsvalsvalsvalsvalsvalsvalsvalsvalsvalsvalsvals",vals
@@ -2155,7 +2158,7 @@ class schedular_function(osv.osv):
                     context['update']=True
                     sale_obj.write_selected_agreement(cr,uid,[each_policy.sale_id],context)
             return True
-
+        
     def recurring_billing(self,cr,uid,context={}):
         print"context",context
         self.pool.get('res.partner').recurring_billing(cr,uid,context)

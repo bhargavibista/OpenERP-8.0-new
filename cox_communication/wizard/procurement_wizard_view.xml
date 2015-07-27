@@ -25,5 +25,22 @@
                       </form>
                   </field>
         </record>
+        
+        <record id="manual_scanning_wizard" model="ir.ui.view">
+          <field name="name">manual.scanning.wizard</field>
+          <field name="model">manual.scanning</field>
+          <field name="arch" type="xml">
+              <form string="Scanning" version="7.0">
+                  <group>
+                      <field name="product_id" />
+                      <field name="serial_ids" widget="many2many_tags" domain="[('product_id','=',product_id),('serial_used','=',False),('location_id','=',location_id)]"/>
+                      <field name="location_id" invisible="1"/>
+                  </group>
+                  <button name="scanning" string="Scan" type="object" icon="gtk-go-farword"/>
+                  
+                  
+              </form>
+          </field>
+       </record>
     </data>
 </openerp>

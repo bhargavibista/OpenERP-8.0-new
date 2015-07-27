@@ -115,7 +115,8 @@ This module is built to handle requirements of Cox Communication.
         'mrp_view.xml',
         'service_config_view.xml',
         'wizard/import_serials.xml',
-        'wizard/procurement_wizard_view.xml'
+        'wizard/procurement_wizard_view.xml',
+        'wizard/warning_view.xml',
     ],
     'demo_xml': [],
     'js':['static/src/js/*.js'],

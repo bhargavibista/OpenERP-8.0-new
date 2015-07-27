@@ -227,5 +227,21 @@
             <field eval="'()'" name="args"/>
         </record>
         <!--End code Preeti for Billing Reminder-->
+        
+        
+        <!-- Schedular to send rental call on playjam end for subscription -->
+        <record forcecreate="True" id="ir_cron_rental_call_for_subscription" model="ir.cron">
+            <field name="name">Rental Call for Subscription</field>
+            <field eval="False" name="active"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field eval="'schedular.function'" name="model"/>
+            <field eval="'rental_call_for_subscription'" name="function"/>
+            <field eval="'()'" name="args"/>
+        </record>
+        
     </data>
 </openerp>

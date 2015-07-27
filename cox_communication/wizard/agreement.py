@@ -67,6 +67,9 @@ class retail_agreement(osv.osv_memory):
     }
     def accept_agreement(self,cr,uid,ids,context):
         if context.get('active_id'):
+            mod_obj = self.pool.get('ir.model.data')
+            result = mod_obj.get_object_reference(cr, uid, 'cox_communication', 'view_order_form_inherit_cox_fields')
+            id = result and result[1] or False
             current_obj = self.browse(cr,uid,ids[0])
 #            array = [current_obj.flare_watch_agmt_chk,current_obj.fanhanttan_toa_agmt_chk,current_obj.privacy_policy_agm_chk,current_obj.fanhanttan_privacy_policy_agmt_chk]
             array = [current_obj.flare_watch_agmt_chk]
@@ -80,6 +83,7 @@ class retail_agreement(osv.osv_memory):
                'view_mode': 'form',
                'res_id': context.get('active_id'),
                'view_type': 'form',
+               'view_id': id,
                'res_model': 'sale.order',
                'type': 'ir.actions.act_window',
                'nodestroy': True,

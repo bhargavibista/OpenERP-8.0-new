@@ -69,6 +69,8 @@ class pre_picking_scanning(osv.osv_memory):
         import_serails = False
         if context is None: context = {}
         if context.get('active_ids',False):
+            picking_id=context.get('active_ids')
+            self.pool.get('stock.picking').write(cr, uid, picking_id, {'skip_barcode': False})
             if context.get('active_model',False) == 'stock.picking':
                 import_serails = self.pool.get("import.serials").create(cr, uid, {'move_internal':True}, context=context)
             return {

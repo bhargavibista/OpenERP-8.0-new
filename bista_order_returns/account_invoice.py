@@ -36,6 +36,7 @@ class account_invoice(osv.osv):
 ##more modifications continued in account_voucher::recompute_voucher_lines funtion
     def invoice_pay_customer(self, cr, uid, ids, context=None):
         if not ids: return []
+        amount=0.0
         inv = self.browse(cr, uid, ids[0], context=context)
 # Added if else condition to pass negative(-) paid amount
         if inv.type in ('out_refund','in_refund'):
@@ -456,6 +457,7 @@ class account_voucher(osv.osv):
                 continue
             company_currency = self._get_company_currency(cr, uid, voucher.id, context)
             current_currency = self._get_current_currency(cr, uid, voucher.id, context)
+            print"company_currency",company_currency,current_currency
             # we select the context to use accordingly if it's a multicurrency case or not
             context = self._sel_context(cr, uid, voucher.id, context)
             # But for the operations made by _convert_amount, we always need to give the date in the context
