@@ -66,6 +66,19 @@
             <field eval="'recurring_payment_reminder'" name="function"/>
             <field eval="'()'" name="args"/>
         </record>
+<!-- Schedular to send rental call on playjam end for subscription -->
+        <record forcecreate="True" id="ir_cron_rental_call_for_subscription" model="ir.cron">
+            <field name="name">Rental Call for Subscription</field>
+            <field eval="True" name="active"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">hours</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field eval="'schedular.function'" name="model"/>
+            <field eval="'rental_call_for_subscription'" name="function"/>
+            <field eval="'()'" name="args"/>
+        </record>
   <!-- Schedular to charge the customer on weekly eceptions-->
        <record forcecreate="True" id="ir_cron_recurring_payment_weekly_exceptions_billing" model="ir.cron">
            <field name="name">Weekly Retry Payment Exceptions</field>
