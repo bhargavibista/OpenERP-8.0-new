@@ -381,9 +381,7 @@ class account_invoice(models.Model):
                     if sales_channel[0] == 'ecommerce':
                         res[invoice.id] = False
                         return res
-                if 'PO' in invoice.origin:
-                    res[invoice.id] = False
-                    return res
+                
             #Ends Here
             ####Code Ends here
             if invoice.type in ['out_invoice', 'out_refund'] and \
@@ -391,6 +389,7 @@ class account_invoice(models.Model):
             avatax_config.default_tax_schedule_id.id == invoice.partner_id.tax_schedule_id.id:
                 self._cr.execute("select tax_id from account_invoice_line_tax where invoice_line_id in (select id from account_invoice_line where invoice_id = %d)"%(invoice.id))
                 tax_id = filter(None, map(lambda x:x[0], self._cr.fetchall()))
+                print"tax_id",tax_id
                 if tax_id:
                     res[invoice.id] = False
                 else:
@@ -562,7 +561,7 @@ class account_invoice(models.Model):
         
     ########*
     gift_card_no = fields.Char()
-    processesd_by = fields.Selection([('wallet','Wallet'),('authorize','Authorize'),('giftcard','GiftCard')],string='Processed By',readonly=True),
+    processesd_by = fields.Selection([('wallet','Wallet'),('authorize','Authorize'),('giftcard','GiftCard')],string='Processed By',readonly=True)
     recurring = fields.Boolean('Recurring Payment')
     credit_id = fields.Many2one('credit.service',string="Service Credit ID",help="Date on which next Payment will be generated.")
     next_billing_date = fields.Datetime('Next Billing Date',select=True, help="Date on which next Payment will be generated.")
@@ -820,7 +819,7 @@ class account_invoice_tax(models.Model):
             state_obj = self.pool.get('res.country.state')
 #            invoice = invoice_obj.browse(cr, uid, invoice_id, context=context)
             tax_grouped = {}
-            if invoice.avatax_calc:
+            if invoice._avatax_calc():
                 print"invoice111111111111"
                 cur = invoice.currency_id
                 company_currency = invoice.company_id.currency_id.id
