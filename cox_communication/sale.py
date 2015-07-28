@@ -14,6 +14,8 @@ from dateutil.relativedelta import relativedelta
 import pytz
 from psycopg2.extensions import ISOLATION_LEVEL_READ_COMMITTED
 import ast
+import logging
+_logger = logging.getLogger(__name__)
 
 #class sale_shop(osv.osv):
 #    _inherit = 'sale.shop'
