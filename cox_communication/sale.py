@@ -231,11 +231,11 @@ class sale_order_line(osv.osv):
             else:
                 child_product_ids.append(product)
             #start code preeti <!--Preeti for Product Configuration-->
-            res['value']['discount_amt']=0.0
-            res['value']['actual_price']=0.0            
-            for components in res.get('value',{}).get('sub_components',[]):                                
-                res['value']['discount_amt']+= components[2].get('discount_amt',False)
-                res['value']['actual_price'] += components[2].get('actual_price',False)
+#            res['value']['discount_amt']=0.0
+#            res['value']['actual_price']=0.0
+#            for components in res.get('value',{}).get('sub_components',[]):
+#                res['value']['discount_amt']+= components[2].get('discount_amt',False)
+#                res['value']['actual_price'] += components[2].get('actual_price',False)
             #end code preeti
             #start code Preeti
             for each_child_product_id in child_product_ids:
@@ -2420,16 +2420,16 @@ class cancel_service(osv.osv):
             print "user_id---------",user_id
             print "app_id---------",app_id
             print "expiry_epoch---------",today
-            expiry_epoch=time.mktime(datetime.strptime(str(cancel_time), "%Y-%m-%d").timetuple())
-            print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch,type(expiry_epoch),int(expiry_epoch)
-            expiry_epoch=expiry_epoch+3600.0
-            print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
-            old_policy_result = user_auth_obj.rental_playjam(cr,uid,user_id,app_id,expiry_epoch)
+#            expiry_epoch=time.mktime(datetime.strptime(str(cancel_time), "%Y-%m-%d").timetuple())
+#            print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch,type(expiry_epoch),int(expiry_epoch)
+#            expiry_epoch=expiry_epoch+3600.0
+#            print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
+            old_policy_result = user_auth_obj.rental_playjam(cr,uid,user_id,app_id,0)
             print "voucher_return----------",old_policy_result
-            result=4113
-#                    if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
+#            result=4113
+            if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
                 #4113 is the result response value for successfull rental update
-            if result==4113:
+#            if result==4113:
                 cr.execute("update res_partner_policy set active_service=False,cancel_date=%s,no_recurring=False,additional_info=%s,return_cancel_reason=%s where id=%s",(time.strftime('%Y-%m-%d'),cancellation_reason,main_reason,service_id.id))
                 res['state'] = 'done'
             return res
@@ -2445,16 +2445,16 @@ class cancel_service(osv.osv):
                         user_id = return_object.partner_id.id
                         app_id=service_id.product_id.app_id
                         today = date.today().strftime('%Y-%m-%d')
-                        cancel_time=time.strftime('%Y-%m-%d')
+#                        cancel_time=time.strftime('%Y-%m-%d')
                         print "user_id---------",user_id
                         print "app_id---------",app_id
-                        print "expiry_epoch---------",today
+#                        print "expiry_epoch---------",today
 #                        expiry_epoch=time.mktime(datetime.strptime(str(cancel_time), "%Y-%m-%d").timetuple())
-                        expiry_epoch=time.mktime(datetime.now().timetuple())
-                        print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch,type(expiry_epoch),int(expiry_epoch)
-                        expiry_epoch=expiry_epoch+3600.0
-                        print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
-                        old_policy_result = user_auth_obj.rental_playjam(user_id,app_id,expiry_epoch)
+#                        expiry_epoch=time.mktime(datetime.now().timetuple())
+#                        print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch,type(expiry_epoch),int(expiry_epoch)
+#                        expiry_epoch=expiry_epoch+3600.0
+#                        print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
+                        old_policy_result = user_auth_obj.rental_playjam(user_id,app_id,0)
                         print "voucher_return----------",old_policy_result
                         if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
                             if (context and  (context.get('refund_cancel_service') or (context.get('active_model')=='credit.service'))) or (context and context.get('immediate_cancel')):
@@ -2514,12 +2514,12 @@ class cancel_service(osv.osv):
                     cancel_time=time.strftime('%Y-%m-%d')
                     print "user_id---------",user_id
                     print "app_id---------",app_id
-                    print "expiry_epoch---------",today
-                    expiry_epoch=time.mktime(datetime.strptime(str(cancel_time), "%Y-%m-%d").timetuple())
-                    print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch,type(expiry_epoch),int(expiry_epoch)
-                    expiry_epoch=expiry_epoch+3600.0
-                    print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
-                    old_policy_result = user_auth_obj.rental_playjam(cr,uid,user_id,app_id,expiry_epoch)
+#                    print "expiry_epoch---------",today
+#                    expiry_epoch=time.mktime(datetime.strptime(str(cancel_time), "%Y-%m-%d").timetuple())
+#                    print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch,type(expiry_epoch),int(expiry_epoch)
+#                    expiry_epoch=expiry_epoch+3600.0
+#                    print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
+                    old_policy_result = user_auth_obj.rental_playjam(cr,uid,user_id,app_id,0)
                     print "voucher_return----------",old_policy_result
                     if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
 		    #Code to write cancellation data and marking service as deactive
