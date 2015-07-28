@@ -591,8 +591,8 @@ class account_tax(osv.osv):
     #Function is inherited because want to send customer billing address not shipping address
     def _check_compute_tax(self, cr, uid, avatax_config, doc_date, doc_code, doc_type, partner, ship_from_address_id, billing_address_id,
                           lines, shipping_charge, user=None, commit=False, invoice_date=False, reference_code=False, context=None):
+        print"invoice_dateeeeeeeeeeee",invoice_date
         address_obj = self.pool.get('res.partner')
-        print"ship_from_address_id",ship_from_address_id
         if not ship_from_address_id:
             raise osv.except_osv(_('No Ship from Address Defined !'), _('There is no company address defined.'))
         if not billing_address_id:
@@ -819,6 +819,7 @@ class account_invoice_tax(models.Model):
             state_obj = self.pool.get('res.country.state')
 #            invoice = invoice_obj.browse(cr, uid, invoice_id, context=context)
             tax_grouped = {}
+            print"invoiceeeeeeeeeeeeeeeeeeeeeeeee",invoice
             if invoice._avatax_calc():
                 print"invoice111111111111"
                 cur = invoice.currency_id
