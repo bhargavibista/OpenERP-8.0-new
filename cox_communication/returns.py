@@ -696,6 +696,12 @@ class return_order(osv.osv):
 			address =  address.id
 		lines = self.create_lines(cr, uid, return_order.order_line)
 		if lines:
+#                        return_date = False
+#                        if return_order.date_confirm:
+#                            return_date = (return_order.date_confirm).split(' ')[0]
+#                        elif return_order.date_order:
+#                            return_date = (return_order.date_order).split(' ')[0]
+#                        print"return_date",return_date
 			tax_amount = account_tax_obj._check_compute_tax(cr, uid, avatax_config, return_order.date_confirm or return_order.date_order,
                                                                 return_order.name, 'ReturnOrder', return_order.partner_id,address,
                                                                 return_order.partner_invoice_id.id,lines,0.0, return_order.user_id,
