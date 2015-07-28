@@ -20,7 +20,7 @@ class export_account_report_csv(osv.osv_memory):
         'date_to':fields.date('To',required=True),
     }
 
-    def export_custom_account_report(self,cr,uid,ids,context={}):
+    def export_custom_account_report_old(self,cr,uid,ids,context={}):
         datas=[]
         count=0
         account_inv_obj=self.pool.get('account.invoice')
@@ -146,7 +146,7 @@ class export_account_report_csv(osv.osv_memory):
                                     print"inv_account_obj.origin:inv_account_obj.origin:inv_account_obj.origin:inv_account_obj.origin:",inv_account_obj.origin,inv_account_obj
                                     if 'RB' in inv_account_obj.origin:
                                         datas1[4]='Recurring Bill'
-                                    elif 'SO' or 'mag' in inv_account_obj.origin:
+                                    elif ('SO' in inv_account_obj.origin) or ('mag' in inv_account_obj.origin):
                                         cr.execute("select order_id from sale_order_invoice_rel where invoice_id='%s'"%(inv_account_obj.id))
                                         so_id=filter(None, map(lambda x:x[0], cr.fetchall()))
                                         print"so_idso_idso_idso_idso_id",so_id
@@ -164,8 +164,8 @@ class export_account_report_csv(osv.osv_memory):
                                         if return_id:
                                             location_id=self.pool.get('return.order').browse(cr,uid,return_id[0]).source_location
                                             print"lreturn_idreturn_idreturn_idreturn_idlocation_brw",location_id
-                                    elif 'CS' in inv_account_obj.origin:
-                                        datas1[4]='Credit & Cancellation'
+                                    elif 'PO' in inv_account_obj.origin:
+                                        datas1[4]='Purchase Order'
                                     datas1[5]=inv_account_obj.origin
                                     if location_id:
                                         datas1[6]=location_id.name
@@ -182,11 +182,16 @@ class export_account_report_csv(osv.osv_memory):
                                     elif inv_account_obj.move_id.journal_id.type=='sale_refund':
                                         datas1[8]=move_lines.product_id.name
                                         datas1[9]=(move_lines.debit)
+                                    elif inv_account_obj.move_id.journal_id.type=='purchase':
+                                        datas1[8]=move_lines.product_id.name
+                                        datas1[9]=(move_lines.debit)
                                 elif move_lines.tax_amount :
                                     if inv_account_obj.move_id.journal_id.type=='sale':
                                         datas1[8]='Sales Tax'
                                     elif inv_account_obj.move_id.journal_id.type=='sale_refund':
                                         datas1[8]='Return Tax'
+                                    elif inv_account_obj.move_id.journal_id.type=='purchase':
+                                        datas1[8]='Purchase Tax'
                                     datas1[9]=(move_lines.tax_amount) if flag==True else 0
                                     flag=False
                                 else:
@@ -212,3 +217,65 @@ class export_account_report_csv(osv.osv_memory):
             'context': context,
         }
 export_account_report_csv()
+class export_recurring_report_csv(osv.osv_memory):
+    """ Export Module """
+    _name = "export.recurring.report.csv"
+    _description = "Export CSV"
+    _columns = {
+        'name' : fields.char('Name',size=32),
+        'csv_file' : fields.binary('CSV file'),
+        'date_from':fields.date('From',required=True),
+        'date_to':fields.date('To',required=True),
+    }
+
+    def export_custom_recurring_report(self,cr,uid,ids,context={}):
+        datas=[]
+        count=0
+        amount_tax = 0.0
+        account_inv_obj=self.pool.get('account.invoice')
+        f = open('/tmp/Recurring Report.csv','w')
+        self_obj=self.browse(cr,uid,ids[0])
+        strt_date=datetime.datetime.strptime(self_obj.date_from,'%Y-%m-%d')
+        end_date=datetime.datetime.strptime(self_obj.date_to,'%Y-%m-%d')
+        if strt_date and end_date :
+            datas = "Sale No."+","+"Customer Name"+","+"Customer No"+","+"Street"+","+"City"+","+"State"+","+"Zip"+","+"Email ID"+","+"Phone Number"+","+"Date"+","+"Order State"+","+"Service"+","+"Service Price(in this offer)"+","+"Free/Paid"+","+"Quantity"+","+"Sales Tax"+","+"User"+","+"\n"
+            device_price,service_price,sales_tax,rental_price,ship_cost=0.0,0.0,0.0,0.0,0.0
+            ro_device_price,cs_service_price,ro_tax,ro_ship_cost=0.0,0.0,0.0,0.0
+            cr.execute("select id from account_invoice where date_invoice>='%s' and date_invoice<='%s' and state='paid' and recurring=True "%(strt_date,end_date))
+            invoice_list=filter(None, map(lambda x:x[0], cr.fetchall()))
+            print "invoice list.................................",invoice_list
+            if invoice_list:
+                count=len(invoice_list)
+                print "count////////////////////////////",count
+                for inv_account_obj in account_inv_obj.browse(cr,uid,invoice_list):
+                    for invoice_line in inv_account_obj.invoice_line:
+                        count=count-1
+                        datas += str(inv_account_obj.name)+","+str(inv_account_obj.partner_id.name)+","+str(inv_account_obj.partner_id.ref)+","+str(inv_account_obj.partner_id.street)+","+str(inv_account_obj.partner_id.city)+","+str(inv_account_obj.partner_id.state_id.name)+","+str(inv_account_obj.partner_id.zip)+ ","+str(inv_account_obj.partner_id.emailid)+","+str(inv_account_obj.partner_id.phone)+","+str(inv_account_obj.date_invoice)+","+str(inv_account_obj.state)+","+str(invoice_line.name)+","+str(invoice_line.price_subtotal)+","+str('Paid')+","+str(invoice_line.quantity)
+                        if amount_tax == 0.0 :
+                            if inv_account_obj.amount_tax >=0.0:
+                                amount_tax = inv_account_obj.amount_tax
+                                datas += ","+str(amount_tax)
+                        else:
+                            datas += ","+str('0.0')
+                        datas += ","+str(inv_account_obj.user_id.name)+"\n"
+                    print "datasssssssssssssssssssssssssssssssssss///////////",datas
+                    f.write(datas)
+                    datas=""
+            f = open("/tmp/Recurring Report.csv","rb")
+            bytes = f.read()
+            out = base64.encodestring(bytes)
+        self.write(cr, uid, ids, {'csv_file':out,'name': 'Recurring Report.csv'})
+        return {
+            'name':_("Export Recurring Report"),
+            'view_mode': 'form',
+            'view_id': False,
+            'view_type': 'form',
+            'res_model': 'export.recurring.report.csv',
+            'res_id': ids[0],
+            'type': 'ir.actions.act_window',
+            'nodestroy': True,
+            'target': 'new',
+            'domain': '[]',
+            'context': context,
+        }
+export_recurring_report_csv()
