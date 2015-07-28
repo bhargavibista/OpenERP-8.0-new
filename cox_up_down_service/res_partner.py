@@ -737,43 +737,23 @@ class upgrade_downgrade_policy(osv.osv):
         self_obj=self.browse(cr,uid,id[0])
         if self_obj.partner_id:
             subscription_data={}
-            from_package_id,new_package_id='',''
             start_date=fields.date.context_today(self, cr, uid, context=context)
-            new_package_id=self_obj.product_id
-            if new_package_id:
-                package_id='service'+str(new_package_id.magento_product_id)
-            old_package_id=self_obj.old_policy_id.product_id
-            if old_package_id:
-                from_package_id='service'+str(old_package_id.magento_product_id)
             partner_obj=self.pool.get('res.partner')
             subscription_data.update({
-                'user_name' :self_obj.partner_id.emailid if self_obj.partner_id.emailid else '',
-                'customer_id':self_obj.partner_id.ref if self_obj.partner_id.ref else '',
-                'package_id':(package_id) if package_id else '',
-                'start_date': start_date,
-                'from_package_id':(from_package_id) if from_package_id else '',
-                'upgrade_downgrade':(self_obj.up_down_service) if self_obj.up_down_service else '',
-#                'free_trial_end':self_obj.free_trial_end if self_obj.free_trial_end else '',
-                'previous_package_prorated_price':0.00,
-                'new_package_prorated_price' :0.00 ,
-                'previous_package_price':self_obj.old_policy_id.product_id.list_price if self_obj.old_policy_id.product_id else '' ,
-                'new_package_price' :self_obj.product_id.list_price if self_obj.product_id else '',
+                'CustomerId':self_obj.partner_id.id if self_obj.partner_id else '',
+                'NewProductId':self_obj.product_id.id,
+                'StartDate': start_date,
+                'OldProductId':self_obj.old_policy_id.product_id.id,
                 'from_openerp':True,
             })
-            free_trial_date,res=partner_obj.makeSubscriptionPurchase(cr,uid,subscription_data)
-            if res:
-                vals={}
-                vals={
-                    'start_date':start_date,
-                    'free_trial_date':free_trial_date if free_trial_date else '',
-                    'state':'done',
-                    'new_policy_id':res,
-                    'previous_package_prorated_price':0.00,
-                    'new_package_prorated_price':0.00,
-                    'previous_package_price':self_obj.old_policy_id.product_id.list_price if self_obj.old_policy_id.product_id else '',
-                    'new_package_price':self_obj.product_id.list_price if self_obj.product_id else '',
-                }
-                result=self_obj.write(vals)
+            res=partner_obj.update_subscription(cr,uid,subscription_data)
+            print"resresres",res,ast.literal_eval(str(res)).get('body')['code']
+            if ast.literal_eval(str(res)).has_key('body'):
+                code=int(ast.literal_eval(str(res)).get('body')['code'])
+                if code!=4113:
+                    message =''
+                    message += message + ast.literal_eval(str(res)).get('body')['message']
+                    raise osv.except_osv(_('Error!!'), _('%s')%(message))
         return True
 upgrade_downgrade_policy()
 
