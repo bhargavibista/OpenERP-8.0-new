@@ -12,6 +12,7 @@ This module is built to handle requirements of Cox Communication Service Upgrada
     'update_xml': [
     'up_down_view.xml',
     'up_down_sequence.xml',
+    'security/ir.model.access.csv',
     ],
     'demo_xml': [],
     'test': [],
