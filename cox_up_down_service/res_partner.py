@@ -121,6 +121,9 @@ class res_partner(osv.osv):
                 if res_id:
                     if partner_obj.payment_policy=='pro':
                         partner_obj.write({'auto_import':True,'billing_date':str(nextmonth)},context=context)
+                        for each_policy in maerge_invoice_data:
+                            policy_brw = each_policy.get('policy_id_brw',False)
+                            policy_brw.write({'next_billing_date':str(nextmonth)})
                     invoice_id_obj = invoice_obj.browse(cr,uid,res_id)
                     sale_obj.email_to_customer(cr,uid,invoice_id_obj,'account.invoice','',partner_obj.emailid,context)
                     self.cal_next_billing_amount(cr,uid,partner_id)
@@ -138,12 +141,12 @@ class res_partner(osv.osv):
                         print "user_id-service_data--------",user_id,policy_brw
                         print "app_id---------",app_id
                         print "expiry_epoch---------",start_date
-                        expiry_epoch=time.mktime(datetime.datetime.strptime(str(today), "%Y-%m-%d").timetuple())
-                        print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch
-                        expiry_epoch=expiry_epoch+3600.0
-                        print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
-                        rental_result = user_auth_obj.rental_playjam(cr,uid,partner_id,app_id,expiry_epoch)
-                        print "voucher_return----------",old_policy_result
+#                        expiry_epoch=time.mktime(datetime.datetime.strptime(str(today), "%Y-%m-%d").timetuple())
+#                        print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch
+#                        expiry_epoch=expiry_epoch+3600.0
+#                        print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
+                        rental_result = user_auth_obj.rental_playjam(cr,uid,partner_id,app_id,0)
+                        print "voucher_return----------",rental_result
         #                    result=4113
                         if ast.literal_eval(str(rental_result)).has_key('body') and ast.literal_eval(str(rental_result)).get('body')['result'] == 4113:
                             #4113 is the result response value for successfull rental update
@@ -683,56 +686,57 @@ class upgrade_downgrade_policy(osv.osv):
         return res
     def onchange_product_id(self,cr,uid,ids,product_id,partner_id,old_policy_id,context=None):
         res,res['value'],res['warning'],message = {},{},{},''
-        existing_parent_services,existing_child_services,existing_parent_services2=[],[],[]
+#        existing_parent_services,existing_child_services,existing_parent_services2=[],[],[]
+        old_prod_categ,old_prod_categ_parent,free_trial_date,flag,source=[],[],'',False,''
         if res.get('warning',{}):
             message = res.get('warning',{}).get('message','')
         if product_id and partner_id and old_policy_id:
             policy_obj=self.pool.get('res.partner.policy')
-#            service_type_obj = self.pool.get('service.type')
-            product_category_obj = self.pool.get('product.category') #vijay
             product_obj = self.pool.get('product.product')
-            desired_id =product_obj.browse(cr,uid,product_id)
-            if desired_id.id != 0:
-                desired_service=desired_id.categ_id
-                desired_service_id=desired_id.categ_id.id
-                each_existing_id=policy_obj.browse(cr,uid,old_policy_id)
-                prod_id = each_existing_id.product_id
-                if prod_id and prod_id.id==product_id:
-                    message += message + '\n Customer already has same active subscription.'
+            old_policy_brw = policy_obj.browse(cr,uid,old_policy_id)
+            new_pack_oe_brw =product_obj.browse(cr,uid,product_id)
+            cr.execute('select product_id from res_partner_policy where active_service=True and return_cancel_reason is null and agmnt_partner= %s'%partner_id)
+            product_ids=filter(None, map(lambda x:x[0], cr.fetchall()))
+            print"product_idsproduct_idsproduct_ids",product_ids
+            if product_ids and new_pack_oe_brw.id in product_ids:
+                message += message + '\n Customer already has same active subscription.'
+                res['warning']['message'] = message
+                res['value'].update({'product_id':False,'name':'','up_down_service':False})
+                return res
+            print"old_policy_brw.from_package_idold_policy_brw.from_package_idold_policy_brw.from_package_id",old_policy_brw.from_package_id,old_policy_brw.from_package_id.extra_days,old_policy_brw.extra_days
+            oe_categ_id=product_obj.browse(cr,uid,old_policy_brw.product_id.id).categ_id
+            if oe_categ_id.parent_id:
+                old_prod_categ_parent.append(oe_categ_id.parent_id.id)
+            old_prod_categ.append(oe_categ_id.id)
+            print"old_prod_categ_parentold_prod_categ_parent",old_prod_categ_parent
+            print"old_prod_categold_prod_categold_prod_categ",old_prod_categ
+            new_prod_categ=new_pack_oe_brw.categ_id
+            print"new_prod_categnew_prod_categnew_prod_categ",new_prod_categ,new_prod_categ.parent_id
+            if new_prod_categ.parent_id:
+                if (new_prod_categ.parent_id.id not in old_prod_categ_parent) and (new_prod_categ.parent_id.id not in old_prod_categ) and (new_prod_categ.id not in old_prod_categ_parent):
+                    message += message + '\n You can not Upgrade/Downgrade to this service'
                     res['warning']['message'] = message
                     res['value'].update({'product_id':False,'name':'','up_down_service':False})
                     return res
+                elif (new_prod_categ.parent_id.id in old_prod_categ_parent) or (new_prod_categ.id in old_prod_categ_parent):
+                    res['value'].update({'up_down_service':'upgrade'})
                 else:
-                    existing_prod_cat_brw  = product_category_obj.browse(cr,uid,prod_id.categ_id.id)
-                    if (existing_prod_cat_brw.parent_id):
-                        existing_parent_services.append(existing_prod_cat_brw.parent_id.id)
-                    else:
-                        existing_parent_services2.append(existing_prod_cat_brw.id)
-                    existing_child_services.append(existing_prod_cat_brw.id)
-                    if desired_service_id:
-                        if desired_service.parent_id:
-                            if (desired_service.parent_id.id not in existing_parent_services) and (desired_service.parent_id.id not in existing_parent_services2):
-                                message += message + '\n You can not Upgrade/Downgrade to this service'
-                                res['warning']['message'] = message
-                                res['value'].update({'product_id':False,'name':'','up_down_service':False})
-                                return res
-                            elif(desired_service.parent_id.id in existing_parent_services):
-                                res['value'].update({'up_down_service':'upgrade'})
-                                return res
-                            else:
-                                res['value'].update({'up_down_service':'downgrade'})
-                                return res
-                        elif (not desired_service.parent_id) or (desired_service_id in existing_child_services):
-                            if ((desired_service_id not in existing_parent_services2) and (desired_service_id not in existing_parent_services)) or (desired_service_id in existing_child_services):
-                                message += message + '\n You can not Upgrade/Downgrade to this service'
-                                res['warning']['message'] = message
-                                res['value'].update({'product_id':False,'name':'','up_down_service':False})
-                                return res
-                            elif desired_service_id in existing_parent_services:
-                                res['value'].update({'up_down_service':'upgrade'})
-                                return res
-
+                    res['value'].update({'up_down_service':'downgrade'})
+            elif (not new_prod_categ.parent_id):
+                if (new_prod_categ.id not in old_prod_categ_parent) or (new_prod_categ.id in old_prod_categ):
+                    message += message + '\n You can not Upgrade/Downgrade to this service'
+                    res['warning']['message'] = message
+                    res['value'].update({'product_id':False,'name':'','up_down_service':False})
+                    return res
+                elif new_prod_categ.id in old_prod_categ_parent:
+                    res['value'].update({'up_down_service':'upgrade'})
+            if old_policy_brw.from_package_id and old_policy_brw.extra_days>0:
+                message += message + '\n Can not upgrade multiple times.'
+                res['warning']['message'] = message
+                res['value'].update({'product_id':False,'name':'','up_down_service':False})
+                return res
         return res
+    
     def upgrade_downgrade(self,cr,uid,id,context=None):
         self_obj=self.browse(cr,uid,id[0])
         if self_obj.partner_id:
