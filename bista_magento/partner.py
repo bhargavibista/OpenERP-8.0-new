@@ -323,7 +323,7 @@ class res_partner(models.Model):
                 result={"body":{ 'code':'-5633','message':"Technical problem"}}
             return json.dumps(result)
 #    giftcard        
-    def redeem_gift_card(self,cr,uid,dict,context):
+    def redeem_gift_card(self,dict,context):
         maerge_invoice_data,result,sale_info=[],{},{}
         today=datetime.datetime.today()
         nextmonth = today + relativedelta(months=1)
@@ -344,51 +344,51 @@ class res_partner(models.Model):
         #gift_card_obj.api_call_toincomm_reversal(cr,uid,dict_gift_card.get('card_no'),context=context)
         #return True
         try:
-            customer_id=self.pool.get('res.partner').search(cr,uid,[('id','=',int(dict_gift_card.get('partner_id')))])
+            customer_id=self.pool.get('res.partner').search(request.cr,self._uid,[('id','=',int(dict_gift_card.get('partner_id')))])
             print "customer_idcustomer_id",customer_id
             if not customer_id:
                 result={"body":{ 'code':'-5555', 'message':"Missing or Invalid Customer ID"}}
                 return json.dumps(result)
-            partner_brw=self.pool.get('res.partner').browse(cr,uid,int(dict.get('CustomerId')))
+            partner_brw=self.pool.get('res.partner').browse(request.cr,self._uid,int(dict.get('CustomerId')))
             billing_date=partner_brw.billing_date
 #            billing_date=datetime.datetime.strptime(billing_date, '%Y-%m-%d')
 	    billing_date=datetime.datetime.strptime(billing_date, '%Y-%m-%d')
             if billing_date:
                 nextmonth=billing_date + relativedelta(months=1)
-            gift_card_response=gift_card_obj.api_call_toincomm_statinq(cr,uid,dict_gift_card.get('card_no'),context=context)
+            gift_card_response=gift_card_obj.api_call_toincomm_statinq(request.cr,self._uid,dict_gift_card.get('card_no'),context=context)
             resp_code_statinq=gift_card_response.getElementsByTagName("RespCode")[0].childNodes[0].nodeValue
             print "resp_code_statinqresp_code_statinq",resp_code_statinq
 #            code 4001 response is for "Card is Active"
             if resp_code_statinq=='4001':
                 face_value=gift_card_response.getElementsByTagName("FaceValue")[0].childNodes[0].nodeValue
                 print "face_valueface_valueface_value",face_value
-                partner_obj=self.pool.get('res.partner').browse(cr,uid,int(dict.get('CustomerId')))
+                partner_obj=self.pool.get('res.partner').browse(request.cr,self._uid,int(dict.get('CustomerId')))
                 if face_value>0.0:
-                    subscription_id=tru_obj.search(cr,uid,[('sales_channel_tru','=','tru')])
+                    subscription_id=tru_obj.search(request.cr,self._uid,[('sales_channel_tru','=','tru')])
                     print "subscription_idsubscription_id",subscription_id
                     if not subscription_id:
                         result={"body":{ "code":False, "message":"No Subscription is stipulated for TRU"}}
                     else:
-                        subscrption_service=tru_obj.browse(cr,uid,subscription_id[0]).product_id
+                        subscrption_service=tru_obj.browse(request.cr,self._uid,subscription_id[0]).product_id
                         print "subscrption_servicesubscrption_service",subscrption_service
-                        cr.execute("select product_id from res_partner_policy where active_service =True and agmnt_partner = %s"%(int(dict_gift_card.get('partner_id'))))
-                        active_services = filter(None, map(lambda x:x[0], cr.fetchall()))
+                        request.cr.execute("select product_id from res_partner_policy where active_service =True and agmnt_partner = %s"%(int(dict_gift_card.get('partner_id'))))
+                        active_services = filter(None, map(lambda x:x[0], request.cr.fetchall()))
                         print "active_servicesactive_services",active_services,subscrption_service.id
                         if active_services and subscrption_service.id in active_services:
-                            policy_id = policy_obj.search(cr,uid,[('product_id','=',subscrption_service.id),('agmnt_partner','=',int(dict_gift_card.get('partner_id'))),('active_service','=',True)])
+                            policy_id = policy_obj.search(request.cr,self._uid,[('product_id','=',subscrption_service.id),('agmnt_partner','=',int(dict_gift_card.get('partner_id'))),('active_service','=',True)])
                             print "policy id...............",policy_id
                             if policy_id:
-				policy_brw=policy_obj.browse(cr,uid,policy_id[0])
+				policy_brw=policy_obj.browse(request.cr,self._uid,policy_id[0])
 				print "policy_brwpolicy_brwpolicy_brw",policy_brw
                                 so_id=policy_brw.sale_id
-                                sale_brw=sale_obj.browse(cr,uid,so_id)
+                                sale_brw=sale_obj.browse(request.cr,self._uid,so_id)
                                 sale_channel=sale_brw.cox_sales_channels
                             #Extra Code for Checking whether service is cancelled or not
-                            cr.execute('select id from cancel_service where sale_id = %s and sale_line_id = %s and partner_policy_id=%s and cancelled=False'%(policy_brw.sale_id,policy_brw.sale_line_id,policy_brw.id))
-                            policies = filter(None, map(lambda x:x[0], cr.fetchall()))
+                            request.cr.execute('select id from cancel_service where sale_id = %s and sale_line_id = %s and partner_policy_id=%s and cancelled=False'%(policy_brw.sale_id,policy_brw.sale_line_id,policy_brw.id))
+                            policies = filter(None, map(lambda x:x[0], request.cr.fetchall()))
                             if not policies:
                                 sale_info={}
-                                cr.execute(
+                                request.cr.execute(
                                     "select id from sale_order_line where parent_so_line_id in(\
                                     select sale_line_id from return_order_line where order_id = \
                                     (select id from return_order where state= 'email_sent' and return_type='car_return' and linked_sale_order = %s ))\
@@ -397,11 +397,11 @@ class res_partner(models.Model):
                                     (select id from return_order where state= 'email_sent' and return_type='car_return' and linked_sale_order = %s ))\
                                     "%(policy_brw.sale_id,policy_brw.sale_id)
                                     )
-                                so_line_id = filter(None, map(lambda x:x[0], cr.fetchall()))
+                                so_line_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
                                 if not policy_brw.sale_line_id in so_line_id:
                                     invoice_name = '%'+policy_brw.sale_order+'%'
                                     print "invoice_nameinvoice_name",invoice_name
-                                    search_payment_exception =exception_obj.search(cr,uid,[('active_payment','=',True),('partner_id','=',int(dict.get('CustomerId'))),('invoice_name','ilike',invoice_name)])
+                                    search_payment_exception =exception_obj.search(request.cr,self._uid,[('active_payment','=',True),('partner_id','=',int(dict.get('CustomerId'))),('invoice_name','ilike',invoice_name)])
                                     if not search_payment_exception:
                                             sale_info.update(
                                                 {'sale_id':policy_brw.sale_id,
@@ -415,7 +415,7 @@ class res_partner(models.Model):
                                     else:
                                         result={"body":{ "code":False, "message":"Payment Exception is generated for the same service"}}        
                                         return json.dumps(result)
-                                redemption_details=gift_card_obj.api_call_toincomm_redemption(cr,uid,dict_gift_card.get('card_no'),context=context)
+                                redemption_details=gift_card_obj.api_call_toincomm_redemption(request.cr,self._uid,dict_gift_card.get('card_no'),context=context)
                                 print "redemption_detailsredemption_detailsredemption_details",redemption_details
                                 resp_code=redemption_details.getElementsByTagName("RespCode")[0].childNodes[0].nodeValue
 #                                code 0 is for Success
@@ -430,18 +430,18 @@ class res_partner(models.Model):
                                             free_trail=datetime.datetime.strptime(free_trail, '%Y-%m-%d')
                                             print "today and free tril................",today,free_trail
                                             if today<free_trail:
-                                                account_id=account_obj.search(cr, uid, [('name', 'ilike', 'Advance Payment')])
+                                                account_id=account_obj.search(request.cr,self._uid, [('name', 'ilike', 'Advance Payment')])
                                                 account_id=account_id[0]
                                             else:
                                                 account_id=False
                                             context.update({'partner_id_obj': partner_obj,'captured_api': True,'giftcard':True,'facevalue': face_value,'account_id':account_id})
-                                            res_id=sale_obj.action_invoice_merge(cr, uid, maerge_invoice_data, today, nextmonth, policy_brw.start_date,'', context=context)
+                                            res_id=sale_obj.action_invoice_merge(request.cr,self._uid, maerge_invoice_data, today, nextmonth, policy_brw.start_date,'', context=context)
                                             if res_id:
 						if len(active_services)==1:
-							self.pool.get('res.partner').write(cr,uid,int(dict_gift_card.get('partner_id')),{'billing_date':str(nextmonth)}) 
-						policy_obj.write(cr,uid,policy_id[0],{'next_billing_date':str(nextmonth)})
+							self.pool.get('res.partner').write(request.cr,self._uid,int(dict_gift_card.get('partner_id')),{'billing_date':str(nextmonth)}) 
+						policy_obj.write(request.cr,self._uid,policy_id[0],{'next_billing_date':str(nextmonth)})
                                                 invoice_id_obj = invoice_obj.browse(cr,uid,res_id)
-                                                invoice_obj.write(cr,uid,res_id,{'gift_card_no':dict_gift_card.get('card_no')})
+                                                invoice_obj.write(request.cr,self._uid,res_id,{'gift_card_no':dict_gift_card.get('card_no')})
                                                 sale_obj.email_to_customer(cr,uid,invoice_id_obj,'account.invoice','',partner_obj.emailid,context)
 						result={"body":{"code":'4543', "message":"Redeem Successful"}}
                                                 #    try:
@@ -451,7 +451,7 @@ class res_partner(models.Model):
                                                 
 #result={"body":{"code":True, "message":"Success"}}
                                             else:
-                                                gift_card_reversal=gift_card_obj.api_call_toincomm_reversal(cr,uid,dict_gift_card.get('card_no'),context=context)
+                                                gift_card_reversal=gift_card_obj.api_call_toincomm_reversal(request.cr,self._uid,dict_gift_card.get('card_no'),context=context)
 						result={"body":{ "code":False, "message":"Technical Problem(Invoice not created)"}}
                                 elif resp_code=='43':
                                         result={"body":{ "code":'-4543', "message":"Missing or Invalid card"}}        
@@ -475,7 +475,7 @@ class res_partner(models.Model):
 		result={"body":{'code':'-5633','message':'Technical problem from Incomm end'}}
                                                     
         except Exception, e:
-            gift_card_reversal=gift_card_obj.api_call_toincomm_reversal(cr,uid,dict_gift_card.get('card_no'),context=context)
+            gift_card_reversal=gift_card_obj.api_call_toincomm_reversal(request.cr,self._uid,dict_gift_card.get('card_no'),context=context)
             result={"body":{'code':'-5633','message':'Technical problem'}}
         return json.dumps(result)
 #    giftcard        
