@@ -203,6 +203,54 @@
        </record>
        <menuitem action="action_view_account_report_export_csv" parent="base.next_id_64" id="menu_account_csv_import"  name="Export Account Report"/>
             <!--menu item for Accounting report-->
+            
+            
+            
+            <!--Recurring Report Customized wizard view-->
+       <record id="view_export_recurring_csv_wizard" model="ir.ui.view">
+           <field name="name">Export Recurring Report CSV</field>
+           <field name="model">export.recurring.report.csv</field>
+           <field name="type">form</field>
+           <field name="arch" type="xml">
+               <form string="Export CSV">
+                   <separator string="Recurring Report" colspan="4"/>
+                   <group colspan="2">
+                       <field name="csv_file" string="File"  readonly="1" filename='name'  attrs="{'invisible':[('name','=','')]}"/>
+                       <field name="date_from"/>
+                       <field name="date_to"/>
+                   </group>
+                   <field name="name" readonly="1" invisible="1" colspan="2" attrs="{'invisible':[('csv_file','=','')]}"/>
+                   <newline/>
+                   <button special="cancel" string="Cancel" icon="gtk-cancel"/>
+                   <button name="export_custom_recurring_report" string="Export" type="object" icon="gtk-apply"/>
+               </form>
+           </field>
+       </record>
+       <!--Recurring Report Customized wizard view-->
+
+      <!--menu item for Accounting report-->
+       <record id="action_view_account_report_export_csv" model="ir.actions.act_window">
+           <field name="name">Accounting Report</field>
+           <field name="type">ir.actions.act_window</field>
+           <field name="res_model">export.account.report.csv</field>
+           <field name="view_type">form</field>
+           <field name="view_id" ref="view_export_account_csv_wizard"/>
+           <field name="target">new</field>
+       </record>
+       <menuitem action="action_view_account_report_export_csv" parent="base.next_id_64" id="menu_account_csv_import"  name="Export Account Report"/>
+            <!--menu item for Accounting report-->
+            
+          <!--menu item for Recurring Report report-->
+       <record id="action_view_recurring_report_export_csv" model="ir.actions.act_window">
+           <field name="name">Recurring Report</field>
+           <field name="type">ir.actions.act_window</field>
+           <field name="res_model">export.recurring.report.csv</field>
+           <field name="view_type">form</field>
+           <field name="view_id" ref="view_export_recurring_csv_wizard"/>
+           <field name="target">new</field>
+       </record>
+       <menuitem action="action_view_recurring_report_export_csv" parent="base.next_id_64" id="menu_recurring_csv_import"  name="Export Recurring Report"/>
+
 
     </data>
 </openerp>
