@@ -23,11 +23,13 @@
                     
                     <newline/>
                     <button name="active_recurring_billing" string="Active Recurring Billing" type="object"/>
+                    <button name="deactivate_recurring_billing" string="Deactivate Recurring Billing" type="object"/>
+
                </form>
             </field>
         </record>
 
-        <act_window name="Active Recurring Billing"
+        <act_window name="Activate/Deactivate Recurring Billing"
             res_model="active.recurring.billing"
             src_model="res.partner"
             view_mode="form"

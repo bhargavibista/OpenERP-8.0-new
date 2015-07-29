@@ -14,6 +14,8 @@ from dateutil.relativedelta import relativedelta
 import pytz
 from psycopg2.extensions import ISOLATION_LEVEL_READ_COMMITTED
 import ast
+import logging
+_logger = logging.getLogger(__name__)
 
 #class sale_shop(osv.osv):
 #    _inherit = 'sale.shop'
@@ -231,11 +233,11 @@ class sale_order_line(osv.osv):
             else:
                 child_product_ids.append(product)
             #start code preeti <!--Preeti for Product Configuration-->
-            res['value']['discount_amt']=0.0
-            res['value']['actual_price']=0.0            
-            for components in res.get('value',{}).get('sub_components',[]):                                
-                res['value']['discount_amt']+= components[2].get('discount_amt',False)
-                res['value']['actual_price'] += components[2].get('actual_price',False)
+#            res['value']['discount_amt']=0.0
+#            res['value']['actual_price']=0.0
+#            for components in res.get('value',{}).get('sub_components',[]):
+#                res['value']['discount_amt']+= components[2].get('discount_amt',False)
+#                res['value']['actual_price'] += components[2].get('actual_price',False)
             #end code preeti
             #start code Preeti
             for each_child_product_id in child_product_ids:
@@ -256,23 +258,32 @@ class sale_order_line(osv.osv):
 #                            print"existing_service_brwexisting_service_brw",existing_service_brw
                             if (existing_service_brw.parent_id):
                                 existing_parent_services.append(existing_service_brw.parent_id.id)
-                            else:
-                                existing_parent_services2.append(existing_service_brw.id)
+#                            else:
+#                                existing_parent_services2.append(existing_service_brw.id)
                             existing_child_services.append(existing_service_brw.id)
                         print"existing_child_services",existing_child_services,existing_parent_services
-                    if desired_service_id:
-                        if (desired_service_id in existing_child_services) or (desired_service_id in existing_parent_services):
-                            message += message + '\n Customer already has same active subscription.'
-                            print"(desired_service.parent_id.id in existing_parent_services2)(desired_service.parent_id.id in existing_parent_services2)"
-                            res['warning']['message'] = message
-                            res['value'].update({'product_id':False,'name':'','sub_components':[]})
-#                                break;
-                        elif (desired_service.parent_id.id in existing_child_services) or (desired_service.parent_id.id in existing_parent_services): #here
-                            if (desired_service_id in existing_child_services) or (desired_service.parent_id.id in existing_parent_services2):
+                        if desired_service_id:
+                            if desired_service.parent_id and (desired_service.parent_id.id in existing_child_services) :
                                 message += message + '\n Customer already has same active subscription.'
                                 res['warning']['message'] = message
                                 res['value'].update({'product_id':False,'name':'','sub_components':[]})
-#                                    break;
+                            elif (desired_service_id in existing_child_services) or (desired_service_id in existing_parent_services):
+                                message += message + '\n Customer already has same active subscription.'
+                                res['warning']['message'] = message
+                                res['value'].update({'product_id':False,'name':'','sub_components':[]})
+#                    if desired_service_id:
+#                        if (desired_service_id in existing_child_services) or (desired_service_id in existing_parent_services):
+#                            message += message + '\n Customer already has same active subscription.'
+#                            print"(desired_service.parent_id.id in existing_parent_services2)(desired_service.parent_id.id in existing_parent_services2)"
+#                            res['warning']['message'] = message
+#                            res['value'].update({'product_id':False,'name':'','sub_components':[]})
+##                                break;
+#                        elif (desired_service.parent_id.id in existing_child_services) or (desired_service.parent_id.id in existing_parent_services): #here
+#                            if (desired_service_id in existing_child_services) or (desired_service.parent_id.id in existing_parent_services2):
+#                                message += message + '\n Customer already has same active subscription.'
+#                                res['warning']['message'] = message
+#                                res['value'].update({'product_id':False,'name':'','sub_components':[]})
+##                                    break;
 
         #end code Preeti
 ##########code done by yogita
@@ -309,8 +320,8 @@ class sale_order_line(osv.osv):
                                             if existing_service.parent_id:
                                                 print"existing_parent_services.append(existing_service_id)",existing_service.parent_id
                                                 existing_parent_services.append(existing_service.parent_id.id)
-                                            else:
-                                                existing_parent_services2.append(existing_service_id)
+#                                            else:
+#                                                existing_parent_services2.append(existing_service_id)
                                             existing_child_services.append(existing_service_id)
 #                                                existing_parent_services2.append(existing_service_id)
                                             print"existing_child_servicesexisting_child_services",existing_child_services
@@ -1198,7 +1209,7 @@ class sale_order(osv.osv):
         order_lines = sale_id_brw.order_line
         active_services=policy_object.search(cr,uid,[('agmnt_partner','=',partner_id),('active_service','=',True)])
         if active_services:
-		billing_date = sale_id_brw.partner_id.billing_date
+            billing_date = sale_id_brw.partner_id.billing_date
         shipping_prod_id = self.shipping_product(cr,uid,[],{})
         for order_line in order_lines:
             free_trial_date,no_recurring,recurring_price='',False,0.0
@@ -1253,6 +1264,7 @@ class sale_order(osv.osv):
                                     'start_date':order_date,
                                     'free_trial_date':free_trial_date,
                                     'next_billing_date':billing_date if billing_date >=free_trial_date else free_trial_date+relativedelta(days=1),
+                                    'rental_response':True
                                     })
                 else:
                     
@@ -1274,7 +1286,9 @@ class sale_order(osv.osv):
                                 'recurring_reminder':False,	
                                 'recurring_price':recurring_price,
                                 }
-                            duration=time.mktime(datetime.strptime('2020-12-31', "%Y-%m-%d").timetuple())
+                            end_date=order_date+relativedelta(months=60)
+                            duration=time.mktime((end_date).timetuple())
+#                            duration=time.mktime(datetime.strptime('2020-12-31', "%Y-%m-%d").timetuple())
                             rental_resp=user_auth_obj.rental_playjam(partner_id,order_line.product_id.product_tmpl_id.app_id,duration)
 #                            rental_res=ast.literal_eval(rental_resp)
                             if ast.literal_eval(str(rental_resp)).has_key('body') and ast.literal_eval(str(rental_resp)).get('body')['result'] == 4113:
@@ -1299,6 +1313,7 @@ class sale_order(osv.osv):
                             'start_date':order_date,
                             'free_trial_date':free_trial_date,
                             'next_billing_date':billing_date if billing_date >=free_trial_date else free_trial_date+relativedelta(days=1),
+                            'rental_response':True
                             })
         #if billing_date and ((sale_id_brw.cox_sales_channels != 'call_center') or (context.get('update'))) :
         print"contextttttttttttttttt",context
@@ -2126,24 +2141,26 @@ class schedular_function(osv.osv):
 
     ######## scheduler to activate subscription if error comes while placing SO for it.
     def rental_call_for_subscription(self,cr,uid,context={}):
-        print"context;;;;;;;;;;",context
         user_auth_obj=self.pool.get('user.auth')
         policy_obj=self.pool.get('res.partner.policy')
         sale_obj=self.pool.get('sale.order')
         policy_ids=policy_obj.search(cr,uid,[('rental_response','=',False)])
-        print"policy_idspolicy_idspolicy_idspolicy_idspolicy_ids",policy_ids
+        _logger.info("policy_idspolicy_idspolicy_idspolicy_idspolicy_ids.....%s",policy_ids)
         if policy_ids:
             for each_policy in policy_obj.browse(cr,uid,policy_ids):
-                expiry_epoch=time.mktime(datetime.strptime('2020-12-31', "%Y-%m-%d").timetuple())
-                print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch
-                rental_response=user_auth_obj.rental_playjam(each_policy.agmnt_partner.id,each_policy.product_id.app_id,expiry_epoch)
-                print"rental_responserental_responserental_responserental_response",rental_response
+                _logger.info("each_policyeach_policy/////////////%s",each_policy)
+                today=datetime.strptime(str(date.today()), "%Y-%m-%d")
+                end_date=today+relativedelta(months=60)
+                expiry_epoch=time.mktime(end_date.timetuple())
+                _logger.info("expiry_epochexpiry_epochexpiry_epochexpiry_epoch--%s",expiry_epoch)
+                rental_response=user_auth_obj.rental_playjam(cr,uid,each_policy.agmnt_partner.id,each_policy.product_id.app_id,expiry_epoch)
+                _logger.info("rental_responserental_responserental_responserental_response--%s",rental_response)
 #                result=4113
                 if ast.literal_eval(str(rental_response)).has_key('body') and ast.literal_eval(str(rental_response)).get('body')['result'] == 4113:
 #                if result==4113:
-                    print"sucessssssssssssssssssssssssss"
+                    _logger.info("sucessssssssssssssssssssssssss")
                     context['update']=True
-                    sale_obj.write_selected_agreement(cr,uid,each_policy.sale_id,context)
+                    sale_obj.write_selected_agreement(cr,uid,[each_policy.sale_id],context)
             return True
         
     def recurring_billing(self,cr,uid,context={}):
@@ -2407,16 +2424,16 @@ class cancel_service(osv.osv):
             print "user_id---------",user_id
             print "app_id---------",app_id
             print "expiry_epoch---------",today
-            expiry_epoch=time.mktime(datetime.strptime(str(cancel_time), "%Y-%m-%d").timetuple())
-            print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch,type(expiry_epoch),int(expiry_epoch)
-            expiry_epoch=expiry_epoch+3600.0
-            print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
-            old_policy_result = user_auth_obj.rental_playjam(cr,uid,user_id,app_id,expiry_epoch)
+#            expiry_epoch=time.mktime(datetime.strptime(str(cancel_time), "%Y-%m-%d").timetuple())
+#            print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch,type(expiry_epoch),int(expiry_epoch)
+#            expiry_epoch=expiry_epoch+3600.0
+#            print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
+            old_policy_result = user_auth_obj.rental_playjam(cr,uid,user_id,app_id,0)
             print "voucher_return----------",old_policy_result
-            result=4113
-#                    if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
+#            result=4113
+            if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
                 #4113 is the result response value for successfull rental update
-            if result==4113:
+#            if result==4113:
                 cr.execute("update res_partner_policy set active_service=False,cancel_date=%s,no_recurring=False,additional_info=%s,return_cancel_reason=%s where id=%s",(time.strftime('%Y-%m-%d'),cancellation_reason,main_reason,service_id.id))
                 res['state'] = 'done'
             return res
@@ -2432,16 +2449,16 @@ class cancel_service(osv.osv):
                         user_id = return_object.partner_id.id
                         app_id=service_id.product_id.app_id
                         today = date.today().strftime('%Y-%m-%d')
-                        cancel_time=time.strftime('%Y-%m-%d')
+#                        cancel_time=time.strftime('%Y-%m-%d')
                         print "user_id---------",user_id
                         print "app_id---------",app_id
-                        print "expiry_epoch---------",today
+#                        print "expiry_epoch---------",today
 #                        expiry_epoch=time.mktime(datetime.strptime(str(cancel_time), "%Y-%m-%d").timetuple())
-                        expiry_epoch=time.mktime(datetime.now().timetuple())
-                        print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch,type(expiry_epoch),int(expiry_epoch)
-                        expiry_epoch=expiry_epoch+3600.0
-                        print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
-                        old_policy_result = user_auth_obj.rental_playjam(user_id,app_id,expiry_epoch)
+#                        expiry_epoch=time.mktime(datetime.now().timetuple())
+#                        print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch,type(expiry_epoch),int(expiry_epoch)
+#                        expiry_epoch=expiry_epoch+3600.0
+#                        print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
+                        old_policy_result = user_auth_obj.rental_playjam(user_id,app_id,0)
                         print "voucher_return----------",old_policy_result
                         if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
                             if (context and  (context.get('refund_cancel_service') or (context.get('active_model')=='credit.service'))) or (context and context.get('immediate_cancel')):
@@ -2501,12 +2518,12 @@ class cancel_service(osv.osv):
                     cancel_time=time.strftime('%Y-%m-%d')
                     print "user_id---------",user_id
                     print "app_id---------",app_id
-                    print "expiry_epoch---------",today
-                    expiry_epoch=time.mktime(datetime.strptime(str(cancel_time), "%Y-%m-%d").timetuple())
-                    print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch,type(expiry_epoch),int(expiry_epoch)
-                    expiry_epoch=expiry_epoch+3600.0
-                    print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
-                    old_policy_result = user_auth_obj.rental_playjam(cr,uid,user_id,app_id,expiry_epoch)
+#                    print "expiry_epoch---------",today
+#                    expiry_epoch=time.mktime(datetime.strptime(str(cancel_time), "%Y-%m-%d").timetuple())
+#                    print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch,type(expiry_epoch),int(expiry_epoch)
+#                    expiry_epoch=expiry_epoch+3600.0
+#                    print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
+                    old_policy_result = user_auth_obj.rental_playjam(cr,uid,user_id,app_id,0)
                     print "voucher_return----------",old_policy_result
                     if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
 		    #Code to write cancellation data and marking service as deactive

@@ -35,13 +35,12 @@ class active_recurring_billing(osv.osv_memory):
         return res
     def active_recurring_billing(self,cr,uid,ids,context=None):
         policy_obj=self.pool.get('res.partner.policy')
-        cancel_service_obj = self.pool.get('cancel.service')
-	return_obj=self.pool.get('return.order')
+        partner_obj=self.pool.get('res.partner')
         rb_activation_obj=self.pool.get('recurring.billing.activation')
         if context and context.get('active_model')=='res.partner':
             data_obj=self.browse(cr,uid,ids[0]).active_policy_id
 #            print"data_objdata_objdata_obj",data_obj
-            policy_ids=[s.policy_id.id for s in data_obj]
+#            policy_ids=[s.policy_id.id for s in data_obj]
 #            print"policy_idspolicy_idspolicy_ids",policy_ids
             if data_obj:
                 for each_policy in data_obj:
@@ -65,9 +64,26 @@ class active_recurring_billing(osv.osv_memory):
                                 'no_recurring':False,
                                 })
                             policy_brw.write({'no_recurring':False})
+                            partner_obj.next_billing_amount(cr,uid,policy_brw.agmnt_partner.id)
                             today=datetime.datetime.today()
                             res=rb_activation_obj.create(cr,uid,{'partner_id':policy_brw.agmnt_partner.id,'policy_id':policy_brw.id,'user_id':uid,'rb_activation_date':today.date()})
-
-
         return True
+    
+    def deactivate_recurring_billing(self,cr,uid,ids,context=None):
+        policy_obj=self.pool.get('res.partner.policy')
+        partner_obj=self.pool.get('res.partner')
+        if context and context.get('active_model')=='res.partner':
+            data_obj=self.browse(cr,uid,ids[0]).active_policy_id
+            if data_obj:
+                for each_policy in data_obj:
+                    no_recurring=each_policy.no_recurring
+                    if no_recurring==True:
+                        policy_brw=policy_obj.browse(cr,uid,each_policy.policy_id.id)
+                        print"policy_brwpolicy_brwpolicy_brw",policy_brw.id
+                        if policy_brw.no_recurring==False:
+                            cr.execute("update res_partner_policy set no_recurring=True where id=%d"%policy_brw.id)
+                            partner_obj.next_billing_amount(cr,uid,policy_brw.agmnt_partner.id)
+        return True
+
+
 active_recurring_billing()
