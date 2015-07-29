@@ -1374,9 +1374,9 @@ class sale_order(osv.osv):
                 raise osv.except_osv(_('Error !'),_('You cannot confirm a sale order which has no line.'))
         if not o.partner_id.emailid:
             raise osv.except_osv(_('Error !'),_('Please Enter Email Address for Customer'))
-        if o.order_type and o.cox_sales_channels == 'retail':
-            if not o.agreement_approved:
-                raise osv.except_osv(_('Error !'),_('The Customer must accept the retail agreements before confirming the order.'))
+#        if o.order_type and o.cox_sales_channels == 'retail':
+#            if not o.agreement_approved:
+#                raise osv.except_osv(_('Error !'),_('The Customer must accept the retail agreements before confirming the order.'))
         self.compute_tax(cr, uid, ids, context=context)##Function to Get tax from the Avalara
 #        if o.amount_total <= 0.0:
 #            raise osv.except_osv(_('Error !'),_('Total Cannot be Zero'))

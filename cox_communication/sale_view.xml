@@ -77,7 +77,7 @@
                 </xpath>
                 <!--Extra buttons are added for different purpose(see code)  -->
                 <xpath expr="//button[@string='Confirm Sale']" position="after">
-                    <button name="action_retail_agreement" string="Retail Agreement" type="object" icon="gtk-go-forward" attrs="{'invisible':['|',('order_type','=',False),'|',('agreement_approved','=',True),('state','=','cancel')]}"/>
+                    <!--<button name="action_retail_agreement" string="Retail Agreement" type="object" icon="gtk-go-forward" attrs="{'invisible':['|',('order_type','=',False),'|',('agreement_approved','=',True),('state','=','cancel')]}"/>-->
                     <button name="order_confirm_cox" type="object" string="Confirm Order" icon="gtk-apply" attrs="{'invisible':[('state','&lt;&gt;','draft')]}"/>
                     <button name="action_process_deliver" string="Deliver" type="object" icon="gtk-go-forward" attrs="{'invisible':['|',('state','&lt;&gt;','progress'),('order_type','=',False)]}"/>
                     <field name="agreement_approved" invisible="1"/>
@@ -298,7 +298,7 @@
                         <button name="print_quotation" string="Print" type="object" states="draft" class="oe_highlight" groups="base.group_user"/>
                         <button name="print_quotation" string="Print" type="object" states="sent" groups="base.group_user"/>
                         <button name="order_confirm_cox" type="object" string="Confirm Order" icon="gtk-apply" attrs="{'invisible':[('state','&lt;&gt;','draft')]}"/>
-                        <button name="action_retail_agreement" string="Retail Agreement" type="object" icon="gtk-go-forward" attrs="{'invisible':['|',('order_type','=',False),'|',('agreement_approved','=',True),('state','=','cancel')]}"/>
+                        <!--<button name="action_retail_agreement" string="Retail Agreement" type="object" icon="gtk-go-forward" attrs="{'invisible':['|',('order_type','=',False),'|',('agreement_approved','=',True),('state','=','cancel')]}"/>-->
                         <button name="order_confirm_cox" type="object" string="Confirm Order" icon="gtk-apply" attrs="{'invisible':[('state','&lt;&gt;','draft')]}"/>
                         <button name="action_process_deliver" string="Deliver" type="object" icon="gtk-go-forward" attrs="{'invisible':['|',('state','&lt;&gt;','progress'),('order_type','=',False)]}"/>
                         <field name="agreement_approved" invisible="1"/>

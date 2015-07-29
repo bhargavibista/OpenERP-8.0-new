@@ -898,7 +898,7 @@ class res_partner(models.Model):
                         return json.dumps({'body':{'code':'-4119','message':'Can not upgrade multiple times'}})
     #                    if new_pack_oe_brw.id==old_policy_brw.product_id.id:
     #                        return json.dumps({'body':{'code':False,'message':'You can not Upgrade/Downgrade to the same active subscription.'}})
-                    oe_categ_id=product_obj.browse(request.cr,SUPERUSER_ID,old_product_id).categ_id
+                    oe_categ_id=product_obj.browse(request.cr,SUPERUSER_ID,old_product_id.product_tmpl_id).categ_id
                     if oe_categ_id.parent_id:
                         old_prod_categ_parent.append(oe_categ_id.parent_id.id)
                     old_prod_categ.append(oe_categ_id.id)
@@ -933,7 +933,7 @@ class res_partner(models.Model):
                     free_trial_date=datetime.datetime.strptime(str(free_trial_date), "%Y-%m-%d").date()
     #                            new_pack_id = product_obj.search(request.cr,SUPERUSER_ID,[('default_code','=ilike',new_sku)])
     #                            new_pack_oe_brw=product_obj.browse(request.cr,SUPERUSER_ID,new_pack_id[0])
-                    new_prod_categ=new_pack_oe_brw.categ_id
+                    new_prod_categ=new_pack_oe_brw.product_tmpl_id.categ_id
                     updown_service=''
                     if new_prod_categ.parent_id:
                         if (new_prod_categ.parent_id.id not in old_prod_categ_parent) and (new_prod_categ.parent_id.id not in old_prod_categ) and (new_prod_categ.id not in old_prod_categ_parent):
@@ -972,7 +972,7 @@ class res_partner(models.Model):
                         print "user_id---------",user_id
                         print "app_id---------",app_id
                         print "expiry_epoch---------",start_date
-                        print"datetime.datetime.today()",datetime.datetime.today()
+#                        print"datetime.datetime.today()",datetime.datetime.today()
 #                        today =  str(datetime.datetime.today()).split(' ')[0]
 #                        expiry_epoch=time.mktime(datetime.datetime.now().timetuple())
 #                        print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch
@@ -1035,7 +1035,7 @@ class res_partner(models.Model):
                             if policy_id:
                                     return json.dumps({'body':{'code':'4113','message':'Subscription Updated'}})
                         else:
-                            new_policy_cancel_result = user_auth_obj.rental_playjam(user_id,new_pack_oe_brw.app_id,expiry_epoch)
+                            new_policy_cancel_result = user_auth_obj.rental_playjam(user_id,new_pack_oe_brw.app_id,0)
                             print "new_policy_cancel_resultnew_policy_cancel_resultnew_policy_cancel_result",new_policy_cancel_result
 			    return json.dumps({'body':{'code':'-4113','message':'Subscription Update Failed'}})
                     else:

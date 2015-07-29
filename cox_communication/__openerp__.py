@@ -58,7 +58,7 @@ This module is built to handle requirements of Cox Communication.
         'crm_helpdesk.xml',
         'reasons_view.xml',
         'returns_view.xml',
-        'wizard/agreement_view.xml',
+#        'wizard/agreement_view.xml',
         'wizard/picking_scanning_view.xml', 
 #        'wizard/provision_customer.xml',    cox gen2 not needed
         'wizard/retail_delivery_view.xml',

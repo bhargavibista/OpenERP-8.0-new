@@ -48,7 +48,7 @@ class charge_customer(osv.osv_memory):
             return 'profileTransAuthCapture'
         if active_id:
             sale_id_obj = self.pool.get('sale.order').browse(cr,uid,context.get('active_id'))
-            if sale_id_obj.cox_sales_channels and sale_id_obj.cox_sales_channels == 'retail':
+            if sale_id_obj.cox_sales_channels and sale_id_obj.cox_sales_channels == 'retail' or 'call_center':
                 return 'profileTransAuthCapture'
             elif sale_id_obj.cox_sales_channels and sale_id_obj.cox_sales_channels == 'ecommerce':
                 return 'profileTransPriorAuthCapture'
@@ -224,7 +224,7 @@ class customer_profile_payment(osv.osv_memory):
             return 'profileTransAuthCapture'
         if active_id:
             sale_id_obj = self.pool.get('sale.order').browse(cr,uid,context.get('active_id'))
-            if sale_id_obj.cox_sales_channels and sale_id_obj.cox_sales_channels in ('retail','ecommerce','tru','playjam'):
+            if sale_id_obj.cox_sales_channels and sale_id_obj.cox_sales_channels in ('retail','ecommerce','tru','playjam','call_center'):
                 return 'profileTransAuthCapture'
             else:
                 return 'profileTransAuthOnly'

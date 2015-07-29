@@ -116,7 +116,7 @@ class sale_order(osv.osv):
                     unit_price=context.get('facevalue',False)
                 if policy_brw.up_down_service and policy_brw.extra_days:
                     invoice_lines+= policy_obj.service_tier_calculation(cr,uid,policy_brw,unit_price,date_inv,context)
-                    cr.execute("update res_partner_policy set adv_paid=False,extra_days=0,next_billing_date= '%s' where id =%s"%(nextmonth,policy_brw.id))
+                    cr.execute("update res_partner_policy set adv_paid=False,extra_days=0 where id =%s"%(policy_brw.id))
 		    cr.commit()
                 else:
                     context['new_pacakge_id'] = policy_brw.product_id
@@ -144,7 +144,7 @@ class sale_order(osv.osv):
                     if vals:
                         last_amount_charged=vals.get('price_unit',False)
                         print"last_amount_chargedlast_amount_chargedlast_amount_charged",last_amount_charged
-                        cr.execute("update res_partner_policy set adv_paid=False,next_billing_date= '%s',last_amount_charged=%s where id =%s"%(nextmonth,last_amount_charged,policy_brw.id))
+                        cr.execute("update res_partner_policy set adv_paid=False,last_amount_charged=%s where id =%s"%(last_amount_charged,policy_brw.id))
                         invoice_lines+=[vals]
                 invoice_ref+= 'RB'+ service_data.get('order_name','') + '|'
                 if not service_data.get('sale_id',False) in sale_ids:
