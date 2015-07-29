@@ -9,7 +9,9 @@
 action_move_create()
 action_number()
 write({'state':'open'})
-action_commit_tax()</field>
+action_commit_tax()
+invoice_validate()                
+</field>
             <field name="kind">function</field>
         </record>
 

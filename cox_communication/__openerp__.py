@@ -86,13 +86,13 @@ This module is built to handle requirements of Cox Communication.
         'schedular.xml',
         'stock_view.xml',
         'email_template.xml',
-#        'report/sale_report.xml',
+#        'report/sale_report.xml',##cox gen2 not needed
 #        'credit_service_view.xml',
         'credit_service_sequence.xml',
-#        'report/sales_returns_analysis.xml',
+#        'report/sales_returns_analysis.xml',##cox gen2 not needed
 #        'board_sale_view.xml',
 
-        'report/report_stock_move.xml',
+#        'report/report_stock_move.xml', ##cox gen2 not needed
         'custom_reporting/board_churn_view.xml',
         'custom_reporting/report_avg_customer_lifetime_view.xml',
         'custom_reporting/month_to_month_sales.xml',

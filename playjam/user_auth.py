@@ -760,11 +760,11 @@ class device_history(models.Model):
     '''Voucher related details'''
     _name = 'device.history'
     
-    partner_id = fields.Many2one(comodel='res.partner',string='User Name')
+    partner_id = fields.Many2one(comodel_name='res.partner',string='User Name')
     device_id = fields.Char()
     key = fields.Char()
     code = fields.Char()
-    user_auth_id = fields.Many2one(comodel='user.auth',string='User Auth')
+    user_auth_id = fields.Many2one(comodel_name='user.auth',string='User Auth')
 
     
     def write(self,ids,vals,context=None):

@@ -269,7 +269,16 @@
                 </xpath>-->
 		<xpath expr="/form/notebook" position="inside">
                     <page string="Stock Moves">
-                        <field name="move_prod_lot_ids"/>
+                        <field name="move_prod_lot_ids">
+                            <tree string="Stock Moves">
+                                <field name="product_id"/>
+                                <field name="location_id" groups="stock.group_locations"/>
+                                <field name="location_dest_id" groups="stock.group_locations"/>
+                                <field name="date" string="Date" groups="base.group_no_one"/>
+                                <field name="date_expected" string="Date Expected"/>
+                                <field name="state"/>
+                            </tree>
+                        </field>
                     </page>
                 </xpath>
                 <field name="ref" position="after">

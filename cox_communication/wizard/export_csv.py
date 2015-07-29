@@ -243,10 +243,6 @@ class export_csv(osv.osv_memory):
 
     def export_csv(self,cr,uid,ids,context={}):
         so_obj = self.pool.get('sale.order')
-        partner_obj = self.pool.get('res.partner')
-        so_line_obj = self.pool.get('sale.order.line')
-        return_line_obj = self.pool.get('return.order.line')
-        policy_obj = self.pool.get('res.partner.policy')
         invoice_obj = self.pool.get('account.invoice')
         self_obj=self.browse(cr,uid,ids[0])
         invoice_id_list,search_so=[],[]
@@ -263,10 +259,7 @@ class export_csv(osv.osv_memory):
             "City","State","Zip","Email ID","Phone Number","Date",
             "Order State","Promo Code","Sales Channel","Location Name",
             "Offer/Product Name","Device","Device Price(in this offer)","Service","Service Price(in this offer","Free/Paid",
-            "Quantity","Offer Price","Sales Tax","User",
-            "Return No.","Return Order Date","Return Product Name",
-            "Return Quantity","Return Amount","Return Tax","Return Reason",
-            "Active/Inactive","Cancel/Return Date"]
+            "Quantity","Offer Price","Sales Tax","User",]
             buf=cStringIO.StringIO()
             writer=csv.writer(buf, 'UNIX')
             pls_write = writer.writerow(datas)
@@ -371,148 +364,58 @@ class export_csv(osv.osv_memory):
                     else:
                         datas.append(0.0)
                     datas.append((so_id_obj.user_id.name if so_id_obj.user_id else ''))
-                    line_ids.append(line.id)
-                    prod_ids.append(line.product_id.id if line.product_id else '')
-                    search_child_so_line_id = so_line_obj.search(cr,uid,[('parent_so_line_id','in',line_ids)])
-                    if search_child_so_line_id:
-                        for each_child in  so_line_obj.browse(cr,uid,search_child_so_line_id):
-                            line_ids.append(each_child.id)
-                            if each_child.product_id:
-                                prod_ids.append(each_child.product_id.id)
-                    result_return = return_line_obj.search(cr,uid,[('sale_line_id','in',line_ids)])
-                    if result_return:
-                        roname,rodate, rolinename,ro_state,qty,line_subtotal,roamount_tax = '','','','',0.0,0.0,0
-                        for return_line_id_obj in return_line_obj.browse(cr,uid,result_return):
-                            if (return_line_id_obj.order_id.state != 'draft') and (return_line_id_obj.order_id.return_type == 'car_return'):
-                              if return_line_id_obj.order_id and return_line_id_obj.order_id.name not in roname:
-                                  roname += (return_line_id_obj.order_id.name if return_line_id_obj.order_id else '-')
-                                  rodate += return_line_id_obj.order_id.date_order
-                                  return_reason=return_line_id_obj.order_id.return_reason.name
-                              else:
-                                  pass
-                              rolinename += (return_line_id_obj.name if return_line_id_obj.name else '-')+','
-                              ro_state=return_line_id_obj.order_id.state
-#                              roname += (return_line_id_obj.order_id.name if return_line_id_obj.order_id else '-')
-#                              rodate += return_line_id_obj.order_id.date_order
-#                              rolinename += (return_line_id_obj.name if return_line_id_obj.name else '-')
-#                              ro_state=return_line_id_obj.order_id.state
-                              if (return_line_id_obj.product_id.type =='product'):
-                                  qty += (float(return_line_id_obj.product_uom_qty))
-                              else:
-                                if (return_line_id_obj.product_id.type =='service') and ( not return_line_id_obj.product_id.recurring_service):
-                                    qty += (float(return_line_id_obj.product_uom_qty))
-                              line_subtotal += float(return_line_id_obj.price_subtotal)
-                            else:
-                                return_line_id_obj = False
-                            if return_line_id_obj:
-                                if return_line_id_obj.order_id.amount_tax >= 0.0 :
-                                    return_tax = return_line_id_obj.order_id.amount_tax
-                                    if return_line_id_obj.order_id.amount_tax != roamount_tax:
-                                        roamount_tax += float(return_tax)
-                        rolinename=(rolinename.strip(','))
-                        datas.append(roname)
-                        datas.append(rodate)
-                        datas.append(rolinename)
-                        datas.append('-'+str(qty))
-                        datas.append('-'+str(line_subtotal))
-                        datas.append('-'+str(roamount_tax))
-                    if not result_return:
-                        datas.extend(['-','-','-',0.0,0.0,0.0])
-                    if line_ids and prod_ids:
-                        search_partner_policy = policy_obj.search(cr,uid,[('sale_line_id','in',line_ids),('product_id','in',prod_ids)])
-                        if search_partner_policy:
-                            search_partner_policy.sort()
-                            policy_brw = policy_obj.browse(cr,uid,search_partner_policy[-1])
-                            if policy_brw.additional_info:
-                                cancel_return_reason = partner_obj.return_cancel_reason_extract(policy_brw.additional_info)
-                                cancel_return_reason = cancel_return_reason.get('cancel_return_reason','')
-                            active_inactive = ('Inactive' if not policy_brw.active_service else 'Active')
-                            if (policy_brw.cancel_date and policy_brw.suspension_date and policy_brw.return_date):
-                                date_list.append(policy_brw.cancel_date)
-                                date_list.append(policy_brw.suspension_date)
-                                date_list.append(policy_brw.return_date)
-                                date_list.sort(key=lambda x: time.mktime(time.strptime(x,"%Y-%m-%d")))
-                                cancel_date=date_list[0]
-                            elif (policy_brw.cancel_date and policy_brw.suspension_date):
-                                cancel_date=(policy_brw.cancel_date if (policy_brw.cancel_date<=policy_brw.suspension_date) else policy_brw.suspension_date)
-                            elif (policy_brw.cancel_date and policy_brw.return_date):
-                                cancel_date=(policy_brw.cancel_date if (policy_brw.cancel_date<=policy_brw.return_date) else policy_brw.return_date)
-                            elif (policy_brw.suspension_date and policy_brw.return_date):
-                                cancel_date=(policy_brw.suspension_date if (policy_brw.suspension_date<=policy_brw.return_date) else policy_brw.return_date)
-                            elif policy_brw.suspension_date and not policy_brw.cancel_date and not policy_brw.return_date :
-                                cancel_date=(policy_brw.suspension_date)
-                            elif (policy_brw.cancel_date and not policy_brw.suspension_date and not policy_brw.return_date):
-                                cancel_date = policy_brw.cancel_date
-                            elif (policy_brw.return_date and not policy_brw.suspension_date and not policy_brw.cancel_date):
-                                cancel_date = policy_brw.return_date
-                            else:
-                                cancel_date=''
-
-                            datas.append(cancel_return_reason)
-                            datas.append(active_inactive)
-                            datas.append(cancel_date if cancel_date else '')
-####### Temp code for no recurring product
-#                        elif line.product_id.default_code=='Casual_Option_A':
-#                            if result_return and ro_state=='done':
-#                                active_inactive='InActive'
-#                                return_date=rodate if rodate else ''
-#                            else:
-#                                active_inactive='Active'
-#                            datas.append(return_reason if return_reason else '')
-#                            datas.append(active_inactive)
-#                            datas.append(return_date if return_date else '')
 
                     pls_write = writer.writerow(datas)
                     datas = []
-                    ##To Search Recurring billing for the Sale Order
-                    cr.execute("select id from account_invoice where recurring = True and state='paid' and id in (select invoice_id from sale_order_invoice_rel where order_id = %d)"%(so_id_obj.id))
-                    invoice_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
-                    if invoice_ids:
-                    
-                        amount_tax = 0.0
-                        for invoice_id_obj in invoice_obj.browse(cr,uid,invoice_ids):
-#                            if invoice_id_obj.recurring==True:
-                            if invoice_id_obj.id in invoice_id_list:
-                                pass
-                            else:
-                                invoice_id_list.append(invoice_id_obj.id)
-                                inv_street,inv_city,inv_zip,inv_phone,inv_co_state = '','','','',''
-                                if invoice_id_obj.partner_id:
-                                    inv_street = str(invoice_id_obj.partner_id.street) + (str(invoice_id_obj.partner_id.street2) if (invoice_id_obj.partner_id.street2) else '')
-                                    inv_city = invoice_id_obj.partner_id.city
-                                    inv_zip = invoice_id_obj.partner_id.zip
-                                    inv_phone =  invoice_id_obj.partner_id.zip
-                                    if invoice_id_obj.partner_id.state_id:
-                                        inv_co_state = invoice_id_obj.partner_id.state_id.name
-                                for invoice_line in invoice_id_obj.invoice_line:
-                                    datas.append(invoice_id_obj.number)
-                                    datas.append(invoice_id_obj.partner_id.name)
-                                    datas.append(invoice_id_obj.partner_id.ref)
-                                    datas.append(inv_street)
-                                    datas.append(inv_city)
-                                    datas.append(inv_co_state)
-                                    datas.append(inv_zip)
-                                    datas.append(invoice_id_obj.partner_id.emailid)
-                                    datas.append(inv_phone)
-                                    datas.append(invoice_id_obj.date_invoice)
-                                    datas.append(invoice_id_obj.state)
-                                    datas.append('-')
-                                    datas.append('-')
-                                    datas.append('-')
-                                    datas.append(invoice_line.name)
-                                    datas.extend(['','','','','Paid'])
-                                    datas.append(invoice_line.quantity)
-                                    datas.append(invoice_line.price_subtotal)
-                                    if amount_tax == 0.0 :
-                                        if invoice_id_obj.amount_tax >=0.0:
-                                            amount_tax = invoice_id_obj.amount_tax
-                                            datas.append(amount_tax)
-                                    else:
-                                        datas.append(0.0)
-                                    datas.append(invoice_id_obj.user_id.name)
-                                    datas.extend(['-','-',0.0,0.0,0.0])
-                                    pls_write = writer.writerow(datas)
-                                    datas = []
+#                    ##To Search Recurring billing for the Sale Order
+#                    cr.execute("select id from account_invoice where recurring = True and state='paid' and id in (select invoice_id from sale_order_invoice_rel where order_id = %d)"%(so_id_obj.id))
+#                    invoice_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
+#                    if invoice_ids:
+#                    
+#                        amount_tax = 0.0
+#                        for invoice_id_obj in invoice_obj.browse(cr,uid,invoice_ids):
+##                            if invoice_id_obj.recurring==True:
+#                            if invoice_id_obj.id in invoice_id_list:
+#                                pass
+#                            else:
+#                                invoice_id_list.append(invoice_id_obj.id)
+#                                inv_street,inv_city,inv_zip,inv_phone,inv_co_state = '','','','',''
+#                                if invoice_id_obj.partner_id:
+#                                    inv_street = str(invoice_id_obj.partner_id.street) + (str(invoice_id_obj.partner_id.street2) if (invoice_id_obj.partner_id.street2) else '')
+#                                    inv_city = invoice_id_obj.partner_id.city
+#                                    inv_zip = invoice_id_obj.partner_id.zip
+#                                    inv_phone =  invoice_id_obj.partner_id.zip
+#                                    if invoice_id_obj.partner_id.state_id:
+#                                        inv_co_state = invoice_id_obj.partner_id.state_id.name
+#                                for invoice_line in invoice_id_obj.invoice_line:
+#                                    datas.append(invoice_id_obj.number)
+#                                    datas.append(invoice_id_obj.partner_id.name)
+#                                    datas.append(invoice_id_obj.partner_id.ref)
+#                                    datas.append(inv_street)
+#                                    datas.append(inv_city)
+#                                    datas.append(inv_co_state)
+#                                    datas.append(inv_zip)
+#                                    datas.append(invoice_id_obj.partner_id.emailid)
+#                                    datas.append(inv_phone)
+#                                    datas.append(invoice_id_obj.date_invoice)
+#                                    datas.append(invoice_id_obj.state)
+#                                    datas.append('-')
+#                                    datas.append('-')
+#                                    datas.append('-')
+#                                    datas.append(invoice_line.name)
+#                                    datas.extend(['','','','','Paid'])
+#                                    datas.append(invoice_line.quantity)
+#                                    datas.append(invoice_line.price_subtotal)
+#                                    if amount_tax == 0.0 :
+#                                        if invoice_id_obj.amount_tax >=0.0:
+#                                            amount_tax = invoice_id_obj.amount_tax
+#                                            datas.append(amount_tax)
+#                                    else:
+#                                        datas.append(0.0)
+#                                    datas.append(invoice_id_obj.user_id.name)
+#                                    datas.extend(['-','-',0.0,0.0,0.0])
+#                                    pls_write = writer.writerow(datas)
+#                                    datas = []
             out=base64.encodestring(buf.getvalue())
             buf.close()
             self.write(cr, uid, ids, {'csv_file':out,'name': 'Sales Report.csv'})

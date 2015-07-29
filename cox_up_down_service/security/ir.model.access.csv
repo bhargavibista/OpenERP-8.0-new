@@ -1,0 +1,11 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_upgrade_downgrade_policy_retail_store","upgrade.downgrade.policy.group_retail_store","model_upgrade_downgrade_policy","cox_communication.group_retail_store",1,1,1,0
+"access_upgrade_downgrade_policy_rsassociate","upgrade.downgrade.policy.group_rsassociate","model_upgrade_downgrade_policy","cox_communication.group_retail_sales_associate",1,1,1,0
+"access_upgrade_downgrade_policy_retail_sales_manager","upgrade.downgrade.policy.group_retail_sales_manager","model_upgrade_downgrade_policy","cox_communication.group_retail_sales_manager",1,1,1,0
+"access_upgrade_downgrade_policy_internal_operations","upgrade.downgrade.policy.group_internal_operations","model_upgrade_downgrade_policy","cox_communication.group_internal_operations",1,1,1,0
+"access_upgrade_downgrade_policy_internal_operations_manager","upgrade.downgrade.policy.group_internal_operations_manager","model_upgrade_downgrade_policy","cox_communication.group_internal_operations_manager",1,1,1,0
+"access_upgrade_downgrade_policy_support","upgrade.downgrade.policy.group_support","model_upgrade_downgrade_policy","cox_communication.group_support",1,1,1,0
+"access_upgrade_downgrade_policy_warehouse_cox","upgrade.downgrade.policy.group_warehouse_cox","model_upgrade_downgrade_policy","cox_communication.group_warehouse_cox",1,1,1,0
+"access_upgrade_downgrade_policy_third_party_reseller","upgrade.downgrade.policy.group_third_party_reseller","model_upgrade_downgrade_policy","cox_communication.group_third_party_reseller",1,1,1,0
+"access_upgrade_downgrade_policy_vista_warehouse","upgrade.downgrade.policy.group_vista_warehouse","model_upgrade_downgrade_policy","cox_communication.group_vista_warehouse",1,1,1,0
+"access_upgrade_downgrade_policy_call_center","upgrade.downgrade.policy.group_call_center","model_upgrade_downgrade_policy","cox_communication.group_call_center",1,1,1,0
