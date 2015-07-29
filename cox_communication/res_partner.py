@@ -1700,12 +1700,12 @@ class partner_payment_error(osv.osv):
                             app_id=policy_brw.product_id.app_id
                             print "user_id---------",user_id,policy_brw
                             print "app_id---------",app_id
-                            print "expiry_epoch---------",start_date
-                            expiry_epoch=time.mktime(datetime.datetime.strptime(str(today), "%Y-%m-%d").timetuple())
-                            print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch
-                            expiry_epoch=expiry_epoch+3600.0
-                            print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
-                            rental_result = user_auth_obj.rental_playjam(cr,uid,user_id,app_id,expiry_epoch)
+#                            print "expiry_epoch---------",start_date
+#                            expiry_epoch=time.mktime(datetime.datetime.strptime(str(today), "%Y-%m-%d").timetuple())
+#                            print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch
+#                            expiry_epoch=expiry_epoch+3600.0
+#                            print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
+                            rental_result = user_auth_obj.rental_playjam(cr,uid,user_id,app_id,0)
                             print "voucher_return----------",old_policy_result
             #                    result=4113
                             if ast.literal_eval(str(rental_result)).has_key('body') and ast.literal_eval(str(rental_result)).get('body')['result'] == 4113:
