@@ -10,8 +10,10 @@
                     <separator colspan="4" string="Advance Payment of Customers" />
                     <!--<field name="save_report_loc"/>-->
                     <newline/>
+                    <group>
                     <field name="billing_date"/>
                     <field name="partner_id"/>
+                    </group>
                     <button name="capture_payment" string="Capture Payment" type="object"/>
                </form>
             </field>

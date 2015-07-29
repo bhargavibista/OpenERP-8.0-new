@@ -750,7 +750,7 @@ class upgrade_downgrade_policy(osv.osv):
                 'OldProductId':self_obj.old_policy_id.product_id.id,
                 'from_openerp':True,
             })
-            res=partner_obj.update_subscription(cr,uid,subscription_data)
+            res=partner_obj.update_subscription(subscription_data)
             print"resresres",res,ast.literal_eval(str(res)).get('body')['code']
             if ast.literal_eval(str(res)).has_key('body'):
                 code=int(ast.literal_eval(str(res)).get('body')['code'])
