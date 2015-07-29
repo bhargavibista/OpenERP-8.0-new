@@ -21,6 +21,7 @@
              <graph string="Month to Month Sales" type="line">
                  <field name="date"/>
                  <field name="current_count"/>
+                 <field name="previous_count"/>
              </graph>
          </field>
     </record>
