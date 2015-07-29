@@ -976,10 +976,11 @@ class res_partner(osv.Model):
             return {'value':{'high_speed_internet':'no','cable':'no','flare_account':check_all_data}}
     def create(self, cr, uid, vals, context=None):
         print "vals////////////////////////",vals
-        email_id=vals.get('emailid')
-        print "email_dd///////////////////////////",email_id
-        print(email_id.lower())
-        vals.update({'emailid':email_id.lower()})
+        if vals.has_key('emailid'):
+            email_id=vals.get('emailid')
+            print "email_dd///////////////////////////",email_id
+            print(email_id.lower())
+            vals.update({'emailid':email_id.lower()})
         res = super(res_partner, self).create(cr, uid, vals, context=context)
         return res
 
