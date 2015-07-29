@@ -134,7 +134,7 @@ class charge_customer(osv.osv_memory):
                     tax_obj = self.pool.get('account.tax')
                     wf_service.trg_validate(uid, 'sale.order', active_id, 'order_confirm', cr)
                     email_to = sale_object.partner_id.emailid
-                    if sale_object.cox_sales_channels in ('retail','ecommerce','tru','playjam'):
+                    if sale_object.cox_sales_channels in ('retail','ecommerce','tru','playjam','call_center'):
 			print "active id////////////////////////////////",active_id
                         cr.execute('select invoice_id from sale_order_invoice_rel where order_id=%s'%(active_id))
                         invoice_id=cr.fetchone()
