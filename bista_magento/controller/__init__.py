@@ -1,2 +1,2 @@
-import my_controller
+import magento_controller
 #test
