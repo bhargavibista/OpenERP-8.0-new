@@ -111,7 +111,6 @@ class account_invoice(osv.osv):
          account_id=account_data['value']['account_id']
          if context.has_key('wallet_purchase'):
             account_id=account_obj.search(cr, uid, [('code', 'ilike', 'Deferred Revenue')])
-            print "account_idaccount_idaccount_id for wallet top up.....",account_id
             if account_id:
                 account_id = account_id[0]
          print "account_data['value']['account_id']",account_id
