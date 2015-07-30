@@ -10,6 +10,7 @@ from openerp.tools.translate import _
 import openerp.pooler as pooler
 import httplib, ConfigParser, urlparse
 import urllib2
+import json
 import xml.dom.minidom
 from xml.dom.minidom import parse, parseString
 import urllib2
@@ -41,7 +42,15 @@ class gift_card_validate_call(osv.osv):
     
     """Call to incomm for status inquiry of Gift Card"""
     def api_call_toincomm_statinq(self,cr,uid,card_num,context):
-        url = "https://milws4-test.incomm.com/transferedvalue/gateway"
+        incomm_config=self.pool.get('incomm.cred.details')
+        config_ids = incomm_config.search(request.cr,SUPERUSER_ID,[])
+        if config_ids:
+            config_obj = incomm_config.browse(request.cr,SUPERUSER_ID,config_ids[0])
+            url=config_obj.server_url
+        else:
+            result={"body":{ 'code':'False', 'message':"Please Define Incomm Configuration!!"}}
+            return json.dumps(result)
+#        url = "https://milws4-test.incomm.com/transferedvalue/gateway"
         xml_text="""<?xml version='1.0' encoding='UTF-8'?>
         <TransferredValueTxn>
         <TransferredValueTxnReq>
@@ -68,7 +77,15 @@ class gift_card_validate_call(osv.osv):
         
         """Call to Incomm to Redeem the gift card"""
     def api_call_toincomm_redemption(self,cr,uid,card_num,context):
-        url = "https://milws4-test.incomm.com/transferedvalue/gateway"
+        incomm_config=self.pool.get('incomm.cred.details')
+        config_ids = incomm_config.search(request.cr,SUPERUSER_ID,[])
+        if config_ids:
+            config_obj = incomm_config.browse(request.cr,SUPERUSER_ID,config_ids[0])
+            url=config_obj.server_url
+        else:
+            result={"body":{ 'code':'False', 'message':"Please Define Incomm Configuration!!"}}
+            return json.dumps(result)
+#        url = "https://milws4-test.incomm.com/transferedvalue/gateway"
         xml_text="""<?xml version='1.0' encoding='UTF-8'?>
         <TransferredValueTxn>
         <TransferredValueTxnReq>
@@ -95,7 +112,15 @@ class gift_card_validate_call(osv.osv):
         
     """Call to Incomm to reverse the Gift Card Status to Active"""
     def api_call_toincomm_reversal(self,cr,uid,card_num,context):
-        url = "https://milws4-test.incomm.com/transferedvalue/gateway"
+        incomm_config=self.pool.get('incomm.cred.details')
+        config_ids = incomm_config.search(request.cr,SUPERUSER_ID,[])
+        if config_ids:
+            config_obj = incomm_config.browse(request.cr,SUPERUSER_ID,config_ids[0])
+            url=config_obj.server_url
+        else:
+            result={"body":{ 'code':'False', 'message':"Please Define Incomm Configuration!!"}}
+            return json.dumps(result)
+#        url = "https://milws4-test.incomm.com/transferedvalue/gateway"
         xml_text="""<?xml version='1.0' encoding='UTF-8'?>
         <TransferredValueTxn>
         <TransferredValueTxnReq>
