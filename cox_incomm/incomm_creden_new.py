@@ -16,6 +16,8 @@ from xml.dom.minidom import parse, parseString
 import urllib2
 import ast
 import time
+import logging
+_logger = logging.getLogger(__name__)
 
 class incomm_cred_details(osv.osv):
     _name = "incomm.cred.details"
