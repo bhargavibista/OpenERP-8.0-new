@@ -11,13 +11,11 @@ class tr_barcode(osv.osv):
     }
     
     def onchange_product_id(self, cr, uid, ids, product_id):
-#        print"idsssssssss",ids,product_id
         res={}
         if not product_id:
             res = {'value': {'code': False}}
             return res
         default_code = self.pool.get('product.product').browse(cr,uid,product_id).default_code
-#        print"default_code",default_code
         vals = {
                'code' : default_code,
                'barcode_type': 'Standard39',
