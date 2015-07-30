@@ -16,6 +16,9 @@ from xml.dom.minidom import parse, parseString
 import urllib2
 import ast
 import time
+import requests
+from openerp.http import request
+from openerp import SUPERUSER_ID
 import logging
 _logger = logging.getLogger(__name__)
 
