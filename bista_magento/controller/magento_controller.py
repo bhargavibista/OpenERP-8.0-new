@@ -25,7 +25,6 @@ class Magento(http.Controller):
                     string_con=urllib.unquote(string_con).decode('utf8')
             if "true" in string_con:
                 string_con=string_con.replace('true', "True")
-                print "string--------------",string_con
             if "false" in string_con:
                 string_con=string_con.replace('false', "False")
             try:
@@ -50,9 +49,6 @@ class Magento(http.Controller):
 	t='true'
         f='false'
         want_code=False
-#        osv_pool = pooler.get_pool('odoo_8')
-#        user = osv_pool.get('user.auth')
-
         if kw.has_key('request'):
             requ=kw.get('request')
             string_con=str(requ)
@@ -63,24 +59,17 @@ class Magento(http.Controller):
                     string_con=urllib.unquote(string_con).decode('utf8')
             if "true" in string_con:
                 string_con=string_con.replace('true', "True")
-
             if "false" in string_con:
                 string_con=string_con.replace('false', "False")
-
-            
             try:
                 dict_req = ast.literal_eval(str(string_con))
             except Exception ,e:
-                
                 return str(json.dumps({"body":{"result":-1537}}))
-            
-            
             api_id=dict_req.get('ApiId')
             db_name=dict_req.get('DBName')
             act_code=dict_req.get('ActivationCode')
             if not api_id=='123':
                 return str({"body":{"result":"Authentication Error!!"}})
-
             registry = RegistryManager.get(db_name)
             with registry.cursor() as cr:
                 u = registry['user.auth']
@@ -96,7 +85,6 @@ class Magento(http.Controller):
         want_code=False
         osv_pool = pooler.get_pool('odoo_8')
         user = osv_pool.get('res.partner')
-
         if kw.has_key('request'):
             requ=kw.get('request')
             string_con=str(requ)
@@ -104,31 +92,20 @@ class Magento(http.Controller):
                 if '+' in string_con:
                     string_con=string_con.replace('+','')
                     string_con=urllib.unquote(string_con).decode('utf8')
-
             if "true" in string_con:
                 string_con=string_con.replace('true', "True")
-                print "string--------------",string_con
-
             if "false" in string_con:
                 string_con=string_con.replace('false', "False")
-
-
-            
             try:
                 dict_req = ast.literal_eval(str(string_con))
-
             except Exception ,e:
                 return req.make_response(str({"body":{'result':-1537}}), [('Content-Type', 'application/json; charset=UTF-8')])
-
-            
             api_id=dict_req.get('ApiId')
             db_name=dict_req.get('DBName')
             pwd=dict_req.get('Password')
             u_name=dict_req.get('UserName')
-
             if not api_id=='123':
                 return str({"body":{"result":"Authentication Error!!"}})
-            
             ###odoo8 changes
 #            registry = openerp.modules.registry.Registry(db_name)
 #            with registry.cursor() as cr:
@@ -139,7 +116,6 @@ class Magento(http.Controller):
             with registry.cursor() as cr:
                 u = registry['res.partner']
                 result = u.login_magento(u_name,pwd)
-           
             return str(result)
         return str({"body":{"result":"SERVER ERROR INVALID SYNTAX"}})
     
@@ -149,8 +125,6 @@ class Magento(http.Controller):
 	t='true'
         f='false'
         want_code=False
-        
-
         if kw.has_key('request'):
             requ=kw.get('request')
             string_con=str(requ)
@@ -158,19 +132,14 @@ class Magento(http.Controller):
                 if '+' in string_con:
                     string_con=string_con.replace('+','')
                     string_con=urllib.unquote(string_con).decode('utf8')
-
             if "true" in string_con:
                 string_con=string_con.replace('true', "True")
-
             if "false" in string_con:
                 string_con=string_con.replace('false', "False")
-
             try:
                 dict_req = ast.literal_eval(str(string_con))
-
             except Exception ,e:
                 return req.make_response(str({"body":{'result':-1537}}), [('Content-Type', 'application/json; charset=UTF-8')])
-
             api_id=dict_req.get('ApiId')
             db_name=dict_req.get('DBName')
             pwd=dict_req.get('Password')
@@ -179,7 +148,6 @@ class Magento(http.Controller):
             user = osv_pool.get('res.partner')
             if not api_id=='123':
                 return str({"body":{"result":"Authentication Error!!"}})
-            
             ##odoo8 changes
 #            registry = openerp.modules.registry.Registry(str(db_name))
 #            with registry.cursor() as cr:
@@ -202,17 +170,12 @@ class Magento(http.Controller):
                 if '+' in string_con:
                     string_con=string_con.replace('+','')
                     string_con=urllib.unquote(string_con).decode('utf8')
-
 	    if t in string_con:
                 string_con=string_con.replace('true', "True")
-
             if f in string_con:
                 string_con=string_con.replace(f, "False")
-
 	    if 'null' in string_con:
                 string_con=string_con.replace('null', "")
-
-
             try:
                 dict_req = ast.literal_eval(str(string_con))
 
@@ -227,14 +190,12 @@ class Magento(http.Controller):
             user = osv_pool.get('res.partner')
             if not api_id=='123':
                 return str({"body":{"result":"Authentication Error!!"}})
-            
             ###odoo8 changes
 #            registry = openerp.modules.registry.Registry(str(db_name))
 #            with registry.cursor() as cr:
 #                result=user.create_update_profile(cr,1,dict_req,{})
 #            obj=request.registry['res.partner']
 #            result=obj.create_update_profile(request.cr,1,dict_req,{})
-
             registry = RegistryManager.get(db_name)
             with registry.cursor() as cr:
                 u = registry['res.partner']
@@ -249,8 +210,6 @@ class Magento(http.Controller):
 	t='true'
         f='false'
         want_code=False
-
-
         if kw.has_key('request'):
             requ=kw.get('request')
             string_con=str(requ)
@@ -258,19 +217,14 @@ class Magento(http.Controller):
                 if '+' in string_con:
                     string_con=string_con.replace('+','')
                     string_con=urllib.unquote(string_con).decode('utf8')
-
             if "true" in string_con:
                 string_con=string_con.replace('true', "True")
-
             if "false" in string_con:
                 string_con=string_con.replace('false', "False")
-
             try:
                 dict_req = ast.literal_eval(str(string_con))
-
             except Exception ,e:
                 return str({"body":{'result':-1537}})
-            
             api_id=dict_req.get('ApiId')
             db_name=dict_req.get('DBName')
             pwd=dict_req.get('Password')
@@ -283,11 +237,8 @@ class Magento(http.Controller):
 #            registry = openerp.modules.registry.Registry(str(db_name))
 #            with registry.cursor() as cr:
 #                result=user.update_billing_info(cr,1,dict_req,{})
-
-
 #            obj=request.registry['res.partner']
 #            result=obj.update_billing_info(request.cr,1,dict_req,{})
-
             registry = RegistryManager.get(db_name)
             with registry.cursor() as cr:
                 u = registry['res.partner']
@@ -309,21 +260,14 @@ class Magento(http.Controller):
                 if '+' in string_con:
                     string_con=string_con.replace('+','')
                     string_con=urllib.unquote(string_con).decode('utf8')
-
             if "true" in string_con:
                 string_con=string_con.replace('true', "True")
-                
             if "false" in string_con:
                 string_con=string_con.replace('false', "False")
-
-
             try:
                 dict_req = ast.literal_eval(str(string_con))
-                
             except Exception ,e:
-                
                 return str({"body":{'result':-1537}})
-            
             api_id=dict_req.get('ApiId')
             db_name=dict_req.get('DBName')
             pwd=dict_req.get('Password')
@@ -332,19 +276,16 @@ class Magento(http.Controller):
             user = osv_pool.get('res.partner')
             if not api_id=='123':
                 return str({"body":{"result":"Authentication Error!!"}})
-            
             ###odoo8 changes
 #            registry = openerp.modules.registry.Registry(str(db_name))
 #            with registry.cursor() as cr:
 #                result=user.create_order_magento(cr,1,dict_req,{})
 #            obj=request.registry['res.partner']
 #            result=obj.create_order_magento(request.cr,1,dict_req,{})
-
             registry = RegistryManager.get(db_name)
             with registry.cursor() as cr:
                 u = registry['res.partner']
                 result = u.create_order_magento(dict_req)
-            
             return str(result)
         return str({"body":{"result":"SERVER ERROR INVALID SYNTAX"}})
     
@@ -360,18 +301,14 @@ class Magento(http.Controller):
                 if '+' in string_con:
                     string_con=string_con.replace('+','')
                     string_con=urllib.unquote(string_con).decode('utf8')
-
             if "true" in string_con:
                 string_con=string_con.replace('true', "True")
             if "false" in string_con:
                 string_con=string_con.replace('false', "False")
-
             try:
                 dict_req = ast.literal_eval(str(string_con))
-
             except Exception ,e:
                 return str({"body":{'result':-1537}})
-            
             api_id=dict_req.get('ApiId')
             db_name=dict_req.get('DBName')
             pwd=dict_req.get('Password')
@@ -403,23 +340,17 @@ class Magento(http.Controller):
                 if '+' in string_con:
                     string_con=string_con.replace('+','')
                     string_con=urllib.unquote(string_con).decode('utf8')
-
             if "true" in string_con:
                 string_con=string_con.replace('true', "True")
-
             if "false" in string_con:
                 string_con=string_con.replace('false', "False")
-
             try:
                 dict_req = ast.literal_eval(str(string_con))
-
             except Exception ,e:
                 return req.make_response(str({"body":{'result':-1537}}), [('Content-Type', 'application/json; charset=UTF-8')])
-            
             api_id=dict_req.get('ApiId')
             db_name=dict_req.get('DBName')
             pwd=dict_req.get('Password')
-#            u_name=dict_req.get('UserName')
             osv_pool = pooler.get_pool(str(db_name))
             user = osv_pool.get('res.partner')
             if not api_id=='123':
@@ -429,7 +360,6 @@ class Magento(http.Controller):
 #                result=user.get_transactions_magento(cr,1,dict_req,{})
 #            obj=request.registry['res.partner']
 #            result=obj.get_transactions_magento(request.cr,1,dict_req,{})
-
             registry = RegistryManager.get(db_name)
             with registry.cursor() as cr:
                 u = registry['res.partner']
@@ -447,26 +377,16 @@ class Magento(http.Controller):
                 if '+' in string_con:
                     string_con=string_con.replace('+','')
                     string_con=urllib.unquote(string_con).decode('utf8')
-
             if "true" in string_con:
                 string_con=string_con.replace('true', "True")
-                
-
             if "false" in string_con:
                 string_con=string_con.replace('false', "False")
-
-
             try:
                 dict_req = ast.literal_eval(str(string_con))
-
             except Exception ,e:
                 return str({"body":{'result':-1537}})
-            
-            
             api_id=dict_req.get('ApiId')
             db_name=dict_req.get('DBName')
-#            pwd=dict_req.get('Password')
-#            u_name=dict_req.get('UserName')
             osv_pool = pooler.get_pool(str(db_name))
             user = osv_pool.get('product.product')
             if not api_id=='123':
@@ -476,7 +396,6 @@ class Magento(http.Controller):
 #                result=user.get_product_info(cr,1,{})
 #            obj=request.registry['product.product']
 #            result=obj.get_product_info(request.cr,1,{})
-
             registry = RegistryManager.get(db_name)
             with registry.cursor() as cr:
                 u = registry['product.product']
@@ -494,24 +413,16 @@ class Magento(http.Controller):
                 if '+' in string_con:
                     string_con=string_con.replace('+','')
                     string_con=urllib.unquote(string_con).decode('utf8')
-
-
             if "true" in string_con:
                 string_con=string_con.replace('true', "True")
             if "false" in string_con:
                 string_con=string_con.replace('false', "False")
             try:
                 dict_req = ast.literal_eval(str(string_con))
-
             except Exception ,e:
                 return req.make_response(str({"body":{'result':-1537}}), [('Content-Type', 'application/json; charset=UTF-8')])
-
-            
-            
             api_id=dict_req.get('ApiId')
             db_name=dict_req.get('DBName')
-#            pwd=dict_req.get('Password')
-#            u_name=dict_req.get('UserName')
             osv_pool = pooler.get_pool(str(db_name))
             user = osv_pool.get('product.product')
             if not api_id=='123':
@@ -522,7 +433,6 @@ class Magento(http.Controller):
 
 #            obj=request.registry['product.product']
 #            result=obj.update_product_info({})
-
             registry = RegistryManager.get('odoo_8')
             with registry.cursor() as cr:
                 u = registry['product.product']
@@ -540,22 +450,14 @@ class Magento(http.Controller):
                 if '+' in string_con:
                     string_con=string_con.replace('+','')
                     string_con=urllib.unquote(string_con).decode('utf8')
-            
-
             if "true" in string_con:
                 string_con=string_con.replace('true', "True")
-                
-
             if "false" in string_con:
                 string_con=string_con.replace('false', "False")
-
             try:
                 dict_req = ast.literal_eval(str(string_con))
-
             except Exception ,e:
                 return req.make_response(str({"body":{'result':-1537}}), [('Content-Type', 'application/json; charset=UTF-8')])
-            
-            
             api_id=dict_req.get('ApiId')
             db_name=dict_req.get('DBName')
             osv_pool = pooler.get_pool(str(db_name))
@@ -579,22 +481,14 @@ class Magento(http.Controller):
                 if '+' in string_con:
                     string_con=string_con.replace('+','')
                     string_con=urllib.unquote(string_con).decode('utf8')
-
             if "true" in string_con:
                 string_con=string_con.replace('true', "True")
-                
-
             if "false" in string_con:
                 string_con=string_con.replace('false', "False")
-            
-            
             try:
                 dict_req = ast.literal_eval(str(string_con))
-
             except Exception ,e:
                 return req.make_response(str({"body":{'result':-1537}}), [('Content-Type', 'application/json; charset=UTF-8')])
-            
-            
             api_id=dict_req.get('ApiId')
             db_name=dict_req.get('DBName')
             registry = RegistryManager.get(db_name)
@@ -603,7 +497,6 @@ class Magento(http.Controller):
             with registry.cursor() as cr:
                 res_partner = registry['res.partner']
                 result = res_partner.redeem_gift_card(dict_req)
-          
             return str(result)
         return str({"body":{"result":"SERVER ERROR INVALID SYNTAX"}})
     
@@ -617,28 +510,20 @@ class Magento(http.Controller):
                 if '+' in string_con:
                     string_con=string_con.replace('+','')
                     string_con=urllib.unquote(string_con).decode('utf8')
-
             if "true" in string_con:
                 string_con=string_con.replace('true', "True")
-                
-
             if "false" in string_con:
                 string_con=string_con.replace('false', "False")
-
-            
             try:
                 dict_req = ast.literal_eval(str(string_con))
-
             except Exception ,e:
                 return str({"body":{'result':-1537}})
-            
             api_id=dict_req.get('ApiId')
             db_name=dict_req.get('DBName')
             osv_pool = pooler.get_pool(str(db_name))
             user = osv_pool.get('res.partner')
             if not api_id=='123':
                 return str({"body":{"result":"Authentication Error!!"}})
-
             registry = RegistryManager.get(db_name)
             with registry.cursor() as cr:
                 u = registry['res.partner']
@@ -656,22 +541,14 @@ class Magento(http.Controller):
                 if '+' in string_con:
                     string_con=string_con.replace('+','')
                     string_con=urllib.unquote(string_con).decode('utf8')
-            
-
             if "true" in string_con:
                 string_con=string_con.replace('true', "True")
-                
-
             if "false" in string_con:
                 string_con=string_con.replace('false', "False")
-
             try:
                 dict_req = ast.literal_eval(str(string_con))
-
             except Exception ,e:
                 return str({"body":{'result':-1537}})
-            
-            
             api_id=dict_req.get('ApiId')
             db_name=dict_req.get('DBName')
             osv_pool = pooler.get_pool(str(db_name))
@@ -688,7 +565,6 @@ class Magento(http.Controller):
     @http.route('/some_url', type='json', auth="user")
     def some_url(self, **req):
         obj=request.registry['user.auth']
-        print "user----------",obj
         dict=obj.get_key_code(request.cr,1,deviceId,wantCode,{})
         return dict
 
