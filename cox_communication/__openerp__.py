@@ -39,7 +39,6 @@ This module is built to handle requirements of Cox Communication.
         'security/departments_security.xml',
         'security/new_cox_security.xml',
         
-        'security/ir.model.access.csv',  ##cox gen2
         'wizard/active_recurring_billing_view.xml',
         'wizard/pre_requisites.xml',
         'sale_view.xml',
@@ -117,6 +116,8 @@ This module is built to handle requirements of Cox Communication.
         'wizard/import_serials.xml',
         'wizard/procurement_wizard_view.xml',
         'wizard/warning_view.xml',
+        'security/ir.model.access.csv',  ##cox gen2
+
     ],
     'demo_xml': [],
     'js':['static/src/js/*.js'],

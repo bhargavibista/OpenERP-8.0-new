@@ -8,7 +8,7 @@ from dateutil.relativedelta import relativedelta
 import calendar
 from calendar import monthrange
 import ast
-#import logging
+import logging
 _logger = logging.getLogger(__name__)
 
 class res_partner(osv.osv):
@@ -27,8 +27,6 @@ class res_partner(osv.osv):
             partner_ids=context.get('partner_ids')
         else:
             today=datetime.date.today()
-#	    today = '2014-08-31'  	
-#	    today=datetime.datetime.strptime(today, "%Y-%m-%d")	
         nextmonth = today + relativedelta(months=1)
         days_nextmonth=calendar.monthrange(nextmonth.year,nextmonth.month)[1]
         if len(partner_ids)==0:
@@ -41,6 +39,7 @@ class res_partner(osv.osv):
             cr.execute('select id from res_partner_policy where  active_service = True and no_recurring=False and  agmnt_partner = %s  and (next_billing_date <= (select billing_date from res_partner where id=%s))'% (partner_id,partner_id))
             #cr.execute('select id from res_partner_policy where  active_service = True and agmnt_partner = %s  and ((free_trial_date is null) or free_trial_date <= (select billing_date from res_partner where id=%s))'% (partner_id,partner_id))
             policies = filter(None, map(lambda x:x[0], cr.fetchall()))
+            _logger.info('policies---------------- %s', policies)
 	    
             if policies:
                 nextmonth = today + relativedelta(months=1)
@@ -58,7 +57,6 @@ class res_partner(osv.osv):
                     elif today.month==2:
                         nextmonth=str(nextmonth.year)+'-'+str(nextmonth.month)+'-'+str(start_date.day)
                         nextmonth=datetime.datetime.strptime(nextmonth, "%Y-%m-%d").date()
-#	    _logger.info('Partnerpolicies' % policies)
             partner_policy = self.pool.get('res.partner.policy')
             for policy_brw in partner_policy.browse(cr,uid,policies):
                 #Extra Code for Checking whether service is cancelled or not
@@ -96,7 +94,6 @@ class res_partner(osv.osv):
             if len(maerge_invoice_data)!=0:
                 cr.execute("select profile_id from partner_profile_ids where partner_id='%s'"%(str(partner_obj.id)))
                 result=cr.dictfetchall()
-                print "partner_profile_idpartner_profile_id",result
                 if result:
                     partner_profile_id=result[0].get('profile_id')
                     cr.execute("select id,profile_id,credit_card_no from custmer_payment_profile where customer_profile_id='%s' and active_payment_profile=True"%(str(partner_obj.customer_profile_id)))
@@ -107,7 +104,6 @@ class res_partner(osv.osv):
                             profile_id=each.get('id')
                             if profile_id==partner_profile_id:
                                 context['cc_number'] = each.get('credit_card_no')
-#                context={'partner_id_obj':partner_obj,'recurring_billing':True }
                 context['partner_id_obj'] = partner_obj
                 context['recurring_billing']=True
                 res_id=sale_obj.action_invoice_merge(cr, uid, maerge_invoice_data, today, nextmonth, start_date,payment_profile_id, context=context)
@@ -124,17 +120,14 @@ class res_partner(osv.osv):
                         try:
                             self.export_recurring_profile(cr,uid,[res_id],context)
                         except Exception, e:
-                            print "error string",e
+                            _logger.info('error string--------------- %s', e)
                 else:
-#                    user_id=partner_id
                     for service_data in maerge_invoice_data:
                         policy_brw = service_data.get('policy_id_brw',False)
                         app_id=policy_brw.product_id.id
                         rental_result = user_auth_obj.rental_playjam(cr,uid,partner_id,app_id,0)
-        #                    result=4113
                         if ast.literal_eval(str(rental_result)).has_key('body') and ast.literal_eval(str(rental_result)).get('body')['result'] == 4113:
                             #4113 is the result response value for successfull rental update
-        #                    if result==4113:
                             additional_info = {'source':'COX','cancel_return_reason':'Credit Card Not on File.'}
                             cancel_reason = return_obj.additional_info(cr,uid,additional_info)
                             cr.execute("update res_partner_policy set active_service = False,return_cancel_reason='Credit Card Not on File.',cancel_date=%s,additional_info=%s where id = %s",(today,cancel_reason,policy_brw.id))
@@ -319,7 +312,6 @@ class res_partner_policy(osv.osv):
             context={}
         start_dt_current_service = datetime.datetime.strptime(str(current_service.start_date), '%Y-%m-%d')
         old_free_trial_date=datetime.datetime.strptime(str(original_service.free_trial_date), "%Y-%m-%d")
-#        old_start_trial_date=datetime.datetime.strptime(str(original_service.start_date), "%Y-%m-%d")
         inv_dt_obj = datetime.datetime.strptime(str(date_inv), '%Y-%m-%d')
         days_in_month=calendar.monthrange(inv_dt_obj.year,inv_dt_obj.month)[1]
         days_left = inv_dt_obj - start_dt_current_service
@@ -331,17 +323,9 @@ class res_partner_policy(osv.osv):
             if (diff_days.days)>1:
                 adv_paid=original_price
             original_price=0.0
-           # if (original_service.extra_days and original_service.extra_days>0):
-            #    days_left_old = old_free_trial_date-start_dt_current_service
-            #else:
-             #   days_left_old=days_left
-        #else:
-         #   original_price=original_service.last_amount_charged
             if (original_service.extra_days and original_service.extra_days>0):
                 days_left_old = start_dt_current_service-old_free_trial_date
                 original_price=0.0
-            #else:
-             #   days_left_old=days_left
         if context and context.get('cancel_date',False):
             cancel_date=datetime.datetime.strptime(str(original_service.cancel_date), "%Y-%m-%d")
             days_left_old=inv_dt_obj-cancel_date
@@ -439,8 +423,6 @@ class res_partner_policy(osv.osv):
         if (original_service.extra_days and original_service.extra_days>0) and ((old_free_trial_date < start_dt_current_service)):
             cancel_date=datetime.datetime.strptime(str(original_service.cancel_date), "%Y-%m-%d")
             extra_days_old=cancel_date-old_free_trial_date
-#            days=calendar.monthrange(date_inv.year,date_inv.month)[1]
-#            days=366 if calendar.isleap(date_inv.year) else 365
             extra_charges_old=(original_service.product_id.list_price/days)*int(extra_days_old.days)
             
             context['name'] = original_service.product_id.name + '(Extra Charges of Previous Service)'
@@ -487,8 +469,6 @@ class upgrade_downgrade_policy(osv.osv):
             context = {}
         if vals.get('name', '/') == '/':
             vals['name'] = self.pool.get('ir.sequence').get(cr, uid, 'upgrade.downgrade.policy') or '/'
-#        if not vals.get('start_date',False):
-#            vals['start_date']=fields.date.context_today(self, cr, uid, context=context)
         new_id = super(upgrade_downgrade_policy, self).create(cr, uid, vals, context=context)
         return new_id
     def onchange_partner_id(self,cr,uid,ids,partner_id,context=None):
@@ -562,7 +542,7 @@ class upgrade_downgrade_policy(osv.osv):
                 'from_openerp':True,
             })
             res=partner_obj.update_subscription(subscription_data)
-            
+
             if ast.literal_eval(str(res)).has_key('body'):
                 code=int(ast.literal_eval(str(res)).get('body')['code'])
                 if code!=4113:

@@ -976,10 +976,11 @@ class res_partner(osv.Model):
             return {'value':{'high_speed_internet':'no','cable':'no','flare_account':check_all_data}}
     def create(self, cr, uid, vals, context=None):
         print "vals////////////////////////",vals
-        email_id=vals.get('emailid')
-        print "email_dd///////////////////////////",email_id
-        print(email_id.lower())
-        vals.update({'emailid':email_id.lower()})
+        if vals.has_key('emailid'):
+            email_id=vals.get('emailid')
+            print "email_dd///////////////////////////",email_id
+            print(email_id.lower())
+            vals.update({'emailid':email_id.lower()})
         res = super(res_partner, self).create(cr, uid, vals, context=context)
         return res
 
@@ -1361,16 +1362,16 @@ class users(osv.osv):
         'src_location_id' : fields.many2one('stock.location','Source Location'),
 #        'mag_store_id' : fields.many2one('sale.shop','Magento Store'),
     } 
-    def create(self, cr, uid, vals, context={}):
-        gid = super(users, self).create(cr, uid, vals, context)
-        cr.commit()
-        smtp_obj=self.pool.get('email.smtpclient')
-        smtp_id=smtp_obj.search(cr,uid,[])
-        for each_smtp in smtp_id:
-	        cr.execute('''
-        	        insert into res_smtpserver_group_rel values(%s,%s)
-	            '''%(each_smtp,gid))
-        return gid	
+#    def create(self, cr, uid, vals, context={}):
+#        gid = super(users, self).create(cr, uid, vals, context)
+#        cr.commit()
+#        smtp_obj=self.pool.get('email.smtpclient')
+#        smtp_id=smtp_obj.search(cr,uid,[])
+#        for each_smtp in smtp_id:
+#	        cr.execute('''
+#        	        insert into res_smtpserver_group_rel values(%s,%s)
+#	            '''%(each_smtp,gid))
+#        return gid	
 users()
 
 class company(osv.osv):
