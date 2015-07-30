@@ -21,6 +21,7 @@ class playjam_config_menu(models.Model):
     '''Playjam Configuration'''
     _name = 'playjam.config.menu'
     _description = 'Playjam Configuration'
+
     wallet_playjam = fields.Char(size=128)
     rental_playjam =  fields.Char(size=128)
     account_playjam = fields.Char(size=128)

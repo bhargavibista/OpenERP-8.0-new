@@ -10,6 +10,8 @@ from passlib.hash import pbkdf2_sha256
 from openerp import models, fields, api, _
 from openerp.http import request
 from openerp import SUPERUSER_ID
+import logging
+_logger = logging.getLogger(__name__)
 
 
 class res_partner(models.Model):
@@ -22,7 +24,6 @@ class res_partner(models.Model):
     user_profile_ids = fields.One2many(comodel_name="user.profile", inverse_name="partner_id", string="User Profile")
     playjam_exported = fields.Boolean()
 
-#    _sql_constraints = [('username_uniq', 'unique(name)', 'A partner already exists with this User Name')]
 
     def get_wallet_update(self):
         url = "http://54.172.158.69/api/rest/flare/wallet/view.json"
@@ -30,9 +31,10 @@ class res_partner(models.Model):
         #                    payload = '{"uid": uid, "quantity":float(value)}'
         payload = '{"uid": "FLARE1124", "quantity":0}'
         request = urllib.quote(payload.encode('utf-8'))
+        _logger.info('request for get wallet update------------ %s', request)
         response = requests.post(
             url, data="request=" + request, headers=headers)
-
+        _logger.info('response for get wallet update------------ %s,%s', response.text)
         resp = response.text
         res = ast.literal_eval(resp)
         if res and 'body' in res and ('quantity' in res.get('body')):
@@ -44,6 +46,7 @@ class res_partner(models.Model):
         return True
     
     def push_transactions(self,dict,context=None):
+       _logger.info('request for push transactions------------ %s', dict)
        if dict.get('transactions',False):
            for each in dict.get('transactions'):
 	       service_product=True
@@ -54,7 +57,6 @@ class res_partner(models.Model):
                        request.cr.execute('select id from product_product where id= %s', (product_id,))
                        product_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
                        order_line,order_dict={},{}
-                       
                        if not product_id:
                            if each.get('meta',False) and each.get('delta',False):
                                account_id=False
@@ -85,7 +87,6 @@ class res_partner(models.Model):
                             if pat_obj.street and pat_obj.city and pat_obj.state_id and pat_obj.zip:
                                 bill_add={ "Street1": str(pat_obj.street),"Street2": str(pat_obj.street2 or ""),"City": str(pat_obj.city),"State": str(pat_obj.state_id.code),"Zip": str(pat_obj.zip),}
                                 billing_info.update({'BillingAddress':bill_add})
-
                             order_dict.update({'BillingInfo':billing_info})
                             partner_addr = self.address_get(request.cr,SUPERUSER_ID, [int(partner_id)],['delivery',])
                             delivery_add=partner_addr.get('delivery')
@@ -99,28 +100,23 @@ class res_partner(models.Model):
                                     order_dict.update({'ShippingAddress':delivery_add})
                             order_dict.update({'wallet_purchase':True})
                             if product_id and order_dict and service_product and each.get('delta'):
- #                               order_res=self.pool.get('res.partner').create_order_magento(request.cr,SUPERUSER_ID,order_dict,{})
                                 order_res=self.pool.get('res.partner').create_order_magento(order_dict)
+                                _logger.info('order create magento for push transaction----------- %s', order_res)
                                 order_res=str(order_res)
                                 if 'true' in order_res:
                                     order_res=order_res.replace('true','True')
                                 if 'false' in order_res:
                                     order_res=order_res.replace('false','False')
-
                                 ord_res=ast.literal_eval(str(order_res))
-
-                                #order_no='SO060'
                                 if (ord_res.get('body')).has_key('OrderNo'):
                                     order_no=(ord_res.get('body')).get('OrderNo')
        return json.dumps({'body':{'result':123,'Message':'Success.'}})
-
-
-
 
     @api.one
     def account_deactivate(self):
         payload = dict(mode='U', uid=self.ids, active=False)
         res = self.pool.get('user.auth').account_playjam(payload)
+        _logger.info('request to account playjam------------ %s', res)
         dict_res = ast.literal_eval(res)
         if 'body' in dict_res and ('result' in dict_res.get('body')):
             if dict_res['body']['result'] == 4097:
@@ -132,6 +128,7 @@ class res_partner(models.Model):
     def account_reactivate(self):
         payload = dict(mode= 'U', uid= self.ids, active=False)
         res = self.pool.get('user.auth').account_playjam(payload)
+        _logger.info('request to account playjam------------ %s', res)
         dict_res = ast.literal_eval(res)
         if 'body' in dict_res and ('result' in dict_res.get('body')):
             if dict_res['body']['result'] == 4097:
@@ -141,13 +138,10 @@ class res_partner(models.Model):
     
     @api.one
     def quality_of_service(self,cr,uid,dict,context=None):
-
         if dict.has_key('UID'):
             cust_id=dict.get('UID')
-
             if cust_id:
                 cust_id=int(cust_id)
-
                 cr.execute('select id from res_partner where id= %s', (cust_id,))
                 if_present = filter(None, map(lambda x:x[0], cr.fetchall()))
                 if if_present!=[]:
@@ -158,18 +152,15 @@ class res_partner(models.Model):
                             date_object = datetime.datetime.strptime(s_date, '%d-%m-%Y')
                         except ValueError:
                             return json.dumps({"body":{"code":False,'message': "Incorrect date format, should be YYYY-MM-DD",}})
-                        
                         start_date=date_object.strftime('%Y-%m-%d')
                     else:
                         start_date=""
-
                     e_date=dict.get('EndDate',False)
                     if e_date:
                         try:
                             date_object = datetime.datetime.strptime(e_date, '%d-%m-%Y')
                         except ValueError:
                             return json.dumps({"body":{"code":False,'message': "Incorrect date format, should be YYYY-MM-DD",}})
-                        
                         end_date=date_object.strftime('%Y-%m-%d')
                     else:
                         end_date=""
@@ -183,12 +174,10 @@ class res_partner(models.Model):
                     round_trip=dict.get('RoundTrip',False)
                     network_type=dict.get('NetworkType',False)
                     qos_avg_score=dict.get('QosAverageScore',False)
-                    create_date=datetime.datetime.now()		
-		
+                    create_date=datetime.datetime.now()		    
                     registry = openerp.modules.registry.Registry(str('QOS'))
                     with registry.cursor() as cr:
                         cr.execute('insert into quality_of_service (session_id,partner_id,game_id,start_date,start_time,end_date,end_time,termination_reason,start_bandwith,end_bandwith,packet_losses_count,round_trip,network_type,qos_avg_score,create_date,write_date,create_uid,write_uid) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)', (session_id,cust_id,game_id,start_date,start_time,end_date,end_time,termination_reason,start_bandwith,end_bandwith,packet_losses_count,round_trip,network_type,qos_avg_score,create_date,create_date,1,1))
                         return True
-
         return False
 res_partner()
