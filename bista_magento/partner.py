@@ -1,27 +1,17 @@
-from openerp.osv import fields, osv
 import datetime 
 import sys
 from dateutil.relativedelta import relativedelta
 from psycopg2.extensions import ISOLATION_LEVEL_READ_COMMITTED
 import calendar
-from openerp.tools.misc import attrgetter
-#from openerp.addons.base_external_referentials.external_osv import ExternalSession
-#from openerp.addons.magentoerpconnect import magerp_osv
 DEBUG = True
 from openerp.tools.translate import _
-import random
-from openerp import netsvc
-import string
 import time
 import ast
-from validate_email import validate_email
 import md5
 import logging
 import re
-import uuid
 from openerp.osv import osv, fields
 import openerp.tools as tools
-from random import randint
 import os
 import urllib
 import requests
@@ -31,7 +21,6 @@ from passlib.hash import pbkdf2_sha256
 from openerp import models, fields, api, _
 from openerp.http import request
 from openerp import SUPERUSER_ID
-import random
 import string
 
 #~ from datetime import datetime
@@ -40,24 +29,7 @@ import string
 class res_partner(models.Model):
     '''Voucher related details'''
     _inherit = 'res.partner'
-#    _columns={
-#
-#        'user_name':fields.char('User Name', size=100),
-#        'password':fields.text('Password'),
-#        'gender':fields.selection([
-#            ('M', 'Male'),
-#            ('F', 'Female'),
-#	    ('O', 'Other')
-#            ], 'Gender'),
-#        'dob':fields.date('DOB'),
-#        'age_rating':fields.char('Age Rating'),
-#        'player_tag':fields.char('Player Tag'),
-#        'game_profile_name':fields.char('Game Profile Name'),
-#        'account_pin':fields.char('Account Pin'),
-#        'use_wallet':fields.char('Use Wallet'),
-#	
-#
-#    }
+
     user_name = fields.Char(string ='User Name',size=100)
     password = fields.Text(string='Password')
     magento_pwd =fields.Char('Password',size=128)
@@ -78,8 +50,9 @@ class res_partner(models.Model):
     'magento_pwd':'ZmwyNDc2',
     'password':'ZmwyNDc2'
     }
+    
     def create(self,cr,uid, vals, context={}):
-        print "password--233435--------------",vals.get('password')
+        
         if vals.has_key('password'):
             pwd=vals.get('password')
             hash = pbkdf2_sha256.encrypt(str(pwd), rounds=200, salt_size=16)
@@ -90,8 +63,6 @@ class res_partner(models.Model):
         return res
 
     def write(self, cr,uid,ids, vals, context={}):
-        print "password----------------",vals.get('password')
-	print "ids-----------------------------------",ids,type(ids)
 	res=True
 	#if tyoe(ids)==str:
 	    #ids=int(ids)
@@ -100,23 +71,19 @@ class res_partner(models.Model):
             ids = [ids]
 #	else:
 #	    ids=int(ids)
-  	print "ids......................878787...",ids
+  	
         if vals.has_key('password'):
             pwd=vals.get('password')
             hash = pbkdf2_sha256.encrypt(str(pwd), rounds=200, salt_size=16)
             vals['password']=str(hash)        
 	res = super(res_partner, self).write(cr, uid, ids, vals, context)
-        #if vals.has_key('password'):
-         #   pwd=vals.get('password')
-          #  hash = pbkdf2_sha256.encrypt(str(pwd), rounds=200, salt_size=16)
-           # vals['password']=str(hash)
         if ids:
-	 #   print "ids--------------^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^-----------",ids
+	 
 	    if isinstance(ids,(int)) :
 		ids = [ids]
-	#	res = super(res_partner, self).write(cr, uid, ids, vals, context)
+	
 	    x=ids[0]
-            print "x.................................",x,type(x)
+            
             playjam_exported=self.browse(cr,uid,int(x)).playjam_exported
             if playjam_exported:
                 playjam_update_vals={'mode':'U'}
@@ -143,12 +110,12 @@ class res_partner(models.Model):
                     active=vals.get('active')
                     playjam_update_vals.update({'active':active})
 		playjam_update_vals.update({'uid':int(x)})
-		print "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",x
+		
 		length=len(playjam_update_vals)
-		print "length-----------------------------",length
+		
 		if int(x)!=0 and length>2:
                     response=self.pool.get('user.auth').account_playjam(playjam_update_vals)
-                    print"res----account---------",response,type(response)
+                    
                     dict_res=ast.literal_eval(response)
                     if dict_res.has_key('body') and (dict_res.get('body')).has_key('result'):
                         if dict_res['body']['result']!=4098:
@@ -187,7 +154,7 @@ class res_partner(models.Model):
                 return json.dumps(result)
         customer_id=partner_obj.search(request.cr,SUPERUSER_ID,[('id','=',int(dict_wallet.get('partner_id')))])
 
-        print "customer_idcustome343546r_id",customer_id
+        
         if not customer_id:
             result={"body":{ 'code':'-5555', 'message':"Missing or Invalid Customer ID"}}
             return json.dumps(result)
@@ -212,24 +179,24 @@ class res_partner(models.Model):
             amount=dict_wallet.get('fill_amount')
             bank_journal_ids = journal_pool.search(request.cr,SUPERUSER_ID, [('type', '=', 'bank')])
             account_data = inv_obj.get_accounts(request.cr,SUPERUSER_ID,active_id,bank_journal_ids[0])
-            print "account_dataaccount_data",account_data,account_data['value']['account_id']
+            
             voucher_data = {'account_id':account_data['value']['account_id'],'partner_id': active_id,'journal_id':bank_journal_ids[0],'amount': amount,'type':'receipt','state': 'draft','pay_now': 'pay_later','name': '','date': today,'company_id': self.pool.get('res.company')._company_default_get(request.cr,SUPERUSER_ID, 'account.voucher',context=None),'payment_option': 'without_writeoff','comment': _('Write-Off')}
-            print "voucher data,,,,,,,,,,,,,,,,,,,,,,,",voucher_data
+            
             voucher_id=account_voucher_obj.create(request.cr,SUPERUSER_ID,voucher_data, context=context)
             context.update({'reference': voucher_id,'description':'Wallet Top-Up','captured_api':True})
 #        call to create transaction in case of existine payment profile
             try:
                 if payment_profile_id:
                     cust_profile_Id=partner_brw.customer_profile_id
-                    print "cust_profile_Id",cust_profile_Id
+                    
                     request.cr.execute("select credit_card_no from custmer_payment_profile where profile_id='%s'"%(payment_profile_id))
                     ccn = filter(None, map(lambda x:x[0], request.cr.fetchall()))
     #                ccn = ['1111']
-                    print "cccn.................",ccn
+                    
                     if ccn:
                         ccn = ccn[0]
                     numberstring=payment_profile_id
-                    print "numberstringnumberstring",numberstring
+                    
     #        call to create profile if there is no existing payment profile at Authorize end
                 else: 
                     maxmind_response,context_maxmind=self.pool.get('customer.profile.payment').maxmind_call(cr,uid,ccn,int(dict_wallet.get('partner_id')))
@@ -261,24 +228,24 @@ class res_partner(models.Model):
                     if dict_wallet.get('fill_amount')>0.0:
                         amount=dict_wallet.get('fill_amount')
                         present_amt_playjam_req=user_auth_obj.wallet_playjam(request.cr,SUPERUSER_ID,active_id, 0.0, context=None)
-                        print "present_amt_playjampresent_amt_playjam",present_amt_playjam_req
+                        
 			if ast.literal_eval(str(present_amt_playjam_req)).has_key('body') and ast.literal_eval(str(present_amt_playjam_req)).get('body')['result']==4129: 
                             present_amt_playjam=float(ast.literal_eval(present_amt_playjam_req).get("body").get('quantity'))
                             add_amt=present_amt_playjam+amount
                             if amount>500.0 or add_amt>500.0:
                                  x=500.0-float(present_amt_playjam)
-                                 print "x....................................",x
+                                 
                                  result={"body":{ 'code':'-55', 'message':"Maximum TopUp Amount Reached"}}
                                  return json.dumps(result) 
-			    print"resultttttttttttttttttttttttttttttttttttttttttttttttttttT"
+			    
                             context['customer_profile_id']=cust_profile_Id
                             response =authorize_net_config.call(request.cr,SUPERUSER_ID,config_obj,'CreateCustomerProfileTransaction',active_id,transaction_type,amount,cust_profile_Id,numberstring,transaction_id,ccv,act_model,'',context)
                             transaction_id = response.get('response').split(',')[6]
                             prepaid_id_search=prepaid_obj.search(request.cr,SUPERUSER_ID,[('card_no','=',ccn[-4:])])
-                            print "transaction_id//////////////////",transaction_id,prepaid_id_search
+                            
                             if context_maxmind and context_maxmind.get('prepaid'):
                                 payment_id=payment_obj.search(cr,uid,[('credit_card_no','=',ccn[-4:])])
-                                print "payment_idpayment_idpayment_id",payment_id
+                                
                                 if payment_id:
                                     for each in payment_id:
                                         payment_obj.write(request.cr,SUPERUSER_ID,each,{'prepaid':True})
@@ -286,10 +253,10 @@ class res_partner(models.Model):
                                 prepaid_obj.write(cr,uid,prepaid_id_search[0],{'transaction_id':transaction_id})
                             if response.get('resultCode') == 'Ok':
                                 wallet_response=user_auth_obj.wallet_playjam(request.cr,SUPERUSER_ID, active_id, amount, context=None)
-                                print "wallet_responsewallet_response",wallet_response
-        #                            retry 5 attempts in case if wallet update fails at playjam end
+                                
+        
                                 while count<6:
-                                    print "while cinrehvjkfdhjfdhb234567",count
+                                    
                                     if ast.literal_eval(wallet_response).get("body") and ast.literal_eval(wallet_response).get("body").get('result')==4129:
                                         quantity=ast.literal_eval(wallet_response).get("body").get('quantity')
                                         partner_obj.cust_profile_payment(request.cr,SUPERUSER_ID,active_id,cust_profile_Id,payment_profile_val,exp_date,context)
@@ -335,7 +302,7 @@ class res_partner(models.Model):
         tru_obj=self.pool.get('tru.subscription.options')
         policy_obj=self.pool.get('res.partner.policy')
 #        dict={"ApiId":"123","DBName":"april_26th_final_test","CustomerId":"6","GiftCardNumber": "7528681124"}
-        print "dict....................",dict
+        
         dict_gift_card={'api_id':dict.get('ApiId'),'partner_id':dict.get('CustomerId'),'card_no':dict.get('GiftCardNumber')}
         for key, value in dict_gift_card.iteritems():
             if value is '':
@@ -345,7 +312,7 @@ class res_partner(models.Model):
         #return True
         try:
             customer_id=self.pool.get('res.partner').search(request.cr,SUPERUSER_ID,[('id','=',int(dict_gift_card.get('partner_id')))])
-            print "customer_idcustomer_id",customer_id
+            
             if not customer_id:
                 result={"body":{ 'code':'-5555', 'message':"Missing or Invalid Customer ID"}}
                 return json.dumps(result)
@@ -357,29 +324,29 @@ class res_partner(models.Model):
                 nextmonth=billing_date + relativedelta(months=1)
             gift_card_response=gift_card_obj.api_call_toincomm_statinq(request.cr,SUPERUSER_ID,dict_gift_card.get('card_no'),context=context)
             resp_code_statinq=gift_card_response.getElementsByTagName("RespCode")[0].childNodes[0].nodeValue
-            print "resp_code_statinqresp_code_statinq",resp_code_statinq
+            
 #            code 4001 response is for "Card is Active"
             if resp_code_statinq=='4001':
                 face_value=gift_card_response.getElementsByTagName("FaceValue")[0].childNodes[0].nodeValue
-                print "face_valueface_valueface_value",face_value
+                
                 partner_obj=self.pool.get('res.partner').browse(request.cr,SUPERUSER_ID,int(dict.get('CustomerId')))
                 if face_value>0.0:
                     subscription_id=tru_obj.search(request.cr,SUPERUSER_ID,[('sales_channel_tru','=','tru')])
-                    print "subscription_idsubscription_id",subscription_id
+                    
                     if not subscription_id:
                         result={"body":{ "code":False, "message":"No Subscription is stipulated for TRU"}}
                     else:
                         subscrption_service=tru_obj.browse(request.cr,SUPERUSER_ID,subscription_id[0]).product_id
-                        print "subscrption_servicesubscrption_service",subscrption_service
+                        
                         request.cr.execute("select product_id from res_partner_policy where active_service =True and agmnt_partner = %s"%(int(dict_gift_card.get('partner_id'))))
                         active_services = filter(None, map(lambda x:x[0], request.cr.fetchall()))
-                        print "active_servicesactive_services",active_services,subscrption_service.id
+                        
                         if active_services and subscrption_service.id in active_services:
                             policy_id = policy_obj.search(request.cr,SUPERUSER_ID,[('product_id','=',subscrption_service.id),('agmnt_partner','=',int(dict_gift_card.get('partner_id'))),('active_service','=',True)])
-                            print "policy id...............",policy_id
+                            
                             if policy_id:
 				policy_brw=policy_obj.browse(request.cr,SUPERUSER_ID,policy_id[0])
-				print "policy_brwpolicy_brwpolicy_brw",policy_brw
+				
                                 so_id=policy_brw.sale_id
                                 sale_brw=sale_obj.browse(request.cr,SUPERUSER_ID,so_id)
                                 sale_channel=sale_brw.cox_sales_channels
@@ -400,7 +367,7 @@ class res_partner(models.Model):
                                 so_line_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
                                 if not policy_brw.sale_line_id in so_line_id:
                                     invoice_name = '%'+policy_brw.sale_order+'%'
-                                    print "invoice_nameinvoice_name",invoice_name
+                                    
                                     search_payment_exception =exception_obj.search(request.cr,SUPERUSER_ID,[('active_payment','=',True),('partner_id','=',int(dict.get('CustomerId'))),('invoice_name','ilike',invoice_name)])
                                     if not search_payment_exception:
                                             sale_info.update(
@@ -416,7 +383,7 @@ class res_partner(models.Model):
                                         result={"body":{ "code":False, "message":"Payment Exception is generated for the same service"}}        
                                         return json.dumps(result)
                                 redemption_details=gift_card_obj.api_call_toincomm_redemption(request.cr,SUPERUSER_ID,dict_gift_card.get('card_no'),context=context)
-                                print "redemption_detailsredemption_detailsredemption_details",redemption_details
+                                
                                 resp_code=redemption_details.getElementsByTagName("RespCode")[0].childNodes[0].nodeValue
 #                                code 0 is for Success
     #In case of failure of redemption reateemt for 3 times limit to redeem the card 
@@ -428,7 +395,7 @@ class res_partner(models.Model):
 #defining account prepaid revenue or service revenue depending on redemption before the free trial or after free trial correspondingly
                                             free_trail=policy_brw.free_trial_date
                                             free_trail=datetime.datetime.strptime(free_trail, '%Y-%m-%d')
-                                            print "today and free tril................",today,free_trail
+                                            
                                             if today<free_trail:
                                                 account_id=account_obj.search(request.cr,SUPERUSER_ID, [('name', 'ilike', 'Advance Payment')])
                                                 account_id=account_id[0]
