@@ -126,7 +126,6 @@ class product_template(osv.osv):
 
     def write(self,cr,uid,ids,vals,context={}):
 
-        print"valsvalsvalsvalsvalsvals",vals
         if not isinstance(ids,list):
             ids=[ids]
         ids_obj=self.browse(cr,uid,ids[0])
@@ -134,26 +133,23 @@ class product_template(osv.osv):
         price=0
         if vals.get('ext_prod_config',[]):
             for each_prod in vals.get('ext_prod_config',[]):
-                print"each_prodeach_prodeach_prodeach_prod",each_prod
                 if each_prod[0]==2:
                     continue
                 elif not each_prod[1]:
                     price += each_prod[2].get('price',False)
-                    print"priceprice-------------------",price
                 elif not each_prod[2]:
                     each_comp_obj = extra_prod_config.browse(cr,uid,each_prod[1])
                     price+=each_comp_obj.price
                 elif each_prod[2].get('price',False):
                     price += each_prod[2].get('price',False)
-            print"pricepricepricepriceprice",type(price),type(ids_obj.list_price)
+            
 #            ids_obj.list_price=price
             vals['list_price']=price
         elif ids_obj.ext_prod_config:
             for each_comp in ids_obj.ext_prod_config:
                 price=each_comp.price
-                print"each_compeach_compeach_comp",each_comp.price,price
-        print"float(vals.get('list_price',False))float(vals.get('list_price',False))",float(vals.get('list_price',False))
-        print"ids_obj.list_priceids_obj.list_priceids_obj.list_price",type(ids_obj.list_price),vals,ids_obj.ext_prod_config,vals.get('list_price',False),price,ids_obj.list_price
+                
+        
         if (ids_obj.ext_prod_config and vals.get('list_price',False)) and float(vals.get('list_price',False)) != price:
             raise osv.except_osv(_('Warning !'),_('Sale price should be equal total price of sub components'))
         return super(product_template, self).write(cr, uid, ids,vals,context=context)
