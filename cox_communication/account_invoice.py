@@ -17,15 +17,11 @@ from openerp.http import request
 class account_move_line(osv.osv):
     _inherit = "account.move.line"
     def create(self,cr,uid,vals,context={}):
-        print "valssssssssssssss-----123------",vals
         pat_id= vals.get('partner_id')
         if pat_id:
             parent_id=self.pool.get('res.partner').browse(cr,uid,pat_id).parent_id.id
             if parent_id:
                 vals.update({'partner_id': parent_id })
-        print "parent_id---------",parent_id
-        print "pat_id----------------",pat_id
-        print"vals",vals
         res=super(account_move_line, self).create(cr, uid, vals, context)
         return res
     
@@ -39,9 +35,7 @@ class account_voucher(osv.osv):
     def onchange_journal(self, cr, uid, ids, journal_id, line_ids, tax_id, partner_id, date, amount, ttype, company_id, context=None):
         print "onchange partner_id-----------",partner_id
         if partner_id:
-            print"idffffffffffffffffffffffffffffff"
             parent_id=self.pool.get('res.partner').browse(cr,uid,partner_id).parent_id.id
-            print "parent_id----------------",parent_id
             if parent_id:
                 partner_id=parent_id
         res=super(account_voucher, self).onchange_journal(cr, uid, ids, journal_id, line_ids, tax_id, partner_id, date, amount, ttype, company_id, context)
@@ -139,9 +133,7 @@ class account_invoice(models.Model):
         """
 #        sale_obj=self.pool.get('sale.order')
         sale_obj=self.env['sale.order']
-        print"sale_objsale_objsale_objsale_objsale_obj",sale_obj
         for inv in self.browse():
-            print"invinvinvinvinvinvinv",inv
             if not inv.date_invoice:
                 date_confirm = sale_obj.date_order_confirm(cr,uid,context)
                 print"date_invoicedate_invoicedate_invoicedate_invoicedate_invoice------------",inv.date_invoice,date_confirm
@@ -150,22 +142,17 @@ class account_invoice(models.Model):
         super(account_invoice,self).action_move_create()
         request.cr.execute("select order_id from sale_order_invoice_rel where invoice_id='%s'"%(self.ids[0])) 
         so_id=filter(None, map(lambda x:x[0], request.cr.fetchall()))
-        print"so_idso_idso_idso_idso_idso_idso_idso_idso_idso_idso_idso_idso_idso_id",so_id
         if so_id:
             sale_brw=sale_obj.browse(so_id[0])
-            print"sale_brwsale_brwsale_brwsale_brw",sale_brw
             sales_channel=sale_brw.cox_sales_channels
-            print"sales_channelsales_channelsales_channel",sales_channel,self
             if not sales_channel=='playjam':
                 # Process the invoices
                 for inv in self:
-                    print"invinvinvinvinvinv",inv
                     if inv.type in ('out_invoice','in_invoice'):
                         move_line_obj=self.pool.get('account.move.line')
                         print'inv.move_id.idinv.move_id.idinv.move_id.id',inv.move_id.id
                         request.cr.execute("select id from account_move_line where credit!=0.00 and product_id in (select id from product_product where product_tmpl_id in (select id from product_template where product_type='service')) and move_id=%s"%(inv.move_id.id))
                         move_line_ids=filter(None, map(lambda x:x[0], request.cr.fetchall()))
-                        print"move_objmove_objmove_objmove_obj",move_line_ids
                         if move_line_ids:
                         # Process the customer invoice
                             self._process_invoice_line(move_line_ids, inv)
@@ -184,7 +171,6 @@ class account_invoice(models.Model):
 
     @api.one
     def _process_invoice_line(self,line, invoice):
-        print"lineeeeeee",line
         
         """
         Handle the creation of the revenue recognition schedule and the initial journal to move
@@ -275,7 +261,6 @@ class account_invoice(models.Model):
                         'account_id': debit_account_id,
                         'debit': period_amount})
                 move_lines.append((0,0,ml_debit))
-                print"ml_creditml_creditml_creditml_credit",ml_credit,ml_debit
 #                period_id = self._period_get(invoice.company_id.id,last_day)
 #                print"period_idperiod_idperiod_idperiod_idperiod_idperiod_id",period_id
             move = {
@@ -319,7 +304,6 @@ class account_invoice(models.Model):
         acc_move_obj=self.pool.get('account.move')
         domain = [('name','=',_('Recognition Journal'))]
         journal_ids = self.pool.get('account.journal').search(cr, uid, domain)
-        print"journal_idsjournal_idsjournal_idsjournal_ids",journal_ids
         if len(journal_ids)==0:
             raise osv.except_osv(_("Error"), _("Cannot find the Recognition Journal for this company."))
         # Get the scheduled revenue recognition records for today
@@ -466,9 +450,9 @@ class account_invoice(models.Model):
 		print "config ids//////////////////////////////",config_ids,customer_profile_id
                 config_obj = authorize_net_config.browse(cr,uid,config_ids[0])
                 cust_payment_profile_id = current_obj.customer_payment_profile_id
-                print"cust_payment_profile_idcust_payment_profile_idcust_payment_profile_id",cust_payment_profile_id
+                
                 transaction_type = current_obj.auth_transaction_type
-                print"transaction_typetransaction_typetransaction_type",transaction_type,current_obj.capture_status
+                
                 amount=current_obj.amount_total
                 try:
                     capture_status = current_obj.capture_status
@@ -477,7 +461,7 @@ class account_invoice(models.Model):
                         ccv=''
                         #context['recurring_billing'] =True
                         transaction_details =authorize_net_config.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',ids[0],transaction_type,amount,customer_profile_id,cust_payment_profile_id,'',ccv,act_model,'',context)
-                        print"transaction_detailstransaction_detailstransaction_details",transaction_details
+                        
                         if transaction_details:
                             transaction_response = transaction_details.get('response')
                             if transaction_response:
