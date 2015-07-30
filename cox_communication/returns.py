@@ -165,7 +165,6 @@ class return_order(osv.osv):
         return {'value':vals}
     
     def no_of_days_passed(self,cr,uid,sale_id_obj,context={}): 
-        print"sale_id_objsale_id_obj",sale_id_obj
 	today=date.today()
         confirmed_date=datetime.strptime(sale_id_obj.date_confirm, "%Y-%m-%d").date()
         difference=today-confirmed_date
@@ -521,7 +520,7 @@ class return_order(osv.osv):
                         'partner_invoice_id':False,'partner_order_id':False,'partner_shipping_id':False,'pricelist_id':False,'show_components':False,'bundle_configuration':False}
                         return {'value': vals, 'warning': warning}
 #                   raise osv.except_osv(_('Error !'),_('You Cannot Place a Return for this Sale Order since its service is already cancelled.'))
-           print"obj_sale_link_order",obj_sale_link_order
+           
            days = self.no_of_days_passed(cr,uid,obj_sale_link_order,{})
            
 	  # if days <= 30:
@@ -631,7 +630,7 @@ class return_order(osv.osv):
                                             'state':'draft',
 #                                             'type': each_line.type,
                                              'sale_line_id':each_line.id })
-                            print "order_line_vals",order_line_vals
+                            
                         tax_ids_used   = tax_ids_used + tax_ids
                if order_line_vals:
                        vals['order_line'] = order_line_vals
@@ -696,12 +695,7 @@ class return_order(osv.osv):
 			address =  address.id
 		lines = self.create_lines(cr, uid, return_order.order_line)
 		if lines:
-#                        return_date = False
-#                        if return_order.date_confirm:
-#                            return_date = (return_order.date_confirm).split(' ')[0]
-#                        elif return_order.date_order:
-#                            return_date = (return_order.date_order).split(' ')[0]
-#                        print"return_date",return_date
+
 			tax_amount = account_tax_obj._check_compute_tax(cr, uid, avatax_config, return_order.date_confirm or return_order.date_order,
                                                                 return_order.name, 'ReturnOrder', return_order.partner_id,address,
                                                                 return_order.partner_invoice_id.id,lines,0.0, return_order.user_id,
@@ -1364,11 +1358,7 @@ class return_order(osv.osv):
             print"Context is empty"
             return True
     
-    def create(self,cr,uid,vals,context={}): 
-        print"valsssssss",vals
-        print"valsssssss",vals['order_line'][0]
-        print"price_unit",vals['order_line'][0][2].get('price_unit')
-        print"price_unit",vals['order_line'][0][2].get('copy_unit_price')        
+    def create(self,cr,uid,vals,context={}):        
         if vals.get('refund_type') == 'partial_refund':            
             if vals['order_line'][1][2].get('price_unit') >= vals['order_line'][1][2].get('copy_unit_price'):
                 print"copy_unit_price=======>",vals.get('copy_unit_price')
