@@ -307,11 +307,8 @@ class mrp_production(osv.osv):
                                 random_counter = 0
                                 while rem_qty > 0 and len(serial_no_list) >= rem_qty:
         #                            context.update({'type':'consumed'})
-                                    print"serial_no_list",serial_no_list
                                     stock_prodlot_id  = serial_no_list[:1]
-                                    print"stock_prodlot_id",stock_prodlot_id
                                     if stock_prodlot_id:
-                                        print"stock_prodlot_id",stock_prodlot_id
                                         del serial_no_list[:1]
                                         prodlot_obj.write(cr,uid,stock_prodlot_id,{'qty_avail':1.0,'location_id':production.location_dest_id.id,'product_id':production.product_id.id,'ref':production.name})
             #                            production.created_serials_random[random_counter].write({'production_id' : False})
