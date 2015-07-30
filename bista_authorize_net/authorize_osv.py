@@ -321,7 +321,6 @@ class CreateCustomerProfileTransaction:
         print"api.RequestData", api.RequestData
         directResponse = ''
         response_ok = self.get_response(responseDOM.getElementsByTagName('messages'))
-        print "response_okresponse_ok1234534546576",response_ok
         if response_ok.get('resultCode',False) == 'Ok':
             directResponse = responseDOM.getElementsByTagName('directResponse')[0].childNodes[0].data
             if (context.get('recurring_billing',False)) or (context.get('captured_api',False)):
@@ -329,7 +328,6 @@ class CreateCustomerProfileTransaction:
                 return response
         else:
             text = response_ok.get('message',False)
-            print "texttexttexttexttexttexttexttext-----------",text
             if responseDOM.getElementsByTagName('directResponse'):
                 directResponse = responseDOM.getElementsByTagName('directResponse')[0].childNodes[0].data
             if text:
@@ -549,7 +547,7 @@ class CreateCustomerPaymentProfile:
 
     def Get(self,cr,uid,sale_order_id,part_id,billing_addr,shipping_addr,cust_profile_id,cc,ext_date,ccv,active_model=False):
         cardCode=''
-        print "ccv for pyemt profile creation............",ccv
+        
         if ccv:
             cardCode = """<cardCode>""" + ccv + """</cardCode> """
         str_billto,str_shipto,address,mode = '','','',''
@@ -894,11 +892,11 @@ class updateCustomerProfileRequest:
                             <customerProfileId>%s</customerProfileId>
                             </profile>
                             </updateCustomerProfileRequest>"""% (self.Session.api_login_id,self.Session.transaction_key,emailid,profile_id)
-        print" api.RequestData", api.RequestData
+        
         responseDOM = api.MakeCall()
-        print "responseDOMresponseDOMresponseDOM",responseDOM
+        
         response_ok = self.get_response(responseDOM.getElementsByTagName('messages'))
-        print "response_okresponse_okresponse_ok",response_ok
+        
         if response_ok.get('resultCode',False) == 'Ok':
             return True
         else:
@@ -946,7 +944,6 @@ class updateCustomerProfileRequest:
        return info
    
     def Get(self,emailid,profile_id):
-        print "emailidemailidemailidemailid",emailid,profile_id
         api = Call()
         api.Session = self.Session
         api.RequestData ="""<?xml version='1.0' encoding='utf-8'?>
@@ -960,11 +957,11 @@ class updateCustomerProfileRequest:
                             <customerProfileId>%s</customerProfileId>
                             </profile>
                             </updateCustomerProfileRequest>"""% (self.Session.api_login_id,self.Session.transaction_key,emailid,profile_id)
-        print" api.RequestData", api.RequestData
+        
         responseDOM = api.MakeCall()
-        print "responseDOMresponseDOMresponseDOM",responseDOM
+        
         response_ok = self.get_response(responseDOM.getElementsByTagName('messages'))
-        print "response_okresponse_okresponse_ok",response_ok
+        
         if response_ok.get('resultCode',False) == 'Ok':
             return True
         else:
