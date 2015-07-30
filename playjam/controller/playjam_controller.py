@@ -7,6 +7,8 @@ import urllib
 from openerp.modules.registry import RegistryManager
 from openerp import SUPERUSER_ID
 database = 'odoo_8_new'
+import logging
+_logger = logging.getLogger(__name__)
 
 class Playjam(http.Controller):
 
@@ -16,45 +18,31 @@ class Playjam(http.Controller):
         t='true'
         f='false'
         want_code=False
-
         if kw.has_key('request'):
             requ=kw.get('request')
             string_con=str(requ)
             if '%' in string_con:
-                #string_con=urllib.unquote(string_con).decode('utf8')
                 if '+' in string_con:
                     string_con=string_con.replace('+','')
                     string_con=urllib.unquote(string_con).decode('utf8')
             if t in string_con:
                 string_con=string_con.replace('true', "True")
-                print "string--------------",string_con
-
             if f in string_con:
                 string_con=string_con.replace(f, "False")
-
-            print "str(request)------",string_con,type(string_con),requ
-
             try:
                 dict_req = ast.literal_eval(str(string_con))
             except Exception ,e:
                 return str({"body":{'result':-1537}})
-
-            print "request---------",dict_req,type(dict_req)
-            #a=dict_req.get('deviceId')
             a=dict_req.get('serialNumber')
-
             wc=dict_req.get('wantCode')
             dev_id=dict_req.get('deviceId')
-            print "a-----",wc,dev_id
-            print "wc-------",type(wc)
             if wc==u'True':
                 want_code=True            
             registry = RegistryManager.get(database)
             with registry.cursor() as cr:
                 u = registry['user.auth']
                 result = u.get_key_code(dev_id, wc)
-
-            print 'result---------------',result            
+            _logger.info('result for get key code------------ %s', result)
             return str(result)
         return str({"body":{'result':-1537}})
 
@@ -63,40 +51,25 @@ class Playjam(http.Controller):
         result={}
         t='true'
         f='false'
-        print "aaaaaaaaaa------",self,kw
         want_code=False        
-
         if 'request' in kw:
             request=kw.get('request')
             string_con=str(request)
-
             if '%' in string_con:
-                #string_con=urllib.unquote(string_con).decode('utf8')
                 if '+' in string_con:
                     string_con=string_con.replace('+','')
                     string_con=urllib.unquote(string_con).decode('utf8')
-
-            print "str(request)------",string_con,type(string_con)
-
             try:
                 dict_req = ast.literal_eval(str(string_con))
-
             except Exception ,e:
                 return (str({"body":{'result':-1537}}))
-
-            print "request---------",dict_req,type(dict_req)
             device_id=dict_req.get('deviceId')
             auth_reply=dict_req.get('authReply')
-#            if auth_reply==None:
-#                auth_reply=""
-            print "a-----",device_id
-            print "wc-------",type(auth_reply),auth_reply
             registry = RegistryManager.get(database)
             with registry.cursor() as cr:
                 u = registry['user.auth']
                 result = u.user_login(dict_req)
-                            
-            print 'result---------------',result            
+            _logger.info('result for get user_login----- %s', result) 
             return (str(result))
         return str({"body":{'result':1537}})
 
@@ -105,38 +78,26 @@ class Playjam(http.Controller):
         result={}
         t='true'
         f='false'
-        print "aaaaaaaaaa------",self,kw,req
         want_code=False
-#        osv_pool = pooler.get_pool('playjam_test')
         user = osv_pool.get('user.auth')
-
         if 'request' in kw:
             request=kw.get('request')
             string_con=str(request)
-
             if '%' in string_con:
-                #string_con=urllib.unquote(string_con).decode('utf8')
                 if '+' in string_con:
                     string_con=string_con.replace('+','')
                     string_con=urllib.unquote(string_con).decode('utf8')
-
-            print "str(request)------",string_con,type(string_con)
             try:
                 dict_req = ast.literal_eval(str(string_con))
-
             except Exception ,e:
                 return (str({"body":{'result':-1537}}))
-
-
-            print "request---------",dict_req,type(dict_req)
             session_token=dict_req.get('deviceId')
             auth_reply=dict_req.get('authReply')
             registry = RegistryManager.get(database)
             with registry.cursor() as cr:
                 u = registry['user.auth']
                 result = u.wallet_top_up(dict_req)            
-            print 'result---------------',result    
-            
+            _logger.info('result for get wallet_top_up----- %s', result) 
             return (str(result))
         return str({"body":{'result':1537}})
 
@@ -147,47 +108,34 @@ class Playcast(http.Controller):
         result={}
 	t='true'
         f='false'
-        print "aaaaaaaaaa------",self,kw
         want_code=False
-#        osv_pool = pooler.get_pool('test_odoo8_1')
-#        user = osv_pool.get('user.auth')
-
         if 'request' in kw:
             request=kw.get('request')
             string_con=str(request)
             if '%' in string_con:
-                #string_con=urllib.unquote(string_con).decode('utf8')
                 if '+' in string_con:
                     string_con=string_con.replace('+','')
                     string_con=urllib.unquote(string_con).decode('utf8')
             if t in string_con:
                 string_con=string_con.replace('true', "True")
-                print "string--------------",string_con
-
             if f in string_con:
                 string_con=string_con.replace(f, "False")
-
-            print "str(request)------",string_con,type(string_con),request
             try:
                 dict_req = ast.literal_eval(str(string_con))
 
             except Exception ,e:
                 return str({"body":{'result':-1537}})
-            print "request---------",dict_req,type(dict_req)
 	    token=dict_req.get('Token')
-            
             registry = RegistryManager.get(database)
             with registry.cursor() as cr:
                 user = registry['user.auth']
                 result=user.validate_insecure_token(token,{})
-
-            print 'result---------------',result
+            _logger.info('result for get validate_insecure_token----- %s', result) 
             response={}
             if result:
                 response={"body":{"code": 1, "message": "Success" }}
             else:
                 response={"body":{"code": -1, "message": "Expired Token" }}
-
             return str(response)
         return str({"body":{'result':-1}})
     
@@ -197,16 +145,11 @@ class Playcast(http.Controller):
         result={}
 	t='true'
         f='false'
-        print "aaaaaaaaaa------",self,kw
         osv_pool = pooler.get_pool('test_odoo8_1')
-
         if 'request' in kw:
-            
             response={"body":{"code": 1, "message": "Call Succesful" }}
-
             return str(response)
         return str({"body":{'result':-1, "message": "Call Failed" }})
-
 #        @openerpweb.httprequest
 
 
@@ -215,41 +158,28 @@ class Playcast(http.Controller):
         result={}
 	t='true'
         f='false'
-        print "aaaaaaaaaa------",self,kw
         want_code=False
         osv_pool = pooler.get_pool(database)
         user = osv_pool.get('res.partner')
-
         if kw.has_key('request'):
             request=kw.get('request')
             string_con=str(request)
             if '%' in string_con:
-                #string_con=urllib.unquote(string_con).decode('utf8')
                 if '+' in string_con:
                     string_con=string_con.replace('+','')
                     string_con=urllib.unquote(string_con).decode('utf8')
             if t in string_con:
                 string_con=string_con.replace('true', "True")
-                print "string--------------",string_con
-
             if f in string_con:
                 string_con=string_con.replace(f, "False")
-
-            print "str(request)------",string_con,type(string_con),request
             try:
                 dict_req = ast.literal_eval(str(string_con))
-
             except Exception ,e:
                 return req.make_response(str({"body":{'result':-1537}}), [('Content-Type', 'application/json; charset=UTF-8')])
-            print "request---------",dict_req,type(dict_req)
-            #a=dict_req.get('deviceId')
             registry = RegistryManager.get(database)
             with registry.cursor() as cr:
                 u = registry['res.partner']
-                result = u.push_transactions(dict_req)            
-            print 'result---------------',result
-    #        user = osv_pool.get('res.users')
-            print "user--------------------",user
-    #        ero
+                result = u.push_transactions(dict_req)    
+            _logger.info('result for  push_transactions----- %s', result) 
             return req.make_response(str(result), [('Content-Type', 'application/json; charset=UTF-8')])
         return str({"body":{'result':-1537}})
