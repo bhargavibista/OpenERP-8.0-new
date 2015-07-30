@@ -56,13 +56,13 @@ class jurisdiction_code(osv.osv):
             type='many2one',
             relation='account.account',
             string="Invoice Tax Account",
-            required=True, help="Use this tax account for Invoices"),  ###cox gen2 removed account.account parameter and view_load=True
+            required=True, help="Use this tax account for Invoices"),  ###cox gen2 odoo 8  removed account.account parameter and view_load=True
         #'account_paid_id':fields.many2one('account.account', 'Refund Tax Account', required=True, help="Use this tax account for Refunds"),
         'account_paid_id':fields.property(
             type='many2one',
             relation='account.account',
             string="Refund Tax Account ",required=True, help="Use this tax account for Refunds",
-            ), ###cox gen2 removed account.account parameter
+            ), ###cox gen2 odoo 8removed account.account parameter
         'base_code_id': fields.many2one('account.tax.code', 'Account Base Code', help="Use this base code for the Invoices"),
         'tax_code_id': fields.many2one('account.tax.code', 'Account Tax Code', help="Use this tax code for the Invoices"),
         'base_sign': fields.float('Base Code Sign', help="Usually 1 or -1"),
@@ -80,10 +80,7 @@ class jurisdiction_code(osv.osv):
     }
 
     def create(self,cr,uid,val,context=None):
-        print"creeeeeeeeeeeeeeee",val
         res = super(jurisdiction_code,self).create(cr,uid,val,context)
-        print"ressssssss jurisdiction_code createeeeeeee",res,val
-#        kdfsfgk
         return res
 
 jurisdiction_code()
@@ -162,8 +159,6 @@ class account_salestax_avatax(osv.osv):
     
     def ping(self, cr, uid, ids, context=None):
         """ Call the Avatax's Ping Service to test the connection. """
-        print "context",context
-        
         if context is None:
             context = {}
 
