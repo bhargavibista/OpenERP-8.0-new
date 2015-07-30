@@ -241,27 +241,23 @@ class sale_order_line(osv.osv):
             #end code preeti
             #start code Preeti
             for each_child_product_id in child_product_ids:
-                print"child_product_ids",child_product_ids
                 desired_id =product_obj.browse(cr,uid,each_child_product_id)
-                print"desired_id",desired_id
                 if desired_id.id != 0:
                     desired_service=desired_id.product_tmpl_id.categ_id  ##cox gen2
-                    print"desired_service",desired_service
                     desired_service_id=desired_id.product_tmpl_id.categ_id.id  ##cox gen2
                     if partner_id:
                         current_active_ids = policy_obj.search(cr,uid,[('agmnt_partner','=',partner_id),('active_service', '=', True)])
                         for each_existing_id in policy_obj.browse(cr,uid,current_active_ids):
                             prod_id = each_existing_id.product_id
-                            print"prod_id",prod_id
                             existing_service_brw = product_category_obj.browse(cr,uid,prod_id.product_tmpl_id.categ_id.id)
-                            print "existing_service_brw",existing_service_brw##cox gen2
+                            
 #                            print"existing_service_brwexisting_service_brw",existing_service_brw
                             if (existing_service_brw.parent_id):
                                 existing_parent_services.append(existing_service_brw.parent_id.id)
 #                            else:
 #                                existing_parent_services2.append(existing_service_brw.id)
                             existing_child_services.append(existing_service_brw.id)
-                        print"existing_child_services",existing_child_services,existing_parent_services
+                        
                         if desired_service_id:
                             if desired_service.parent_id and (desired_service.parent_id.id in existing_child_services) :
                                 message += message + '\n Customer already has same active subscription.'
@@ -288,9 +284,9 @@ class sale_order_line(osv.osv):
         #end code Preeti
 ##########code done by yogita
                         elif existing_order_line:
-                            print"existing_order_lineexisting_order_lineexisting_order_line",existing_order_line
+                            
                             for each_line in existing_order_line:
-                                print"each_line[1]",each_line[1]
+                                
                                 lines_product_ids = []
                                 existing_parent_services=[]
                                 existing_child_services=[]
@@ -303,30 +299,28 @@ class sale_order_line(osv.osv):
                                             
                                             [lines_product_ids.append(each_comp[2].get('product_id',False)) if each_comp[2].get('product_id',False) and each_comp[2].get('product_type',False) == 'service' else '' for each_comp in each_line[2].get('sub_components',[])]
                                         else:
-                                            print"each_line[2].get('product_id',False)",each_line[2].get('product_id',False)
+                                            
                                             [lines_product_ids.append(each_line[2].get('product_id',False)) if each_line[2].get('product_id',False) else '']
                                 else:
                                     cr.execute("select product_id from sub_components where so_line_id =%s and product_type='service'"%(each_line[1]))
                                     lines_product_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
-                                    print"lines_product_ids",lines_product_ids
+                                    
                                 for each_child_product_id in lines_product_ids:
                                     existing_id =product_obj.browse(cr,uid,each_child_product_id)
                                     if existing_id.id != 0:
                                         existing_service=existing_id.product_tmpl_id.categ_id  ##cox gen2
-                                        print"existing_service***************************",existing_service,desired_service_id,desired_service.parent_id
+                                        
                                         existing_service_id=existing_id.product_tmpl_id.categ_id.id ##cox gen2
                                         if partner_id and existing_service_id:
             #                                if desired_service_id:
                                             if existing_service.parent_id:
-                                                print"existing_parent_services.append(existing_service_id)",existing_service.parent_id
+                                                
                                                 existing_parent_services.append(existing_service.parent_id.id)
 #                                            else:
 #                                                existing_parent_services2.append(existing_service_id)
                                             existing_child_services.append(existing_service_id)
 #                                                existing_parent_services2.append(existing_service_id)
-                                            print"existing_child_servicesexisting_child_services",existing_child_services
-                                            print"existing_parent_servicesexisting_parent_services",existing_parent_services
-                                            print"existing_parent_servicesexisting_parent_services",existing_parent_services2
+                                            
                                             if desired_service.parent_id and (desired_service.parent_id.id in existing_child_services) :
 #                                                if (desired_service.parent_id.id in existing_child_services) :
 #                                                or (desired_service.parent_id.id in existing_parent_services): #here
@@ -1316,23 +1310,23 @@ class sale_order(osv.osv):
                             'rental_response':True
                             })
         #if billing_date and ((sale_id_brw.cox_sales_channels != 'call_center') or (context.get('update'))) :
-        print"contextttttttttttttttt",context
+        
         if billing_date and (context.get('update')) :
-            print"ifffffffffffffff"
+            
             value = "billing_date='%s'"%billing_date
             if not active_services:
                 value += ",start_date='%s'"%order_date
             if value:
                 print"value",value,sale_id_brw.cox_sales_channels
                 if sale_id_brw.cox_sales_channels != 'amazon':
-                    print"ffffffffffffffffff"
+                    
                     result=partner_obj.write(cr,uid,partner_id,{'billing_date':billing_date})
-                    print"resultttttttttttttt",result
+                    
 #                    cr.execute('update res_partner set %s where id=%s'%(value,partner_id))
 #                    cr.commit()
             self.calculate_extra_days(cr,uid,partner_id,billing_date)
             billing=partner_obj.browse(cr,uid,partner_id)
-            print"billingbillingbillingbillingbilling",billing,billing.billing_date
+            
             partner_obj.cal_next_billing_amount(cr,uid,partner_id)
         return True
 
