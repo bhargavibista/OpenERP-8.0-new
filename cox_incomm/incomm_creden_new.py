@@ -39,6 +39,7 @@ incomm_cred_details()
 class gift_card_validate_call(osv.osv):
     _name = 'gift.card.validate.call'
     
+    """Call to incomm for status inquiry of Gift Card"""
     def api_call_toincomm_statinq(self,cr,uid,card_num,context):
         url = "https://milws4-test.incomm.com/transferedvalue/gateway"
         xml_text="""<?xml version='1.0' encoding='UTF-8'?>
@@ -57,19 +58,15 @@ class gift_card_validate_call(osv.osv):
         </TransferredValueTxnReq>
         </TransferredValueTxn>"""% ('','','Flare Entertainment',card_num,'','')
         r=urllib2.Request(url,data=xml_text,headers={'Content-Type': 'application/xml'})
-#        print "rrrrrrrrrrrrrrrrrrrrrr",r
         u = urllib2.urlopen(r)
         response = u.read()
-#        print "response...............",response
+        _logger.info('request for api_call_toincomm_statinq----------------- %s', response)
         xml1 = xml.dom.minidom.parseString(response)
         stat_inq_data = xml.dom.minidom.parseString(response)
         pretty_xml_as_string_statinq = xml1.toprettyxml()
-        print "pretty_xml_as_string_statinq...............",pretty_xml_as_string_statinq,stat_inq_data
-#        resp_msg=xml1.getElementsByTagName("RespMsg")[0].childNodes[0].nodeValue
-#        face_value=xml1.getElementsByTagName("FaceValue")[0].childNodes[0].nodeValue
-#        print "face valieueeeeeeeeee...........",face_value
         return stat_inq_data
         
+        """Call to Incomm to Redeem the gift card"""
     def api_call_toincomm_redemption(self,cr,uid,card_num,context):
         url = "https://milws4-test.incomm.com/transferedvalue/gateway"
         xml_text="""<?xml version='1.0' encoding='UTF-8'?>
@@ -90,15 +87,13 @@ class gift_card_validate_call(osv.osv):
         r=urllib2.Request(url,data=xml_text,headers={'Content-Type': 'application/xml'})
         u = urllib2.urlopen(r)
         response = u.read()
-        print "response...............",response
+        _logger.info('response for api_call_toincomm_redemption----------------- %s', response)
         xml2 = xml.dom.minidom.parseString(response)
         pretty_xml_as_string_redemption = xml2.toprettyxml()
-        print "pretty_xml_as_string_statinq...............",pretty_xml_as_string_redemption
         redemption_data = xml.dom.minidom.parseString(response)
-#        print "redemption data...............",redemption_data
         return redemption_data
         
-
+    """Call to Incomm to reverse the Gift Card Status to Active"""
     def api_call_toincomm_reversal(self,cr,uid,card_num,context):
         url = "https://milws4-test.incomm.com/transferedvalue/gateway"
         xml_text="""<?xml version='1.0' encoding='UTF-8'?>
@@ -119,12 +114,10 @@ class gift_card_validate_call(osv.osv):
         r=urllib2.Request(url,data=xml_text,headers={'Content-Type': 'application/xml'})
         u = urllib2.urlopen(r)
         response = u.read()
-        print "response...............",response
+        _logger.info('response for api_call_toincomm_reversal----------------- %s', response)
         xml3 = xml.dom.minidom.parseString(response)
         pretty_xml_as_string_reversal = xml3.toprettyxml()
-        print "pretty_xml_as_string_statinq...............",pretty_xml_as_string_reversal
         reversal_data = xml.dom.minidom.parseString(response)
-        print "reversal_data data...............",reversal_data
         return reversal_data
         
     _columns = {
