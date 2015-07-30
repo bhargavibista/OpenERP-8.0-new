@@ -3,7 +3,6 @@ import logging
 from openerp.osv import osv, fields
 import datetime
 from openerp.tools.translate import _
-from openerp import netsvc
 from dateutil.relativedelta import relativedelta
 #from openerp.addons.magentoerpconnect import magerp_osv
 import calendar
@@ -16,7 +15,6 @@ class res_partner(osv.osv):
     _inherit="res.partner"
     
     def recurring_billing(self,cr,uid,context={}):
-        print"recurring billing"
         partner_ids,payment_profile_id,start_date=[],False,''
         sale_obj=self.pool.get('sale.order')
 	exception_obj=self.pool.get('partner.payment.error')
@@ -27,7 +25,6 @@ class res_partner(osv.osv):
             today=context.get('billing_date','')
             today=datetime.datetime.strptime(today, "%Y-%m-%d").date()
             partner_ids=context.get('partner_ids')
-            print"partner_ids",partner_ids
         else:
             today=datetime.date.today()
 #	    today = '2014-08-31'  	
@@ -36,7 +33,7 @@ class res_partner(osv.osv):
         days_nextmonth=calendar.monthrange(nextmonth.year,nextmonth.month)[1]
         if len(partner_ids)==0:
             partner_ids = self.search(cr, uid, [('billing_date','=',str(today))])
-        print"partner_ids",partner_ids
+        
         for partner_id in partner_ids:
             partner_obj=self.browse(cr,uid,partner_id)       
 #            nextmonth=datetime.datetime.strptime(nextmonth, "%Y-%m-%d").date()
@@ -44,7 +41,7 @@ class res_partner(osv.osv):
             cr.execute('select id from res_partner_policy where  active_service = True and no_recurring=False and  agmnt_partner = %s  and (next_billing_date <= (select billing_date from res_partner where id=%s))'% (partner_id,partner_id))
             #cr.execute('select id from res_partner_policy where  active_service = True and agmnt_partner = %s  and ((free_trial_date is null) or free_trial_date <= (select billing_date from res_partner where id=%s))'% (partner_id,partner_id))
             policies = filter(None, map(lambda x:x[0], cr.fetchall()))
-	    print"policyyyyyyyyyyyyyyyyy",policies,today,partner_id
+	    
             if policies:
                 nextmonth = today + relativedelta(months=1)
                 if len(policies)==1:
@@ -103,12 +100,9 @@ class res_partner(osv.osv):
                 if result:
                     partner_profile_id=result[0].get('profile_id')
                     cr.execute("select id,profile_id,credit_card_no from custmer_payment_profile where customer_profile_id='%s' and active_payment_profile=True"%(str(partner_obj.customer_profile_id)))
-                    print "partner_obj.customer_profile_id",partner_obj.customer_profile_id
                     payment_profile_data=cr.dictfetchall()
-                    print "payment_profile_data",payment_profile_data
                     if payment_profile_data:
                         for each in payment_profile_data:
-                            print "payment_profile_idpayment_profile_id",each
                             payment_profile_id=each.get('profile_id')
                             profile_id=each.get('id')
                             if profile_id==partner_profile_id:
@@ -116,7 +110,6 @@ class res_partner(osv.osv):
 #                context={'partner_id_obj':partner_obj,'recurring_billing':True }
                 context['partner_id_obj'] = partner_obj
                 context['recurring_billing']=True
-                print"context",context
                 res_id=sale_obj.action_invoice_merge(cr, uid, maerge_invoice_data, today, nextmonth, start_date,payment_profile_id, context=context)
                 if res_id:
                     if partner_obj.payment_policy=='pro':
@@ -137,16 +130,7 @@ class res_partner(osv.osv):
                     for service_data in maerge_invoice_data:
                         policy_brw = service_data.get('policy_id_brw',False)
                         app_id=policy_brw.product_id.id
-                        print"policy_brwpolicy_brwpolicy_brwpolicy_brwpolicy_brw",policy_brw
-                        print "user_id-service_data--------",user_id,policy_brw
-                        print "app_id---------",app_id
-                        print "expiry_epoch---------",start_date
-#                        expiry_epoch=time.mktime(datetime.datetime.strptime(str(today), "%Y-%m-%d").timetuple())
-#                        print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch
-#                        expiry_epoch=expiry_epoch+3600.0
-#                        print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
                         rental_result = user_auth_obj.rental_playjam(cr,uid,partner_id,app_id,0)
-                        print "voucher_return----------",rental_result
         #                    result=4113
                         if ast.literal_eval(str(rental_result)).has_key('body') and ast.literal_eval(str(rental_result)).get('body')['result'] == 4113:
                             #4113 is the result response value for successfull rental update
@@ -156,7 +140,7 @@ class res_partner(osv.osv):
                             cr.execute("update res_partner_policy set active_service = False,return_cancel_reason='Credit Card Not on File.',cancel_date=%s,additional_info=%s where id = %s",(today,cancel_reason,policy_brw.id))
                             sale_obj.email_to_customer(cr,uid,pay_error,'partner.payment.error','cancel_service',partner_obj.emailid,context)
         return True
-    def magento_connection(self,cr,uid,context={}):
+    '''def magento_connection(self,cr,uid,context={}):
         referential_obj = self.pool.get('external.referential')
         website_obj = self.pool.get('external.shop.group')
         partner_obj = self.pool.get('res.partner')
@@ -165,7 +149,7 @@ class res_partner(osv.osv):
             attr_conn = False
             referential_id_obj = referential_obj.browse(cr,uid,search_referential[0])
 #            try:
-#                attr_conn = referential_id_obj.external_connection(True)
+#                attr_conn = referential_id_obj.external_connection(True)'''
 
     def prodid_from_pkgid(self,cr,uid,package_id):
         prod_brw = False
@@ -181,7 +165,6 @@ class res_partner(osv.osv):
         return prod_brw
 
     def makeSubscriptionPurchase(self,cr,uid,subscription_data):
-	print "subscription data",subscription_data
         if subscription_data and subscription_data.get('user_name','') or subscription_data.get('customer_id',''):
             username = subscription_data.get('user_name','')
             customer_id = subscription_data.get('customer_id','')
@@ -207,7 +190,6 @@ class res_partner(osv.osv):
             if partner_id and package_id and start_date and from_package_id:
                 partner_brw = partner_obj.browse(cr,uid,partner_id[0])
                 oe_prod_brw = product_obj.search(cr,uid,[('default_code','=',from_package_id)])
-                print"oe_prod_brwoe_prod_brwoe_prod_brw",oe_prod_brw
                 if from_package_id=='service91':
                     return "You can not downgrade"
                 if oe_prod_brw:
@@ -302,172 +284,7 @@ class res_partner(osv.osv):
 
 		        return True
 	return False
-    '''def update_subscription(self,cr,uid,subscription_data,context=None):
-	print "subscription data",subscription_data
-        if subscription_data and subscription_data.get('CustomerId',''):
-            customer_id = subscription_data.get('CustomerId','')
-            new_sku = subscription_data.get('NewSKU','')
-            start_date = subscription_data.get('StartDate','')
-            old_sku = subscription_data.get('OldSKU','')
-	    from_openerp=subscription_data.get('from_openerp','')
-            partner_obj = self.pool.get('res.partner')
-            partner_policy = self.pool.get('res.partner.policy')
-            up_down_obj=self.pool.get('upgrade.downgrade.policy')
-            return_obj = self.pool.get('return.order')
-            product_obj=self.pool.get('product.product')
-            result,partner_id=False,{}
-            if customer_id:
-                partner_id = partner_obj.search(cr,uid,[('id','=',customer_id)])
-            elif username:
-                partner_id = partner_obj.search(cr,uid,[('emailid','ilike',username)])
-            print "partner_id",partner_id
-            try:
-                if partner_id and new_sku and start_date and old_sku:
-                    partner_brw = partner_obj.browse(cr,uid,partner_id[0])
-                    oe_prod_id = product_obj.search(cr,uid,[('default_code','=ilike',old_sku)])
-                    print "oe_prod_brw",oe_prod_id
-    #                if from_package_id=='service91':
-    #                    return "You can not downgrade"
-                    if oe_prod_id:
-                        search_old_policy = partner_policy.search(cr,uid,[('product_id','=',oe_prod_id[0]),('active_service','=',True),('agmnt_partner','in',partner_id)])
-                        print "search_old_policy",search_old_policy
-    		    if not partner_brw.customer_profile_id:
-                            result={
-                                'code':'False',
-                                'message':'Customer Payment Profile does not exist.'
-                                }
-                            return result
-                    if search_old_policy:
-                        new_pack_id = product_obj.search(cr,uid,[('default_code','=ilike',new_sku)])
-                        new_pack_oe_brw=product_obj.browse(cr,uid,new_pack_id[0])
-                        old_prod_categ,old_prod_categ_parent,free_trial_date,flag,source=[],[],'',False,''
-                        old_policy_brw = partner_policy.browse(cr,uid,search_old_policy[0])
-                        if new_pack_oe_brw.id==old_policy_brw.product_id:
-                            result={
-                            'code':'False',
-                            'message':'Customer already has same active subscription.'
-                            }
-                            return result
-                        oe_categ_id=product_obj.browse(cr,uid,oe_prod_id[0]).categ_id
-                        print"oe_categ_idoe_categ_idoe_categ_id",oe_categ_id
-                        if oe_categ_id.parent_id:
-                            print"oe_oe_categ_id.parent_ide_categ_id.parent_id",oe_categ_id.parent_id
-                            old_prod_categ_parent.append(oe_categ_id.parent_id.id)
-                        old_prod_categ.append(oe_categ_id.id)
-                        source=('gcluster' if uid==72  else 'COX')
-                        billing_dt_obj = datetime.datetime.strptime(partner_brw.billing_date, '%Y-%m-%d').date()
-                        start_dt_current_service=datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
-                        old_free_trial_date=datetime.datetime.strptime(old_policy_brw.free_trial_date, "%Y-%m-%d").date()
-                        if (old_free_trial_date>start_dt_current_service):
-                            if (start_dt_current_service.month==2 and billing_dt_obj.day in(31,30)) or (billing_dt_obj.day==31) :
-                                days_month=calendar.monthrange(start_dt_current_service.year,start_dt_current_service.month)[1]
-                                new_billing_date=str(start_dt_current_service.year)+'-'+str(start_dt_current_service.month)+'-'+str(days_month)
-                            else:
-                                new_billing_date=str(start_dt_current_service.year)+'-'+str(start_dt_current_service.month)+'-'+str(billing_dt_obj.day)
-                            new_billing_date=datetime.datetime.strptime(new_billing_date, "%Y-%m-%d").date()
-                            if start_dt_current_service>=new_billing_date:
-                                new_billing_date=new_billing_date + relativedelta(months=1)
-                            if new_billing_date<billing_dt_obj:
-                                billing_dt_obj=new_billing_date
-                                free_trial_date=billing_dt_obj-relativedelta(days=1)
-                                flag=True
-                            elif start_dt_current_service<old_free_trial_date and old_free_trial_date>billing_dt_obj:
-                                free_trial_date=billing_dt_obj-relativedelta(days=1)
-                            else:
-                                free_trial_date=old_free_trial_date
-                        elif(old_free_trial_date<start_dt_current_service):
-                            free_trial_date=billing_dt_obj-relativedelta(days=1)
-                        else:
-                            free_trial_date=old_free_trial_date
-                        free_trial_date=datetime.datetime.strptime(str(free_trial_date), "%Y-%m-%d").date()
-#                            new_pack_id = product_obj.search(cr,uid,[('default_code','=ilike',new_sku)])
-#                            new_pack_oe_brw=product_obj.browse(cr,uid,new_pack_id[0])
-                        if new_pack_oe_brw:
-                            new_prod_categ=new_pack_oe_brw.categ_id
-                            print"printupdown_service=",new_prod_categ
-                            print"nrwwwwwwwwwwwwwwwwwww parentttttttt",new_prod_categ.parent_id
-                            print" old_prod_categ_parent old_prod_categ_parent",old_prod_categ_parent
-                            print"old_prod_categold_prod_categold_prod_categold_prod_categ",old_prod_categ
-                            updown_service=''
-                            if new_prod_categ.parent_id:
-                                if (new_prod_categ.parent_id.id not in old_prod_categ_parent) and (new_prod_categ.parent_id.id not in old_prod_categ) and (new_prod_categ.id not in old_prod_categ_parent):
-                                    result={'code':False,'message':'You can not Upgrade/Downgrade to this service'}
-                                    return result
-                                elif (new_prod_categ.parent_id.id in old_prod_categ_parent) or (new_prod_categ.id in old_prod_categ_parent):
-                                    updown_service='upgrade'
-                                else:
-                                    updown_service='downgarde'
-                            elif (not new_prod_categ.parent_id):
-#                                or (new_prod_categ.id in old_prod_categ_parent):
-                                if (new_prod_categ.id not in old_prod_categ_parent) or (new_prod_categ.id in old_prod_categ):
-                                    result={'code':False,'message':'You can not Upgrade/Downgrade to this service'}
-                                    return result
-                                elif new_prod_categ.id in old_prod_categ_parent:
-                                    print"ujpgradeeeeeeeeeeeeeeeeeeeeeeeeee==========="
-                                    updown_service='upgrade'
-                            print"updown_serviceupdown_serviceupdown_service",updown_service,new_pack_oe_brw.categ_id
-                            if billing_dt_obj<start_dt_current_service:
-                                days_left =(billing_dt_obj+relativedelta(months=1)) - start_dt_current_service
-                            else:
-                                days_left = billing_dt_obj - start_dt_current_service
-                            nijjbnin
-                            additional_info = {'source':source,'cancel_return_reason':'downgrade'}
-                            cancel_reason = return_obj.additional_info(cr,uid,additional_info)
-                            cr.execute("update res_partner_policy set active_service = False,return_cancel_reason='downgrade',cancel_date=%s,additional_info=%s where id = %s",(start_date,cancel_reason,old_policy_brw.id))
-                            policy_id=partner_policy.create(cr,uid,{
-                            'service_name':new_pack_oe_brw.name,
-                            'active_service':True,
-                            'sale_id': old_policy_brw.sale_id,
-                            'start_date': start_date,
-                            'agmnt_partner':partner_id[0],
-                            'product_id': new_pack_oe_brw.id,
-                            'from_package_id':old_policy_brw.id,
-                            'up_down_service':updown_service,
-                            'free_trial_date': free_trial_date if free_trial_date else False,
-                            'sale_line_id':old_policy_brw.sale_line_id,
-                            'extra_days': (days_left.days if days_left else 0),
-                            'sale_order':old_policy_brw.sale_order,
-                            'source':source,
-                            'no_recurring':False,
-                            })
-                            if flag==True:
-                                result1=partner_brw.write({'billing_date':billing_dt_obj})
-                                print"resulttttttttttttttt",result1,billing_dt_obj
-                            if policy_id:
-                                result={
-                                'code':'True',
-                                'message':'Success'
-                                }
-#                            if from_openerp!=True:
-#                                result1=up_down_obj.create(cr,uid,{
-#                                'partner_id':partner_id[0],
-#                                'old_policy_id':old_policy_brw.id,
-#                                'product_id':new_pack_oe_brw.id,
-##                                        'up_down_service':up_down_service,
-#                                'up_down_service':'upgrade' if 'up' in up_down_service.lower() else 'downgrade',
-#                                'start_date':start_date,
-#                                'free_trial_date':free_trial_date if free_trial_date else old_policy_brw.free_trial_date,
-##                                        'free_trial_end':free_trial_end if free_trial_end else False,
-#                                'source':source,
-#                                'state':'done',
-#                                'new_policy_id':policy_id,
-#                                'previous_package_prorated_price':previous_package_prorated_price,
-#                                'new_package_prorated_price':new_package_prorated_price,
-#                                'previous_package_price':previous_package_price,
-#                                'new_package_price':new_package_price,
-#                                })
-#                            else:
-#                                return free_trial_date,policy_id
-
-                                return result
-            except Exception, e:
-                result={
-                    'code':'False',
-                    'message':str(e)
-                }
-                return result
-
-	return False'''
+    
 
 res_partner()
 
@@ -484,6 +301,7 @@ class res_partner_policy(osv.osv):
     'up_down_service': fields.char('Upgrade/Downgrade',size=256),
     'up_down_id':fields.many2one('upgrade.downgrade.policy','Updown Policy')
     }
+    
     def up_down_charges_gcluster(self,cr,uid,original_service,current_service,context):
         last_amount_paid = original_service.last_amount_charged
         previous_package_prorated_price = current_service.previous_package_prorated_price
@@ -499,7 +317,6 @@ class res_partner_policy(osv.osv):
         adv_paid=0.0
         if not context:
             context={}
-            print"contexttttttttttttttt",context
         start_dt_current_service = datetime.datetime.strptime(str(current_service.start_date), '%Y-%m-%d')
         old_free_trial_date=datetime.datetime.strptime(str(original_service.free_trial_date), "%Y-%m-%d")
 #        old_start_trial_date=datetime.datetime.strptime(str(original_service.start_date), "%Y-%m-%d")
@@ -526,14 +343,11 @@ class res_partner_policy(osv.osv):
             #else:
              #   days_left_old=days_left
         if context and context.get('cancel_date',False):
-            print"cancelllllllllllllllllllll",original_service,context.get('cancel_date',False)
             cancel_date=datetime.datetime.strptime(str(original_service.cancel_date), "%Y-%m-%d")
             days_left_old=inv_dt_obj-cancel_date
-            print"days_left_olddays_left_olddays_left_olddays_left_olddays_left_old",days_left_old
         cr.execute('update res_partner_policy set last_amount_charged=%s where id =%s'%(current_price,current_service.id))
         if original_service.last_amount_charged<original_service.product_id.list_price and original_service.last_amount_charged!=0.0:
             days_left_old =(start_dt_current_service-old_free_trial_date)
-            print"days_left_olddays_left_olddays_left_olddays_left_old",days_left_old
             original_subscription_charges =  (original_price * ((days_left_old.days)/float(days_in_month)))
         else:
 		original_subscription_charges =  (original_price * ((days_in_month- days_left_old.days)/float(days_in_month)))
@@ -575,17 +389,15 @@ class res_partner_policy(osv.osv):
         invoice_lines  =context.get('invoice_lines',[])
         if original_service.from_package_id:
             extra_days=original_service.extra_days
-            print"extra_daysextra_daysextra_daysextra_days",extra_days
             while extra_days>0:
                 context['cancel_date']=True
-                print"original_serviceoriginal_serviceoriginal_service",original_service
 #                if original_service.from_package_id and original_service.up_down_service:
 #                    if original_service.up_down_service:
                 start_current_service = datetime.datetime.strptime(str(original_service.start_date), '%Y-%m-%d')
                 cancel_date=datetime.datetime.strptime(str(original_service.cancel_date), "%Y-%m-%d")
                 extra_days_old=cancel_date-start_current_service
                 extra_charges_old=(original_service.product_id.list_price/days)*int(extra_days_old.days)
-                print"extra_charges_oldextra_charges_oldextra_charges_oldextra_charges_old",extra_charges_old,original_service.product_id.list_price,extra_days_old,original_service.extra_days
+                
                 if extra_charges_old>0.0:
                     context['name'] = original_service.product_id.name + '(Extra Charges of Previous Service)'
                     context['new_pacakge_id'] = original_service.product_id
@@ -593,10 +405,10 @@ class res_partner_policy(osv.osv):
                     invoice_lines += lines
                 upgrade_downgrade=original_service.up_down_service
 #                cr.execute('update res_partner_policy set extra_days=0 where id =%s'%(original_service.id))
-                print"upgrade_downgradeupgrade_downgradeupgrade_downgrade",upgrade_downgrade,original_service
+                
                 original_service=original_service.from_package_id if original_service.from_package_id else original_service
                 extra_days=original_service.extra_days if original_service.from_package_id else 0
-                print"old_serviceold_serviceold_serviceold_serviceold_serviceold_service",extra_days,original_service
+                
         old_free_trial_date=datetime.datetime.strptime(str(original_service.free_trial_date), "%Y-%m-%d")
         billing_date=datetime.datetime.strptime(str(date_inv), "%Y-%m-%d")
         unit_price = policy_brw.product_id.list_price
@@ -623,14 +435,14 @@ class res_partner_policy(osv.osv):
             context['name'] = inv_line_desc
             lines  = self.invoice_line_up_down(cr,uid,policy_brw,extra_charges,context)
             invoice_lines += lines
-        print"invoice_linesinvoice_linesinvoice_lines",invoice_lines
+        
         if (original_service.extra_days and original_service.extra_days>0) and ((old_free_trial_date < start_dt_current_service)):
             cancel_date=datetime.datetime.strptime(str(original_service.cancel_date), "%Y-%m-%d")
             extra_days_old=cancel_date-old_free_trial_date
 #            days=calendar.monthrange(date_inv.year,date_inv.month)[1]
 #            days=366 if calendar.isleap(date_inv.year) else 365
             extra_charges_old=(original_service.product_id.list_price/days)*int(extra_days_old.days)
-            print"extra_charges_oldextra_charges_oldextra_charges_oldextra_charges_old",extra_charges_old,original_service.product_id.list_price,extra_days_old,original_service.extra_days
+            
             context['name'] = original_service.product_id.name + '(Extra Charges of Previous Service)'
             context['new_pacakge_id'] = original_service.product_id
             lines  = self.invoice_line_up_down(cr,uid,original_service,extra_charges_old,context)
@@ -697,21 +509,20 @@ class upgrade_downgrade_policy(osv.osv):
             new_pack_oe_brw =product_obj.browse(cr,uid,product_id)
             cr.execute('select product_id from res_partner_policy where active_service=True and return_cancel_reason is null and agmnt_partner= %s'%partner_id)
             product_ids=filter(None, map(lambda x:x[0], cr.fetchall()))
-            print"product_idsproduct_idsproduct_ids",product_ids
+            
             if product_ids and new_pack_oe_brw.id in product_ids:
                 message += message + '\n Customer already has same active subscription.'
                 res['warning']['message'] = message
                 res['value'].update({'product_id':False,'name':'','up_down_service':False})
                 return res
-            print"old_policy_brw.from_package_idold_policy_brw.from_package_idold_policy_brw.from_package_id",old_policy_brw.from_package_id,old_policy_brw.from_package_id.extra_days,old_policy_brw.extra_days
+            
             oe_categ_id=product_obj.browse(cr,uid,old_policy_brw.product_id.id).categ_id
             if oe_categ_id.parent_id:
                 old_prod_categ_parent.append(oe_categ_id.parent_id.id)
             old_prod_categ.append(oe_categ_id.id)
-            print"old_prod_categ_parentold_prod_categ_parent",old_prod_categ_parent
-            print"old_prod_categold_prod_categold_prod_categ",old_prod_categ
+            
             new_prod_categ=new_pack_oe_brw.categ_id
-            print"new_prod_categnew_prod_categnew_prod_categ",new_prod_categ,new_prod_categ.parent_id
+            
             if new_prod_categ.parent_id:
                 if (new_prod_categ.parent_id.id not in old_prod_categ_parent) and (new_prod_categ.parent_id.id not in old_prod_categ) and (new_prod_categ.id not in old_prod_categ_parent):
                     message += message + '\n You can not Upgrade/Downgrade to this service'
@@ -751,7 +562,7 @@ class upgrade_downgrade_policy(osv.osv):
                 'from_openerp':True,
             })
             res=partner_obj.update_subscription(subscription_data)
-            print"resresres",res,ast.literal_eval(str(res)).get('body')['code']
+            
             if ast.literal_eval(str(res)).has_key('body'):
                 code=int(ast.literal_eval(str(res)).get('body')['code'])
                 if code!=4113:
