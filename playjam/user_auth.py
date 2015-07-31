@@ -105,8 +105,7 @@ class user_auth(models.Model):
                 return json.dumps({'body':{"code":False, "message":"No such Device"}})
         else:
             return json.dumps({'body':{"code":False, "message":"Please enter the Activation code"}})
-        
-        
+    
     def link_account(self, dict, context=None):
         _logger.info('dict---------------- %s', dict)
         partner_id=dict.get('CustomerId')
@@ -329,14 +328,23 @@ class user_auth(models.Model):
     
     
     def account_playjam(self,dict,context=None):
-        url = "http://54.172.158.69/api/rest/flare/account/view.json"
-        headers = {'content-type': 'application/x-www-form-urlencoded'}
-        data=json.dumps(dict)
-	_logger.info('data for account playjam--------------- %s', data)
-        request=urllib.quote(data.encode('utf-8'))
-        response = requests.post(
-                    url, data="request="+request, headers=headers)
-        return response.content
+        playjam_config=self.pool.get('playjam.config.menu')
+        config_ids = playjam_config.search(request.cr,SUPERUSER_ID,[])
+        if config_ids:
+            config_obj = playjam_config.browse(request.cr,SUPERUSER_ID,config_ids[0])
+            url=config_obj.account_playjam
+#        url = "http://54.172.158.69/api/rest/flare/account/view.json"
+            headers = {'content-type': 'application/x-www-form-urlencoded'}
+            data=json.dumps(dict)
+            _logger.info('data for account playjam--------------- %s', data)
+            request=urllib.quote(data.encode('utf-8'))
+            response = requests.post(
+                        url, data="request="+request, headers=headers)
+            return response.content
+        else:
+            result={"body":{ 'code':'False', 'message':"Please Define Playjam Configuration!!"}}
+            return json.dumps(result)
+
 
     def user_login(self, dict, context=None):
         result,auth_user_id = '',[]
@@ -484,51 +492,75 @@ class user_auth(models.Model):
         return json.dumps({'body':{ "code":False, "message":"Playjam Server Issue."}})
         
     def wallet_playjam(self, user_id, quantity, context=None):
-        url = "http://54.75.245.17/api/rest/flare/wallet/view.json"
-        headers = {'content-type': 'application/x-www-form-urlencoded'}
+        playjam_config=self.pool.get('playjam.config.menu')
+        config_ids = playjam_config.search(request.cr,SUPERUSER_ID,[])
+        if config_ids:
+            config_obj = playjam_config.browse(request.cr,SUPERUSER_ID,config_ids[0])
+            url=config_obj.wallet_playjam
+#        url = "http://54.75.245.17/api/rest/flare/wallet/view.json"
+            headers = {'content-type': 'application/x-www-form-urlencoded'}
 
-        payload = {
-                        "uid": 'FLARE1093',
-                        "quantity":float(quantity),
-                    }
+            payload = {
+                            "uid": 'FLARE1093',
+                            "quantity":float(quantity),
+                        }
 
-        data=json.dumps(payload)
-        _logger.info('data for wallet--------------- %s', data)
-        request=urllib.quote(data.encode('utf-8'))
-        response = requests.post(
-                    url, data="request="+request, headers=headers)
-        _logger.info('response for wallet--------------- %s', response.content)
-        return response.content
+            data=json.dumps(payload)
+            _logger.info('data for wallet--------------- %s', data)
+            request=urllib.quote(data.encode('utf-8'))
+            response = requests.post(
+                        url, data="request="+request, headers=headers)
+            _logger.info('response for wallet--------------- %s', response.content)
+            return response.content
+        else:
+            result={"body":{ 'code':'False', 'message':"Please Define Playjam Configuration!!"}}
+            return json.dumps(result)
     
     def device_playjam(self, dict, context=None):
-        url = "http://54.172.158.69/api/rest/flare/device/view.json"
-        headers = {'content-type': 'application/x-www-form-urlencoded'}
-        data=json.dumps(dict)
-        request=urllib.quote(data.encode('utf-8'))
-        response = requests.post(
-                    url, data="request="+request, headers=headers)
-        _logger.info('response for device playjam--------------- %s', response.content)
-        return response.content
+        playjam_config=self.pool.get('playjam.config.menu')
+        config_ids = playjam_config.search(request.cr,SUPERUSER_ID,[])
+        if config_ids:
+            config_obj = playjam_config.browse(request.cr,SUPERUSER_ID,config_ids[0])
+            url=config_obj.device_playjam
+#        url = "http://54.172.158.69/api/rest/flare/device/view.json"
+            headers = {'content-type': 'application/x-www-form-urlencoded'}
+            data=json.dumps(dict)
+            request=urllib.quote(data.encode('utf-8'))
+            response = requests.post(
+                        url, data="request="+request, headers=headers)
+            _logger.info('response for device playjam--------------- %s', response.content)
+            return response.content
+        else:
+            result={"body":{ 'code':'False', 'message':"Please Define Playjam Configuration!!"}}
+            return json.dumps(result)
     
     
     def rental_playjam(self, user_id, appId, expiration, context=None):
-        url = "http://54.172.158.69/api/rest/flare/rental/view.json"
-        headers = {'content-type': 'application/x-www-form-urlencoded'}
-        _logger.info('App ID---------- %s', appId)
-	expiration=int(expiration)
-        _logger.info('Expiration---------- %s', expiration)
-        payload = {
-            "uid":long(user_id),
-            "appId":long(appId),
-            "expiration":(expiration)*1000,
-	    "charge":0.0
-            }
-        data=json.dumps(payload)
-        request=urllib.quote(data.encode('utf-8'))
-        response = requests.post(
-                    url, data="request="+request, headers=headers)
-        return response.content
-    
+        playjam_config=self.pool.get('playjam.config.menu')
+        config_ids = playjam_config.search(request.cr,SUPERUSER_ID,[])
+        if config_ids:
+            config_obj = playjam_config.browse(request.cr,SUPERUSER_ID,config_ids[0])
+            url=config_obj.rental_playjam
+#            url = "http://54.172.158.69/api/rest/flare/rental/view.json"
+            headers = {'content-type': 'application/x-www-form-urlencoded'}
+            _logger.info('App ID---------- %s', appId)
+            expiration=int(expiration)
+            _logger.info('Expiration---------- %s', expiration)
+            payload = {
+                "uid":long(user_id),
+                "appId":long(appId),
+                "expiration":(expiration)*1000,
+                "charge":0.0
+                }
+            data=json.dumps(payload)
+            request=urllib.quote(data.encode('utf-8'))
+            response = requests.post(
+                        url, data="request="+request, headers=headers)
+            return response.content
+        else:
+            result={"body":{ 'code':'False', 'message':"Please Define Playjam Configuration!!"}}
+            return json.dumps(result)
+
     def validate_insecure_token(self,session_token, context=None):
         request.cr.execute('select id from user_auth where insecure_token= %s', (session_token,))
         auth_user_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
