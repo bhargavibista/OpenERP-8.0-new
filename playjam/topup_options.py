@@ -28,6 +28,9 @@ class playjam_config_menu(models.Model):
     profile_playjam = fields.Char(size=128)
     device_playjam = fields.Char(size=128)
     obtain_transactions_playjam = fields.Char(size=128)
+    magento_api_id =fields.char(string='Magento API', size=128),
+    current_db = fields.char(string='Current DB', size=128),
+
     _defaults={
     }
 
