@@ -179,7 +179,7 @@ class user_auth(models.Model):
             used= serial_obj.used
 
         if tru_location and not used:
-            cr.execute('select id from product_product where location_id= %s', (tru_location,))
+            request.cr.execute('select id from product_product where location_id= %s', (tru_location,))
             product_id = filter(None, map(lambda x:x[0], cr.fetchall()))
             if product_id:
                 prod_obj=self.pool.get('product.product').browse(request.cr,SUPERUSER_ID,product_id[0])
@@ -280,7 +280,7 @@ class user_auth(models.Model):
                 for each in product_obj.ext_prod_config:
                    if each.comp_product_id.product_type=='service':
                        app_id=each.comp_product_id.app_id
-                cr.execute('select id from sale_order where name = %s', (str(order_no),))
+                request.cr.execute('select id from sale_order where name = %s', (str(order_no),))
                 order_id = filter(None, map(lambda x:x[0], cr.fetchall()))
                 sale_id=order_id[0]
                 free_days=prod_obj.free_trail_days
@@ -325,7 +325,30 @@ class user_auth(models.Model):
 			    auth_user_obj.write({'is_activated':True})
                             return json.dumps({"body":{ "code":True, "message":"Success"}})
         return json.dumps({'body':{ "code":False, "message":"Playjam Server Issue."}})
-    
+
+    def obtaintransactions(self,user_id,start_time,end_time, context=None):
+        playjam_config=self.pool.get('playjam.config.menu')
+        config_ids = playjam_config.search(request.cr,SUPERUSER_ID,[])
+        if config_ids:
+            config_obj = playjam_config.browse(request.cr,SUPERUSER_ID,config_ids[0])
+            url=config_obj.obtain_transactions_playjam
+            if uid and start_time and end_time:
+    #            url = "http://54.172.158.69/api/rest/flare/obtaintransactions/view.json"
+                headers = {'content-type': 'application/x-www-form-urlencoded'}
+                payload = {
+                    "uid": uid,
+                    "startTime":long(start_time),
+                    "endTime":long(end_time),
+                }
+                data=json.dumps(payload)
+                request=urllib.quote(data.encode('utf-8'))
+                response = requests.post(
+                            url, data="request="+request, headers=headers)
+                return response.text
+            return False
+        else:
+            result={"body":{ 'code':'False', 'message':"Please Define Playjam Configuration!!"}}
+            return json.dumps(result)
     
     def account_playjam(self,dict,context=None):
         playjam_config=self.pool.get('playjam.config.menu')
@@ -345,6 +368,24 @@ class user_auth(models.Model):
             result={"body":{ 'code':'False', 'message':"Please Define Playjam Configuration!!"}}
             return json.dumps(result)
 
+    def profile_playjam(self,dict,context=None):
+	#Sends a profile call to playjam
+        playjam_config=self.pool.get('playjam.config.menu')
+        config_ids = playjam_config.search(request.cr,SUPERUSER_ID,[])
+        if config_ids:
+            config_obj = playjam_config.browse(request.cr,SUPERUSER_ID,config_ids[0])
+            url=config_obj.profile_playjam
+#        url = "http://54.172.158.69/api/rest/flare/profile/view.json"
+            headers = {'content-type': 'application/x-www-form-urlencoded'}
+
+            data=json.dumps(dict)
+            request=urllib.quote(data.encode('utf-8'))
+            response = requests.post(
+                        url, data="request="+request, headers=headers)
+            return response.text
+        else:
+            result={"body":{ 'code':'False', 'message':"Please Define Playjam Configuration!!"}}
+            return json.dumps(result)
 
     def user_login(self, dict, context=None):
         result,auth_user_id = '',[]
@@ -445,7 +486,7 @@ class user_auth(models.Model):
                 for each in product_obj.ext_prod_config:
                    if each.comp_product_id.product_type=='service':
                        app_id=each.comp_product_id.app_id
-                cr.execute('select id from sale_order where name = %s', (str(order_no),))
+                request.cr.execute('select id from sale_order where name = %s', (str(order_no),))
                 order_id = filter(None, map(lambda x:x[0], cr.fetchall()))
                 sale_id=order_id[0]
                 free_days=prod_obj.free_trail_days
@@ -457,7 +498,7 @@ class user_auth(models.Model):
                     end_date=end_free_trial.strftime('%Y/%m/%d')
                     duration=time.mktime(datetime.datetime.strptime(end_date, "%Y/%m/%d").timetuple())
             else:
-                cr.execute('select id from res_partner_policy where active_service = False and agmnt_partner = %s', (str(partner_id),))
+                request.cr.execute('select id from res_partner_policy where active_service = False and agmnt_partner = %s', (str(partner_id),))
                 plociy_line_id = filter(None, map(lambda x:x[0], cr.fetchall()))
                 if len(plociy_line_id)>1:
                     return json.dumps({'body':{ "code":False, "message":"Multiple Inactive Service."}})
@@ -490,7 +531,7 @@ class user_auth(models.Model):
 			    auth_user_obj.write({'is_activated':True})
                             return json.dumps({"body":{ "code":True, "message":"Success"}})
         return json.dumps({'body':{ "code":False, "message":"Playjam Server Issue."}})
-        
+    
     def wallet_playjam(self, user_id, quantity, context=None):
         playjam_config=self.pool.get('playjam.config.menu')
         config_ids = playjam_config.search(request.cr,SUPERUSER_ID,[])
@@ -515,6 +556,76 @@ class user_auth(models.Model):
         else:
             result={"body":{ 'code':'False', 'message':"Please Define Playjam Configuration!!"}}
             return json.dumps(result)
+        
+    def wallet_top_up(self, dict, context=None):
+	'''The function is called while making the topup from console'''
+        quantity=False
+        session_token=dict.get('sessionToken')
+        if dict.has_key('quantity'):
+            quantity=dict.get('quantity')
+        option_list=[]
+        top_optns_obj=self.pool.get('topup.options')
+        check=False
+        if session_token:
+            check=self.validate_token(session_token,context=None)
+
+        if check==False:
+            h=int('-0x0011', 16)
+            return json.dumps({'result':-17})
+        if check:
+            if not quantity:
+                request.cr.execute('select id from topup_options')
+                top_up_options = filter(None, map(lambda x:x[0], cr.fetchall()))
+                for each in top_up_options:
+                    cdt=top_optns_obj.browse(request.cr,SUPERUSER_ID,each).credit
+                    fb=top_optns_obj.browse(request.cr,SUPERUSER_ID,each).value
+                    option_list.append({'credit':cdt,'value':fb})
+                return json.dumps({'body':{'result': 50,'options':option_list}})
+
+            else:
+                request.cr.execute('select partner_id from user_auth where session_token=%s', (session_token,))
+                partner_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
+                if partner_id==[]:
+                    return json.dumps({'body':{'result':-49}})
+                wallet_dict={}
+                billing_info={}
+                wallet_dict.update({'CustomerId':partner_id[0]})
+                pat_obj=self.pool.get('res.partner').browse(request.cr,SUPERUSER_ID,partner_id[0])
+                cust_pro_id=pat_obj.customer_profile_id
+                if not cust_pro_id:
+                    return json.dumps({'body':{'result':-49}})
+                request.cr.execute('select profile_id from custmer_payment_profile where customer_profile_id=%s and active_payment_profile = True', (cust_pro_id,))
+                cpp = filter(None, map(lambda x:x[0], request.cr.fetchall()))
+                if cpp==[]:
+                    return json.dumps({'body':{'result':-49}})
+                billing_info.update({'PaymentProfileId':str(cpp[0])})
+                wallet_dict.update({'PaymentType': 'CC'})
+                partner_addr = self.pool.get('res.partner').address_get(request.cr,SUPERUSER_ID, [int(partner_id[0])],['default',])
+                billing_add=partner_addr.get('default')
+                if not billing_add:
+                    return json.dumps({'body':{'result':-49}})
+                if billing_add:
+                    delivery_obj=self.pool.get('res.partner').browse(request.cr,SUPERUSER_ID, billing_add)
+                    if delivery_obj.street and delivery_obj.city and delivery_obj.state_id and delivery_obj.zip:
+                        billing_add={ "Street1": str(delivery_obj.street),"Street2": 'abc',"City": str(delivery_obj.city),"State": str(delivery_obj.state_id.code),"Zip": str(delivery_obj.zip),}
+                        billing_info.update({'BillingAddress':billing_add})
+                        billing_info.update({'CreditCard': {'CCNumber': '', 'CCV': '', 'ExpDate': ''}})
+                wallet_dict.update({'BillingInfo':billing_info})
+                wallet_dict.update({'FillAmount':quantity})
+                response=self.pool.get('res.partner').wallet_topup(request.cr,SUPERUSER_ID,wallet_dict,{})
+                if 'true' in response:
+		    response=response.replace('true','True')
+		if 'false' in response:
+                    response=response.replace('false','False')
+                response=ast.literal_eval(str(response))
+                if (response.get('body')).get('code')=="-49":
+                    return json.dumps({'body':{'result':-50}})
+                elif (response.get('body')).get('code')=="-50":
+                    return json.dumps({'body':{'result':-49}})
+                elif (response.get('body')).get('code')=="-55":
+                    return json.dumps({'body':{'result':-51}})
+                else:
+                    return json.dumps({'body':{'result':49}})
     
     def device_playjam(self, dict, context=None):
         playjam_config=self.pool.get('playjam.config.menu')
@@ -560,6 +671,23 @@ class user_auth(models.Model):
         else:
             result={"body":{ 'code':'False', 'message':"Please Define Playjam Configuration!!"}}
             return json.dumps(result)
+        
+    def validate_token(self,session_token, context=None):
+	'''This function validates the session token'''
+        request.cr.execute('select id from user_auth where session_token= %s', (session_token,))
+        auth_user_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
+        if auth_user_id==[]:
+            return False
+        if auth_user_id:
+            cur_datetime = datetime.datetime.now()
+            _logger.info('cur_datetime------------ %s', cur_datetime)
+            token_exp_time=self.browse(request.cr,SUPERUSER_ID,auth_user_id[0]).token_exp_time
+            _logger.info('tok_exp_time------------ %s', token_exp_time)
+            dt=datetime.datetime.strptime(token_exp_time, "%Y-%m-%d %H:%M:%S.%f")
+            _logger.info('dt------------ %s', dt)
+            if cur_datetime > dt:
+                return False
+        return True
 
     def validate_insecure_token(self,session_token, context=None):
         request.cr.execute('select id from user_auth where insecure_token= %s', (session_token,))
