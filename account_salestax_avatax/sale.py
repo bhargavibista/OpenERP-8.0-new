@@ -99,10 +99,16 @@ class sale_order(osv.osv):
             avatax_config.default_tax_schedule_id.id == order.partner_id.tax_schedule_id.id:
                 address = partner_obj.address_get(cr, uid, [order.company_id.partner_id.id], ['contact'])
                 lines = self.create_lines(cr, uid, order.order_line)
-                tax_amount = account_tax_obj._check_compute_tax(cr, uid, avatax_config, order.date_confirm or order.date_order,
+                ##odoo8 changes
+                if order.date_confirm:
+                            order_date = (order.date_confirm).split(' ')[0]
+                else:
+                    order_date = (order.date_order).split(' ')[0]
+                ######
+                tax_amount = account_tax_obj._check_compute_tax(cr, uid, avatax_config, order_date, 
                                                                 order.name, 'SalesOrder', order.partner_id, address['contact'],
                                                                 order.partner_invoice_id.id, lines, order.shipcharge, order.user_id,
-                                                                context=context).TotalTax
+                                                                context=context).TotalTax  ###odoo8 changes
                 self.write(cr, uid, [order.id], {'tax_amount': tax_amount, 'order_line': []})
         return True
 

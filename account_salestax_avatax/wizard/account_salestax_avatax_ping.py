@@ -34,13 +34,11 @@ class account_salestax_avatax_ping(osv.osv_memory):
     }
 
     def default_get(self, cr, uid, fields_list, context=None):
-        print "fields_list===",fields_list
         res = super(account_salestax_avatax_ping, self).default_get(cr, uid, fields_list, context)
         return res
 
     def ping(self, cr, uid, ids, context=None):
         """ Call the Avatax's Ping Service to test the connection. """
-        print "context",context
         
         if context is None:
             context = {}
