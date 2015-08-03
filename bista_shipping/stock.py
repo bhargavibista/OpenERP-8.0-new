@@ -129,9 +129,9 @@ class shipping_response(osv.osv):
         stockmove_obj = self.pool.get('stock.move')
         stockpicking_obj = self.pool.get('stock.picking')
         shippingresp_lnk = self.browse(cr,uid,ids[0])
-        type = shippingresp_lnk.picking_id.type
-        pick_id = shippingresp_lnk.picking_id.id
-        stockpicking = stockpicking_obj.browse(cr,uid,pick_id)
+        type = shippingresp_lnk.picking_id.picking_type_id.code
+        pick_id = shippingresp_lnk.picking_id
+        stockpicking = stockpicking_obj.browse(cr,uid,pick_id.id)
         use_mps = stockpicking.use_mps
 
         ### Shipper
@@ -140,11 +140,11 @@ class shipping_response(osv.osv):
         stockpicking_ob_browse = stockpicking_obj.browse(cr,uid,shippingresp_lnk.picking_id.id)
         dimension = stockpicking_ob_browse.package_dim
 #            if not tracking_ref:
-        if type == 'out':
+        if type == 'outgoing':
              cust_address = shippingresp_lnk.picking_id.company_id
 #            cust_address = shippingresp_lnk.picking_id.sale_id.shop_id.cust_address
 #                print "cust_address",cust_address
-        elif type == 'in':
+        elif type == 'incoming':
             cust_address = shippingresp_lnk.picking_id.address_id
         if not cust_address:
             if error:
@@ -167,9 +167,9 @@ class shipping_response(osv.osv):
 #            print "this is a tuple %s"%str((shipper,))
 
         ### Recipient
-        if type == 'out':
+        if type == 'outgoing':
             cust_address = shippingresp_lnk.picking_id.partner_id
-        elif type == 'in':
+        elif type == 'incoming':
             cust_address = shippingresp_lnk.picking_id.sale_id.shop_id.cust_address
         if not cust_address:
             if error:
@@ -201,7 +201,6 @@ class shipping_response(osv.osv):
 
         elif shippingresp_lnk.type.lower() == 'fedex':
             #raise osv.except_osv(_('Error'), _('FedEx shipment request under construction'))
-
             shippingfedex_obj = self.pool.get('shipping.fedex')
             shippingfedex_id = shippingfedex_obj.search(cr,uid,[('active','=',True)])
             if not shippingfedex_id:
@@ -239,70 +238,71 @@ class shipping_response(osv.osv):
                     packages = line.number_of_similar_packages+1
                 else:
                     packages = 2
+                
                 for i in range(1,packages):
                     count_package += 1
                     print "count pacjakeeeeeeee....inssside.......",count_package
             # This is the object that will be handling our tracking request.
             # We're using the FedexConfig object from example_config.py in this dir.
                     shipment = FedexProcessShipmentRequest(CONFIG_OBJ)
-
-            # This is very generalized, top-level information.
-            # REGULAR_PICKUP, REQattachUEST_COURIER, DROP_BOX, BUSINESS_SERVICE_CENTER or STATION
-                    fedex_servicedetails = stockpicking_obj.browse(cr,uid,shippingresp_lnk.picking_id.id)
-
-                    shipment.RequestedShipment.DropoffType = fedex_servicedetails.dropoff_type_fedex #'REGULAR_PICKUP'
+                    # This is very generalized, top-level information.
+                    # REGULAR_PICKUP, REQattachUEST_COURIER, DROP_BOX, BUSINESS_SERVICE_CENTER or STATION
+                    shipment.RequestedShipment.DropoffType = pick_id.dropoff_type_fedex #'REGULAR_PICKUP'
+#                        print "ship_id.dropoff_type_fedex",ship_id.service_type_fedex
                     # See page 355 in WS_ShipService.pdf for a full list. Here are the common ones:
                     # STANDARD_OVERNIGHT, PRIORITY_OVERNIGHT, FEDEX_GROUND, FEDEX_EXPRESS_SAVER
-                    shipment.RequestedShipment.ServiceType = fedex_servicedetails.service_type_fedex #'PRIORITY_OVERNIGHT'
+                    shipment.RequestedShipment.ServiceType = pick_id.service_type_fedex #'PRIORITY_OVERNIGHT'
                     # What kind of package this will be shipped in.
                     # FEDEX_BOX, FEDEX_PAK, FEDEX_TUBE, YOUR_PACKAGING
-                    shipment.RequestedShipment.PackagingType = fedex_servicedetails.packaging_type_fedex  #'FEDEX_PAK'
-
+                    shipment.RequestedShipment.PackagingType = pick_id.packaging_type_fedex  #'FEDEX_PAK'
                     # No idea what this is.
                     # INDIVIDUAL_PACKAGES, PACKAGE_GROUPS, PACKAGE_SUMMARY
-                    shipment.RequestedShipment.PackageDetail = fedex_servicedetails.package_detail_fedex #'INDIVIDUAL_PACKAGES'
+    #                    shipment.RequestedShipment.PackageDetail = ship_id.package_detail_fedex #'INDIVIDUAL_PACKAGES'
                     # Shipper contact info.
-                    shipment.RequestedShipment.Shipper.Contact.PersonName = shipper.name #'Sender Name'
- #                   shipment.RequestedShipment.Shipper.Contact.CompanyName = shipper.company_name #'Some Company'
+                    "shipper.name shipper.name ",shipper.name
+                    if stockpicking.picking_type_id.code=='internal' or stockpicking.picking_type_id.code=='outgoing':
+                        shipment.RequestedShipment.Shipper.Contact.PersonName = 'COX COMMUNICATIONS'#'Sender Name'
+                        shipment.RequestedShipment.Shipper.Contact.CompanyName = 'Flareplay Warehouse' #'Some Company'
+                    else:
+                        shipment.RequestedShipment.Shipper.Contact.CompanyName = shipper.name #'Some Company'
                     shipment.RequestedShipment.Shipper.Contact.PhoneNumber = shipper.phone #'9012638716'
-
                     # Shipper address.
-                    shipment.RequestedShipment.Shipper.Address.StreetLines = shipper.address1 #['Address Line 1']
+                    shipment.RequestedShipment.Shipper.Address.StreetLines = shipper.address1#['Address Line 1']
                     shipment.RequestedShipment.Shipper.Address.City =  shipper.city #'Herndon'
                     shipment.RequestedShipment.Shipper.Address.StateOrProvinceCode = shipper.state_code #'VA'
                     shipment.RequestedShipment.Shipper.Address.PostalCode = shipper.zip #'20171'
                     shipment.RequestedShipment.Shipper.Address.CountryCode = shipper.country_code #'US'
                     shipment.RequestedShipment.Shipper.Address.Residential = False
-
                     # Recipient contact info.
-                    shipment.RequestedShipment.Recipient.Contact.PersonName = receipient.name #'Recipient Name'
-#                    shipment.RequestedShipment.Recipient.Contact.CompanyName = receipient.company_name #'Recipient Company'
+#                        shipment.RequestedShipment.Recipient.Contact.PersonName = receipient.name #'Recipient Name'
+                    if stockpicking.picking_type_id.code=='internal':
+                        shipment.RequestedShipment.Recipient.Contact.PersonName = receipient.name #'Recipient Name'
+                        shipment.RequestedShipment.Recipient.Contact.CompanyName = 'COX SOLUTIONS STORE'
+                    else:
+                        shipment.RequestedShipment.Recipient.Contact.CompanyName =receipient.company_name
+                    #'Recipient Company'
                     shipment.RequestedShipment.Recipient.Contact.PhoneNumber = receipient.phone #'9012637906'
-
                     # Recipient address
-                    shipment.RequestedShipment.Recipient.Address.StreetLines = receipient.address1 #['Address Line 1']
+                    shipment.RequestedShipment.Recipient.Address.StreetLines = receipient.address1 + ' ,' + receipient.address2 #['Address Line 1']
                     shipment.RequestedShipment.Recipient.Address.City = receipient.city #'Herndon'
                     shipment.RequestedShipment.Recipient.Address.StateOrProvinceCode = receipient.state_code #'VA'
                     shipment.RequestedShipment.Recipient.Address.PostalCode = receipient.zip #'20171'
                     shipment.RequestedShipment.Recipient.Address.CountryCode = receipient.country_code #'US'
                     # This is needed to ensure an accurate rate quote with the response.
                     shipment.RequestedShipment.Recipient.Address.Residential = False
-
                     # Who pays for the shipment?
                     # RECIPIENT, SENDER or THIRD_PARTY
-                    shipment.RequestedShipment.ShippingChargesPayment.PaymentType = fedex_servicedetails.payment_type_fedex #'SENDER'
-
-                    if fedex_servicedetails.service_type_fedex in ['INTERNATIONAL_ECONOMY','INTERNATIONAL_ECONOMY_FREIGHT','INTERNATIONAL_FIRST','INTERNATIONAL_PRIORITY','INTERNATIONAL_PRIORITY_FREIGHT','INTERNATIONAL_GROUND','EUROPE_FIRST_INTERNATIONAL_PRIORITY']:
+                    print"shippingfedex_ptr.account_no",shippingfedex_ptr.account_no
+                    shipment.RequestedShipment.ShippingChargesPayment.PaymentType = pick_id.payment_type_fedex #'SENDER'
+                    shipment.RequestedShipment.ShippingChargesPayment.Payor.ResponsibleParty.AccountNumber = shippingfedex_ptr.account_no #####cox gen2 changes saziya
+                    if pick_id.service_type_fedex in ['INTERNATIONAL_ECONOMY','INTERNATIONAL_ECONOMY_FREIGHT','INTERNATIONAL_FIRST','INTERNATIONAL_PRIORITY','INTERNATIONAL_PRIORITY_FREIGHT','INTERNATIONAL_GROUND','EUROPE_FIRST_INTERNATIONAL_PRIORITY']:
                         shipment.RequestedShipment.CustomsClearanceDetail.DutiesPayment.PaymentType ='SENDER'
                         shipment.RequestedShipment.CustomsClearanceDetail.DutiesPayment.Payor.AccountNumber =shippingfedex_ptr.account_no
                         shipment.RequestedShipment.CustomsClearanceDetail.DutiesPayment.Payor.CountryCode =shipper.country_code
                         shipment.RequestedShipment.CustomsClearanceDetail.DocumentContent ='NON_DOCUMENTS'
-
-                        shipment.RequestedShipment.CustomsClearanceDetail.CustomsValue.Amount =fedex_servicedetails.customsvalue
-                        shipment.RequestedShipment.CustomsClearanceDetail.CustomsValue.Currency =fedex_servicedetails.currency_id.name
-
+                        shipment.RequestedShipment.CustomsClearanceDetail.CustomsValue.Amount =pick_id.customsvalue
+                        shipment.RequestedShipment.CustomsClearanceDetail.CustomsValue.Currency =pick_id.currency_id.name
                         move_ids=stockmove_obj.search(cr,uid,[('picking_id','=',shippingresp_lnk.picking_id.id)])
-
                         if move_ids:
                             for move in move_ids:
                                 move_line=stockmove_obj.browse(cr,uid,move)
@@ -310,112 +310,73 @@ class shipping_response(osv.osv):
                                 commodities_obj.NumberOfPieces=int(move_line.product_uos_qty)
                                 commodities_obj.Description=move_line.name
                                 commodities_obj.CountryOfManufacture='US'
-                                commodities_obj.Weight.Units=fedex_servicedetails.weight_unit
+                                commodities_obj.Weight.Units=pick_id.weight_unit
                                 commodities_obj.Weight.Value= str(move_line.product_id.weight)
                                 commodities_obj.Quantity=int(move_line.product_qty)
                                 commodities_obj.QuantityUnits='EA'
-                                commodities_obj.UnitPrice.Currency=fedex_servicedetails.currency_id.name
+                                commodities_obj.UnitPrice.Currency=pick_id.currency_id.name
                                 commodities_obj.UnitPrice.Amount =str(move_line.product_id.price_extra)
-                                commodities_obj.CustomsValue.Currency=fedex_servicedetails.currency_id.name
-                                commodities_obj.CustomsValue.Amount=str(fedex_servicedetails.customsvalue)
+                                commodities_obj.CustomsValue.Currency=pick_id.currency_id.name
+                                commodities_obj.CustomsValue.Amount=str(pick_id.customsvalue)
                                 shipment.RequestedShipment.CustomsClearanceDetail.Commodities=commodities_obj
-
-
-
-
-
-
-#                    commodities_obj=shipment.create_wsdl_object_of_type('Commodity')
-#                    print "commodities_obj",commodities_obj
-#                    commodities_obj.NumberOfPieces='1'
-#                    commodities_obj.Description='dgdf'
-#                    commodities_obj.NumberOfPieces='1'
-#                    commodities_obj.CountryOfManufacture='US'
-#                    commodities_obj.Weight.Units=fedex_servicedetails.weight_unit
-#                    commodities_obj.Weight.Value=fedex_servicedetails.weight_package
-#                    commodities_obj.Quantity='1'
-#                    commodities_obj.QuantityUnits='EA'
-#                    commodities_obj.UnitPrice.Currency=fedex_servicedetails.currency_id.name
-#                    commodities_obj.UnitPrice.Amount ='100'
-#                    commodities_obj.CustomsValue.Currency=fedex_servicedetails.currency_id.name
-#                    commodities_obj.CustomsValue.Amount=fedex_servicedetails.customsvalue
-#                    shipment.RequestedShipment.CustomsClearanceDetail.Commodities=commodities_obj
-                    if fedex_servicedetails.service_type_fedex in ['FEDEX_FREIGHT','FEDEX_NATIONAL_FREIGHT']:
-                        shipment.RequestedShipment.FreightShipmentDetail.FedExFreightAccountNumber='510087020'
-                        shipment.RequestedShipment.FreightShipmentDetail.FedExFreightBillingContactAndAddress.Contact.PersonName='Mohsin'
-                        shipment.RequestedShipment.FreightShipmentDetail.FedExFreightBillingContactAndAddress.Contact.CompanyName='510087020'
-                        shipment.RequestedShipment.FreightShipmentDetail.FedExFreightBillingContactAndAddress.Contact.PhoneNumber='510087020'
-
-        #                _logger.info("Freight Shipment Detail: %s", shipment.RequestedShipment.FreightShipmentDetail)
                     # Specifies the label type to be returned.
                     # LABEL_DATA_ONLY or COMMON2D
                     shipment.RequestedShipment.LabelSpecification.LabelFormatType = 'COMMON2D'
-
                     # Specifies which format the label file will be sent to you in.
                     # DPL, EPL2, PDF, PNG, ZPLII
+#                        Image format
                     shipment.RequestedShipment.LabelSpecification.ImageType = 'PNG'
-
                     # To use doctab stocks, you must change ImageType above to one of the
                     # label printer formats (ZPLII, EPL2, DPL).
                     # See documentation for paper types, there quite a few.
                     shipment.RequestedShipment.LabelSpecification.LabelStockType = 'PAPER_4X6'
-
                     # This indicates if the top or bottom of the label comes out of the
                     # printer first.
                     # BOTTOM_EDGE_OF_TEXT_FIRST or TOP_EDGE_OF_TEXT_FIRST
                     shipment.RequestedShipment.LabelSpecification.LabelPrintingOrientation = 'BOTTOM_EDGE_OF_TEXT_FIRST'
-                #As Package count is updated by +1 for every request its made 0 for each time
+                    package1_weight = shipment.create_wsdl_object_of_type('Weight')
+#                        # Weight, in pounds.
+#                        package1_weight.Value = ship_id.weight_package #1.0
+#                        package1_weight.Units = "LB"
+            #As Package count is updated by +1 for every request its made 0 for each time
                     shipment.RequestedShipment.PackageCount = 0
-                    if use_mps:
-                        weight = line.package_dim.weight
-                    else:
-                        weight = dimension.weight
-
                     package1_weight = shipment.create_wsdl_object_of_type('Weight')
                     # Weight, in pounds.
-                    package1_weight.Value = fedex_servicedetails.weight_package or fedex_servicedetails.weight#1.0
                     package1_weight.Units = "LB"
                     if use_mps:
+                        package1_weight.Value = line.package_dim.weight
                         pack_dim = line.package_dim
                         fed_length = pack_dim.length
                         fed_width = pack_dim.width
                         fed_height = pack_dim.height
+                        fed_weight= pack_dim.weight
                     else:
-                        fed_length = dimension.length
-                        fed_width = dimension.width
-                        fed_height = dimension.height
+                        package1_weight.Value=pick_id.weight_package#1.0
+                        fed_length = pick_id.pack_length
+                        fed_width = pick_id.pack_width
+                        fed_height = pick_id.pack_height
 
                     package1_dimensions = shipment.create_wsdl_object_of_type('Dimensions')
-        #                print"package1_dimensions",package1_dimensions
-                    package1_dimensions.Length = int(fedex_servicedetails.pack_length)
-                    package1_dimensions.Width = int(fedex_servicedetails.pack_width)
-                    package1_dimensions.Height = int(fedex_servicedetails.pack_height)
+                    package1_dimensions.Length = int(fed_length)
+                    package1_dimensions.Width = int(fed_width)
+                    package1_dimensions.Height = int(fed_height)
                     package1_dimensions.Units = "IN"
-
                     package1 = shipment.create_wsdl_object_of_type('RequestedPackageLineItem')
                     package1.Weight = package1_weight
                     package1.Dimensions=package1_dimensions
-                    package1.PhysicalPackaging = fedex_servicedetails.physical_packaging_fedex
-
+                    package1.PhysicalPackaging = pick_id.physical_packaging_fedex
                     _logger.info("Package Dimensions: %s", package1_dimensions)
-                    # Un-comment this to see the other variables you may set on a package.
-
-                    # This adds the RequestedPackageLineItem WSDL object to the shipment. It
-                    # increments the package count and total weight of the shipment for you.
                     shipment.add_package(package1)
                     if use_mps:
-                        print "countttttttttttttttttttttttttt111111111111",count_package
                         if count_package==1:
-                            print "count22222222222222...........",count_package
-                            shipment.RequestedShipment.TotalWeight.Value = stockpicking.total_weight
-                            shipment.RequestedShipment.PackageCount = int(stockpicking.total_packages)
+                            shipment.RequestedShipment.TotalWeight.Value = pick_id.total_weight
+                            shipment.RequestedShipment.PackageCount = int(pick_id.total_packages)
                             shipment.RequestedShipment.RequestedPackageLineItems[0].SequenceNumber=count_package
                         else:
                             shipment.RequestedShipment.RequestedPackageLineItems[0].SequenceNumber=count_package
                             shipment.RequestedShipment.MasterTrackingId.TrackingIdType = type
                             if master_tracking:
                                 shipment.RequestedShipment.MasterTrackingId.TrackingNumber= int(master_tracking)
-
                     _logger.info("Requested Shipment: %s", shipment.RequestedShipment)
 
                     # If you'd like to see some documentation on the ship service WSDL, un-comment
@@ -455,7 +416,7 @@ class shipping_response(osv.osv):
         #                    fedexTrackingNumber = shipment.response.CompletedShipmentDetail.CompletedPackageDetails[0].TrackingIds[0].TrackingNumber
                     _logger.info("Fedex Tracking No.: %s", fedexTrackingNumber)
                     # Net shipping costs.
-                    if fedex_servicedetails.service_type_fedex in ['INTERNATIONAL_ECONOMY','INTERNATIONAL_ECONOMY_FREIGHT','INTERNATIONAL_FIRST','INTERNATIONAL_PRIORITY','INTERNATIONAL_PRIORITY_FREIGHT','INTERNATIONAL_GROUND','EUROPE_FIRST_INTERNATIONAL_PRIORITY']:
+                    if pick_id.service_type_fedex in ['INTERNATIONAL_ECONOMY','INTERNATIONAL_ECONOMY_FREIGHT','INTERNATIONAL_FIRST','INTERNATIONAL_PRIORITY','INTERNATIONAL_PRIORITY_FREIGHT','INTERNATIONAL_GROUND','EUROPE_FIRST_INTERNATIONAL_PRIORITY']:
                         fedexshippingrate = shipment.response.CompletedShipmentDetail.ShipmentRating.ShipmentRateDetails[0].TotalNetCharge.Amount
                     else:
                         fedexshippingrate = shipment.response.CompletedShipmentDetail.CompletedPackageDetails[0].PackageRating.PackageRateDetails[0].NetCharge.Amount
@@ -548,7 +509,7 @@ class shipping_response(osv.osv):
         #                            s.close()
         #                    else:
         #                        raise osv.except_osv(_('Warning!'),_('Quotes have already been accepted'))
-                    if fedex_servicedetails.service_type_fedex in ['INTERNATIONAL_ECONOMY','INTERNATIONAL_ECONOMY_FREIGHT','INTERNATIONAL_FIRST','INTERNATIONAL_PRIORITY','INTERNATIONAL_PRIORITY_FREIGHT','INTERNATIONAL_GROUND','EUROPE_FIRST_INTERNATIONAL_PRIORITY']:
+                    if pick_id.service_type_fedex in ['INTERNATIONAL_ECONOMY','INTERNATIONAL_ECONOMY_FREIGHT','INTERNATIONAL_FIRST','INTERNATIONAL_PRIORITY','INTERNATIONAL_PRIORITY_FREIGHT','INTERNATIONAL_GROUND','EUROPE_FIRST_INTERNATIONAL_PRIORITY']:
                         if shipment.response.CompletedShipmentDetail.ShipmentRating:
                             fedexshippingrate = shipment.response.CompletedShipmentDetail.ShipmentRating.ShipmentRateDetails[0].TotalNetCharge.Amount
 
@@ -560,6 +521,7 @@ class shipping_response(osv.osv):
 #            raise osv.except_osv(_('Error!'),_('%s' % (exc,)))
 
             if fedexTrackingNumber:
+#                if len(fedexTrackingNumber)
                 stockpickingwrite_result = stockpicking_obj.write(cr,uid,shippingresp_lnk.picking_id.id,{'carrier_tracking_ref':fedexTrackingNumber[0], 'shipping_label':binascii.b2a_base64(str(b64decode(ascii_label_data))), 'shipping_rate': fedexshippingrate, 'label_recvd': True,'child_tracking_ids':fedexTrackingNumber,})
                 if shippingresp_lnk.picking_id and shippingresp_lnk.picking_id.sale_id:
                     self.pool.get('sale.order').write(cr,uid,shippingresp_lnk.picking_id.sale_id.id,{'tracking_no':fedexTrackingNumber})
@@ -1067,6 +1029,7 @@ class stock_picking_out(osv.osv):
             return True
         shippingfedex_obj = self.pool.get('shipping.fedex')
         shippingfedex_id = shippingfedex_obj.search(cr,uid,[('active','=',True)])
+        stockpicking_lnk = self.browse(cr,uid,ids[0])
         if not shippingfedex_id:
             if error:
                 raise osv.except_osv(_('Error'), _('Default FedEx settings not defined'))
@@ -1074,7 +1037,6 @@ class stock_picking_out(osv.osv):
                 return False
         else:
             shippingfedex_id = shippingfedex_id[0]
-
         shippingfedex_ptr = shippingfedex_obj.browse(cr,uid,shippingfedex_id)
         account_no = shippingfedex_ptr.account_no
         key = shippingfedex_ptr.key
@@ -1083,104 +1045,35 @@ class stock_picking_out(osv.osv):
         is_test = shippingfedex_ptr.test
         CONFIG_OBJ = FedexConfig(key=key, password=password, account_number=account_no, meter_number=meter_no, use_test_server=is_test)
         rate_request = FedexRateServiceRequest(CONFIG_OBJ)
-
-        stockpicking_lnk = self.browse(cr,uid,ids[0])
-
-        # This is very generalized, top-level information.
-        # REGULAR_PICKUP, REQUEST_COURIER, DROP_BOX, BUSINESS_SERVICE_CENTER or STATION
         rate_request.RequestedShipment.DropoffType = dropoff_type_fedex
-
-        # See page 355 in WS_ShipService.pdf for a full list. Here are the common ones:
-        # STANDARD_OVERNIGHT, PRIORITY_OVERNIGHT, FEDEX_GROUND, FEDEX_EXPRESS_SAVER
         rate_request.RequestedShipment.ServiceType = service_type_fedex
-
-        # What kind of package this will be shipped in.
-        # FEDEX_BOX, FEDEX_PAK, FEDEX_TUBE, YOUR_PACKAGING
         rate_request.RequestedShipment.PackagingType = packaging_type_fedex
-
-        # No idea what this is.
-        # INDIVIDUAL_PACKAGES, PACKAGE_GROUPS, PACKAGE_SUMMARY
-        rate_request.RequestedShipment.PackageDetail = package_detail_fedex
-
+#        rate_request.RequestedShipment.PackageDetailType = package_detail_fedex  ##cox gen2 changes
         rate_request.RequestedShipment.Shipper.Address.PostalCode = shipper_postal_code
         rate_request.RequestedShipment.Shipper.Address.CountryCode = shipper_country_code
         rate_request.RequestedShipment.Shipper.Address.Residential = False
-
         rate_request.RequestedShipment.Recipient.Address.PostalCode = customer_postal_code
         rate_request.RequestedShipment.Recipient.Address.CountryCode = customer_country_code
-        # This is needed to ensure an accurate rate quote with the response.
-        #rate_request.RequestedShipment.Recipient.Address.Residential = True
-        #include estimated duties and taxes in rate quote, can be ALL or NONE
         rate_request.RequestedShipment.EdtRequestType = 'NONE'
-
-        # Who pays for the rate_request?
-        # RECIPIENT, SENDER or THIRD_PARTY
         rate_request.RequestedShipment.ShippingChargesPayment.PaymentType = payment_type_fedex
 #        rate_request.RequestedShipment.ShippingChargesPayment.PaymentType = payment_type_fedex
-#        rate_request.RequestedShipment.PackageCount = 1
-        package1_weight = rate_request.create_wsdl_object_of_type('Weight')
-        _logger.info("Package weight: %s", package1_weight)
-        package1_weight.Value = weight
-        package1_weight.Units = "LB"
-
-        package1_dimensions=rate_request.create_wsdl_object_of_type('Dimensions')
-        package1_dimensions.Length=int(fed_length)
-        package1_dimensions.Width=int(fed_width)
-        package1_dimensions.Height=int(fed_height)
-        package1_dimensions.Units="IN"
-        _logger.info("Package dimensions: %s", package1_dimensions)
-
-
-
-#        package1 = rate_request.create_wsdl_object_of_type('RequestedPackageLineItem')
-#        package1.Weight = package1_weight
-#        package1.Dimensions = package1_dimensions
-#
-#        #can be other values this is probably the most common
-#        package1.PhysicalPackaging = physical_packaging_fedex
-#        # Un-comment this to see the other variables you may set on a package.
-#        #print package1
-#
-#        # This adds the RequestedPackageLineItem WSDL object to the rate_request. It
-#        # increments the package count and total weight of the rate_request for you.
-#        rate_request.add_package(package1)
-
-        # If you'd like to see some documentation on the ship service WSDL, un-comment
-        # this line. (Spammy).
-        #print rate_request.client
-
-        # Un-comment this to see your complete, ready-to-send request as it stands
-        # before it is actually sent. This is useful for seeing what values you can
-        # change.
-        #print rate_request.RequestedShipment
-
-        # Fires off the request, sets the 'response' attribute on the object.
-#        saturday_delivery = stockpicking_lnk.saturday_delivery
-#        if saturday_delivery:
-#            date = stockpicking_lnk.saturday_date
-#            format_date = datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
-#            rate_request.RequestedShipment.ShipTimestamp = format_date
-#            rate_request.RequestedShipment.SpecialServicesRequested.SpecialServiceTypes='SATURDAY_DELIVERY'
-
-############## Rate Request for MULTIPLE PACKAGE SHIPMENT###############################
+        ############## Rate Request for MULTIPLE PACKAGE SHIPMENT###############################
         total_packages = stockpicking_lnk.total_packages
-        rate_request.RequestedShipment.PackageCount = int(total_packages)
+        print"total_packages",total_packages
+        if total_packages:
+            rate_request.RequestedShipment.PackageCount = int(total_packages)
         similar_packages = stockpicking_lnk.similar_packages
         use_mps = stockpicking_lnk.use_mps
-        package_detail = stockpicking_lnk.package_detail_fedex
         if use_mps:
             rate_request.RequestedShipment.TotalWeight.Value = weight
-        if use_mps and package_detail=="PACKAGE_GROUPS":
+        if use_mps and package_detail_fedex=="PACKAGE_GROUPS":
             
             line_count = 0
             group_count = 0
-            print "line........346546.............",similar_packages
             for line in similar_packages:
-                print "line.....................",line,similar_packages
                 group_count += 1
                 package_dim = line.package_dim
                 package1_weight = rate_request.create_wsdl_object_of_type('Weight')
-
                 package1_weight.Value = package_dim.weight
                 package1_weight.Units = "LB"
                 _logger.info("Package weight: %s", package1_weight)
@@ -1201,23 +1094,19 @@ class stock_picking_out(osv.osv):
                 # increments the package count and total weight of the rate_request for you.
                 rate_request.add_package(package1)
                 rate_request.RequestedShipment.RequestedPackageLineItems[line_count].GroupNumber = group_count
-                print "line.number_of_similar_packagesline.number_of_similar_packages222221111111112",line.number_of_similar_packages
-
                 rate_request.RequestedShipment.RequestedPackageLineItems[line_count].GroupPackageCount = line.number_of_similar_packages
-                print "line.number_of_similar_packagesline.number_of_similar_packages222222",line.number_of_similar_packages
                 line_count += 1
                 rate_request.RequestedShipment.PackageCount -= 1
         else:
             package1 = rate_request.create_wsdl_object_of_type('RequestedPackageLineItem')
             package1_weight = rate_request.create_wsdl_object_of_type('Weight')
-            package_dim = stockpicking_lnk.package_dim
-            package1_weight.Value = package_dim.weight
+            package1_weight.Value = stockpicking_lnk.weight_package
             package1_weight.Units = "LB"
             _logger.info("Package weight: %s", package1_weight)
             package1_dimensions=rate_request.create_wsdl_object_of_type('Dimensions')
-            package1_dimensions.Length=int(package_dim.length)
-            package1_dimensions.Width=int(package_dim.width)
-            package1_dimensions.Height=int(package_dim.height)
+            package1_dimensions.Length=int(stockpicking_lnk.pack_length)
+            package1_dimensions.Width=int(stockpicking_lnk.pack_width)
+            package1_dimensions.Height=int(stockpicking_lnk.pack_height)
             package1_dimensions.Units="IN"
             _logger.info("Package dimensions: %s", package1_dimensions)
             package1 = rate_request.create_wsdl_object_of_type('RequestedPackageLineItem')
@@ -1227,7 +1116,10 @@ class stock_picking_out(osv.osv):
             package1.Dimensions = package1_dimensions
             package1.PhysicalPackaging = physical_packaging_fedex
             rate_request.add_package(package1)
-        print "rate_request",rate_request.RequestedShipment
+            print"rate_request.RequestedShipment.RequestedPackageLineItems",rate_request.RequestedShipment.RequestedPackageLineItems
+            rate_request.RequestedShipment.RequestedPackageLineItems[0].GroupPackageCount = 1 ##cox gen2 packageCaount should be atleast 1
+        print "rate_request...............",rate_request.RequestedShipment
+#new lines added
         try:
             rate_request.send_request()
 
@@ -2092,8 +1984,8 @@ class similar_packages(osv.osv):
     _columns = {
         'number_of_similar_packages' : fields.integer('Similar Packages'),
         'package_dim': fields.many2one('package.dimension','Package Dimension'),
-#        'picking_id':fields.many2one('stock.picking.out','Picking id'),
-        'picking_id':fields.many2one('shipping.order.processing','Picking id'),
+        'picking_id':fields.many2one('stock.picking','Picking id'),
+#        'picking_id':fields.many2one('shipping.order.processing','Picking id'),
     }
 similar_packages()
 
@@ -2410,129 +2302,130 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         for id in ids:
-            try:
+            print"context",context
+#            try:
 #                dimension = self.browse(cr,uid,id).package_dim
-                stockpicking = self.browse(cr,uid,id)
-		if stockpicking.state != 'done':
-                    raise osv.except_osv(_('Warning !'),_('You Generate Shipping Quotes only if Order is in Done State.'))
-                shipping_type = stockpicking.shipping_type
-                type = stockpicking.type
-                weight = stockpicking.weight_package if stockpicking.weight_package else stockpicking.weight
+            stockpicking = self.browse(cr,uid,id)
+            if stockpicking.state != 'done':
+                raise osv.except_osv(_('Warning !'),_('You Generate Shipping Quotes only if Order is in Done State.'))
+            shipping_type = stockpicking.shipping_type
+            type = stockpicking.picking_type_id.code
+            weight = stockpicking.weight_package if stockpicking.weight_package else stockpicking.weight
 #                weight_unit=stockpicking.weight_unit if stockpicking.weight_unit else 'LB'
-                weight_unit='LB'
-                if weight<=0.0:
-                    raise Exception('Package Weight Invalid!')
+            weight_unit='LB'
+            if weight<=0.0:
+                raise Exception('Package Weight Invalid!')
 
 
-                ###based on stock.picking type
-                if type == 'out':
-                    #shipper_address = stockpicking.sale_id and stockpicking.sale_id.shop_id.cust_address or False
-		    shipper_address = stockpicking.company_id
-                elif type == 'in':
-                    shipper_address = stockpicking.address_id
-                if not shipper_address:
-                    if 'error' not in context.keys() or context.get('error',False):
-                        raise Exception('Shop Address not defined!')
-                    else:
-                        return False
-                if not (shipper_address.name or shipper_address.partner_id.name):
-                    raise osv.except_osv(_('Warning !'),_("You must enter Shipper Name."))
-                if not shipper_address.street:
-                    raise osv.except_osv(_('Warning !'),_("You must enter Shipper Street."))
-                if not shipper_address.city:
-                    raise osv.except_osv(_('Warning !'),_("You must enter Shipper City."))
-                if not shipper_address.state_id.code:
-                    raise osv.except_osv(_('Warning !'),_("You must enter Shipper State Code."))
-                if not shipper_address.zip:
-                    raise osv.except_osv(_('Warning !'),_("You must enter Shipper Zip."))
-                if not shipper_address.country_id.code:
-                    raise osv.except_osv(_('Warning !'),_("You must enter Shipper Country."))
-                shipper = Address(shipper_address.name or shipper_address.partner_id.name, shipper_address.street, shipper_address.city, shipper_address.state_id.code or '', shipper_address.zip, shipper_address.country_id.code, shipper_address.street2 or '', shipper_address.phone or '', shipper_address.email, shipper_address.partner_id.name)
+            ###based on stock.picking type
+            if type == 'outgoing':
+                #shipper_address = stockpicking.sale_id and stockpicking.sale_id.shop_id.cust_address or False
+                shipper_address = stockpicking.company_id
+            elif type == 'incoming':
+                shipper_address = stockpicking.address_id
+            if not shipper_address:
+                if 'error' not in context.keys() or context.get('error',False):
+                    raise Exception('Shop Address not defined!')
+                else:
+                    return False
+            if not (shipper_address.name or shipper_address.partner_id.name):
+                raise osv.except_osv(_('Warning !'),_("You must enter Shipper Name."))
+            if not shipper_address.street:
+                raise osv.except_osv(_('Warning !'),_("You must enter Shipper Street."))
+            if not shipper_address.city:
+                raise osv.except_osv(_('Warning !'),_("You must enter Shipper City."))
+            if not shipper_address.state_id.code:
+                raise osv.except_osv(_('Warning !'),_("You must enter Shipper State Code."))
+            if not shipper_address.zip:
+                raise osv.except_osv(_('Warning !'),_("You must enter Shipper Zip."))
+            if not shipper_address.country_id.code:
+                raise osv.except_osv(_('Warning !'),_("You must enter Shipper Country."))
+            shipper = Address(shipper_address.name or shipper_address.partner_id.name, shipper_address.street, shipper_address.city, shipper_address.state_id.code or '', shipper_address.zip, shipper_address.country_id.code, shipper_address.street2 or '', shipper_address.phone or '', shipper_address.email, shipper_address.partner_id.name)
 
-                ### Recipient
-                ###based on stock.picking type
-                if type == 'out':
-                    cust_address = stockpicking.partner_id
-                elif type == 'in':
-                    cust_address = stockpicking.sale_id and stockpicking.sale_id.shop_id.cust_address or False
-                if not cust_address:
-                    if 'error' not in context.keys() or context.get('error',False):
-                        raise Exception('Reciepient Address not defined!')
-                    else:
-                        return False
-                if not (cust_address.name or cust_address.name):
-                    raise osv.except_osv(_('Warning !'),_("You must enter Reciepient Name."))
+            ### Recipient
+            ###based on stock.picking type
+            if type == 'outgoing':
+                cust_address = stockpicking.partner_id
+            elif type == 'incoming':
+                cust_address = stockpicking.sale_id and stockpicking.sale_id.shop_id.cust_address or False
+            if not cust_address:
+                if 'error' not in context.keys() or context.get('error',False):
+                    raise Exception('Reciepient Address not defined!')
+                else:
+                    return False
+            if not (cust_address.name or cust_address.name):
+                raise osv.except_osv(_('Warning !'),_("You must enter Reciepient Name."))
 #                if not cust_address.street:
 #                    raise osv.except_osv(_('Warning !'),_("You must enter Reciepient Street."))
-                if not cust_address.city:
-                    raise osv.except_osv(_('Warning !'),_("You must enter Reciepient City."))
+            if not cust_address.city:
+                raise osv.except_osv(_('Warning !'),_("You must enter Reciepient City."))
 #                if not cust_address.state_id.code:
 #                    raise osv.except_osv(_('Warning !'),_("You must enter Reciepient State Code."))
-                if not cust_address.zip:
-                    raise osv.except_osv(_('Warning !'),_("You must enter Reciepient Zip."))
-                if not cust_address.country_id.code:
-                    raise osv.except_osv(_('Warning !'),_("You must enter Reciepient Country."))
+            if not cust_address.zip:
+                raise osv.except_osv(_('Warning !'),_("You must enter Reciepient Zip."))
+            if not cust_address.country_id.code:
+                raise osv.except_osv(_('Warning !'),_("You must enter Reciepient Country."))
 #                if not cust_address.email:
 #                    raise osv.except_osv(_('Warning !'),_("You must enter Reciepient email."))
-                receipient = Address(cust_address.name , cust_address.street, cust_address.city, cust_address.state_id.code or '', cust_address.zip, cust_address.country_id.code, cust_address.street2 or '', cust_address.phone or '', cust_address.email, cust_address.name)
+            receipient = Address(cust_address.name , cust_address.street, cust_address.city, cust_address.state_id.code or '', cust_address.zip, cust_address.country_id.code, cust_address.street2 or '', cust_address.phone or '', cust_address.email, cust_address.name)
 
-                # Deleting previous quotes
-                shipping_res_obj = self.pool.get('shipping.response')
-                shipping_res_ids = shipping_res_obj.search(cr,uid,[('picking_id','=',ids[0])])
+            # Deleting previous quotes
+            shipping_res_obj = self.pool.get('shipping.response')
+            shipping_res_ids = shipping_res_obj.search(cr,uid,[('picking_id','=',ids[0])])
 #                shipping_res_ids = shipping_res_obj.search(cr,uid,[('picking_id','=',11387)])
-                if shipping_res_ids:
-                    shipping_res_obj.unlink(cr,uid,shipping_res_ids)
+            if shipping_res_ids:
+                shipping_res_obj.unlink(cr,uid,shipping_res_ids)
 
-                saleorderline_ids = self.pool.get('sale.order.line').search(cr,uid,[('order_id','=',stockpicking.sale_id.id)])
-                sys_default = self._get_sys_default_shipping(cr,uid,saleorderline_ids,weight,context)
-                context['sys_default'] = sys_default
-                cust_default= self._get_cust_default_shipping(cr,uid,stockpicking.carrier_id.id,context)
-                context['cust_default'] = cust_default
+            saleorderline_ids = self.pool.get('sale.order.line').search(cr,uid,[('order_id','=',stockpicking.sale_id.id)])
+            sys_default = self._get_sys_default_shipping(cr,uid,saleorderline_ids,weight,context)
+            context['sys_default'] = sys_default
+            cust_default= self._get_cust_default_shipping(cr,uid,stockpicking.carrier_id.id,context)
+            context['cust_default'] = cust_default
 
-                if 'usps_active' not in context.keys() and (shipping_type == 'USPS' or shipping_type == 'All'):
-                    usps_info = self.pool.get('shipping.usps').get_usps_info(cr,uid,context)
-                    service_type_usps = stockpicking.service_type_usps
-                    first_class_mail_type_usps = stockpicking.first_class_mail_type_usps or ''
-                    container_usps = stockpicking.container_usps or ''
-                    size_usps = stockpicking.size_usps
-                    width_usps = stockpicking.width_usps
-                    length_usps = stockpicking.length_usps
-                    height_usps = stockpicking.height_usps
-                    girth_usps = stockpicking.girth_usps
-                    usps = shippingservice.USPSRateRequest(usps_info, service_type_usps, first_class_mail_type_usps, container_usps, size_usps, width_usps, length_usps, height_usps, girth_usps, weight, shipper, receipient, cust_default, sys_default)
-                    usps_response = usps.send()
-                    context['type'] = 'USPS'
-                    self.create_quotes(cr,uid,ids,usps_response,context)
+            if 'usps_active' not in context.keys() and (shipping_type == 'USPS' or shipping_type == 'All'):
+                usps_info = self.pool.get('shipping.usps').get_usps_info(cr,uid,context)
+                service_type_usps = stockpicking.service_type_usps
+                first_class_mail_type_usps = stockpicking.first_class_mail_type_usps or ''
+                container_usps = stockpicking.container_usps or ''
+                size_usps = stockpicking.size_usps
+                width_usps = stockpicking.width_usps
+                length_usps = stockpicking.length_usps
+                height_usps = stockpicking.height_usps
+                girth_usps = stockpicking.girth_usps
+                usps = shippingservice.USPSRateRequest(usps_info, service_type_usps, first_class_mail_type_usps, container_usps, size_usps, width_usps, length_usps, height_usps, girth_usps, weight, shipper, receipient, cust_default, sys_default)
+                usps_response = usps.send()
+                context['type'] = 'USPS'
+                self.create_quotes(cr,uid,ids,usps_response,context)
 
-                if shipping_type == 'UPS' or shipping_type == 'All':
-                    ups_info = self.pool.get('shipping.ups').get_ups_info(cr,uid,context)
-                    pickup_type_ups = stockpicking.pickup_type_ups
-                    service_type_ups = stockpicking.service_type_ups
-                    packaging_type_ups = stockpicking.packaging_type_ups
+            if shipping_type == 'UPS' or shipping_type == 'All':
+                ups_info = self.pool.get('shipping.ups').get_ups_info(cr,uid,context)
+                pickup_type_ups = stockpicking.pickup_type_ups
+                service_type_ups = stockpicking.service_type_ups
+                packaging_type_ups = stockpicking.packaging_type_ups
 #                    print"shipper",shipper
-                    ups = shippingservice.UPSRateRequest(ups_info, pickup_type_ups, service_type_ups, packaging_type_ups, weight, shipper, receipient, cust_default, sys_default)
-                    ups_response = ups.send()
-                    context['type'] = 'UPS'
-                    self.create_quotes(cr,uid,ids,ups_response,context)
+                ups = shippingservice.UPSRateRequest(ups_info, pickup_type_ups, service_type_ups, packaging_type_ups, weight, shipper, receipient, cust_default, sys_default)
+                ups_response = ups.send()
+                context['type'] = 'UPS'
+                self.create_quotes(cr,uid,ids,ups_response,context)
 
-                if shipping_type == 'Fedex' or shipping_type == 'All':
-                    dropoff_type_fedex = stockpicking.dropoff_type_fedex
-                    service_type_fedex = stockpicking.service_type_fedex
-                    packaging_type_fedex = stockpicking.packaging_type_fedex
-                    package_detail_fedex = stockpicking.package_detail_fedex
-                    payment_type_fedex = stockpicking.payment_type_fedex
-                    physical_packaging_fedex = stockpicking.physical_packaging_fedex
-                    shipper_postal_code = shipper.zip
-                    shipper_country_code = shipper.country_code
-                    customer_postal_code = receipient.zip
-                    customer_country_code = receipient.country_code
-                    fed_length = stockpicking.pack_length
-                    fed_width = stockpicking.pack_width
-                    fed_height = stockpicking.pack_height
-                    error_required = True
-                    shipping_res = self.generate_fedex_shipping(cr,uid,[id],dropoff_type_fedex,service_type_fedex,packaging_type_fedex,package_detail_fedex,payment_type_fedex,physical_packaging_fedex,weight,shipper_postal_code,shipper_country_code,customer_postal_code,customer_country_code,sys_default,cust_default,error_required,context,fed_length,fed_width,fed_height)
-            except Exception, exc:
-                raise osv.except_osv(_('Error!'),_('%s' % (exc,)))
+            if shipping_type == 'Fedex' or shipping_type == 'All':
+                dropoff_type_fedex = stockpicking.dropoff_type_fedex
+                service_type_fedex = stockpicking.service_type_fedex
+                packaging_type_fedex = stockpicking.packaging_type_fedex
+                package_detail_fedex = stockpicking.package_detail_fedex
+                payment_type_fedex = stockpicking.payment_type_fedex
+                physical_packaging_fedex = stockpicking.physical_packaging_fedex
+                shipper_postal_code = shipper.zip
+                shipper_country_code = shipper.country_code
+                customer_postal_code = receipient.zip
+                customer_country_code = receipient.country_code
+                fed_length = stockpicking.pack_length
+                fed_width = stockpicking.pack_width
+                fed_height = stockpicking.pack_height
+                error_required = True
+                shipping_res = self.generate_fedex_shipping(cr,uid,[id],dropoff_type_fedex,service_type_fedex,packaging_type_fedex,package_detail_fedex,payment_type_fedex,physical_packaging_fedex,weight,shipper_postal_code,shipper_country_code,customer_postal_code,customer_country_code,sys_default,cust_default,error_required,context,fed_length,fed_width,fed_height)
+#            except Exception, exc:
+#                raise osv.except_osv(_('Error!'),_('%s' % (exc,)))
             return True
 
 
