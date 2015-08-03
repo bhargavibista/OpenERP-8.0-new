@@ -159,13 +159,20 @@ class stock_picking(osv.osv):
             status = picking_obj.browse(cr,uid,picking_id).state
 
             if status == 'draft':
-                 draft_validate = picking_obj.draft_validate(cr, uid, [picking_id], context=context)
+#                 draft_validate = picking_obj.draft_validate(cr, uid, [picking_id], context=context) ##odoo8 changes
+                draft_validate = picking_obj.action_confirm(cr, uid, [pick.id], context=context)
 
-
-            function = picking_obj.action_process(cr, uid, [picking_id], context=context)
-
-            res_id = function['res_id']
-            do_partial = self.pool.get("stock.partial.picking").do_partial(cr,uid,[res_id],context=context)
+#            function = picking_obj.action_process(cr, uid, [picking_id], context=context)
+#
+#            res_id = function['res_id']
+#            do_partial = self.pool.get("stock.partial.picking").do_partial(cr,uid,[res_id],context=context)
+            function = picking_obj.do_enter_transfer_details(cr, uid, [pick.id], context=context)
+                
+                #self.pool.get('stock.picking').write(cr,uid,[pick.id],{'scan_uid':uid,'scan_date':time.strftime('%Y-%m-%d %H:%M:%S')})
+            res_id = function.get('res_id')
+            if res_id:
+#                    cox gen2
+                do_partial = self.pool.get("stock.transfer_details").do_detailed_transfer(cr,uid,[res_id],context=context)
             return picking_id
             #print"do_partial",do_partial
 
@@ -1018,6 +1025,29 @@ class stock_move(osv.osv):
 #
 #        return res
 
+    def _check_tracking_stock_prod_lots(self, cr, uid, ids, context=None):
+        """ Checks if serial number is assigned to stock move or not.
+        @return: True or False
+        """
+        for move in self.browse(cr, uid, ids, context=context):
+            if not move.stock_prod_lots and (move.picking_id.skip_barcode==False and \
+               (move.state == 'done' and \
+               ( \
+                   (move.product_id.track_production and move.location_id.usage == 'production') or \
+                   (move.product_id.track_production and move.location_dest_id.usage == 'production') or \
+                   (move.product_id.track_incoming and move.location_id.usage == 'supplier') or \
+                   (move.product_id.track_outgoing and move.location_dest_id.usage == 'customer') or \
+                   (move.product_id.track_incoming and move.location_id.usage == 'inventory') \
+               ))):
+                return False
+        return True
+
+    def check_tracking(self, cr, uid, ids,lot_id, context=None):
+        """ Checks if serial number is assigned to stock move or not.
+        @return: True or False
+        """
+        return True
+
     _columns = {
         'received_qty': fields.integer('Received Quantity'),
 #        'pack_nobar_image': fields.function(get_image, string="Image", type="binary", method=True),#binary("Image"),
@@ -1033,6 +1063,13 @@ class stock_move(osv.osv):
         'received_qty': lambda *a: 0,
         'status': 'draft',
     }
+    _constraints = [
+#        (_check_tracking,
+#            'You must assign a serial number for this product.',
+#            ['prodlot_id']),
+        (_check_tracking_stock_prod_lots,
+            'You must assign a serial number for this product.',
+            ['stock_prod_lots'])]
 ######
 
 '''    def onchange_default_code_in(self, cr, uid, ids, default_code,quantity,dest_id,note,type,state,address_id, move_lines,context=None):

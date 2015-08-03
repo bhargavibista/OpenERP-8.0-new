@@ -16,8 +16,6 @@ class stock_production_lot(osv.osv):
 
     _inherit = 'stock.production.lot'
 
-
-
     _columns = {
         'serial_used' : fields.boolean('InActive'),
     }
