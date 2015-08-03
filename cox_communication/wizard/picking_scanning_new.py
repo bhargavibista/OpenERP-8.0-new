@@ -251,7 +251,7 @@ class picking_scanning(osv.osv_memory):
                 context['action_process_original'] = True ##Extra Line of Code
 #                function = picking_obj.action_process(cr, uid, [pick.id], context=context)
                 function = picking_obj.do_enter_transfer_details(cr, uid, [pick.id], context=context)
-                print"functionnnnnnnnnnnnnnn"
+                
                 #self.pool.get('stock.picking').write(cr,uid,[pick.id],{'scan_uid':uid,'scan_date':time.strftime('%Y-%m-%d %H:%M:%S')})
                 res_id = function.get('res_id')
                 if res_id:
@@ -275,10 +275,9 @@ class picking_scanning(osv.osv_memory):
                     'type': 'ir.actions.act_window'
             }
         else:
-            print"elssssssseeeeeeeee",ids
             active_ids =context.get('active_ids',False)
             context.update({'active_id':active_ids[0], 'active_ids':active_ids,'active_model':'stock.picking'})
-            print"contextshipping processssssssssssssss",context
+            
             pre_shipping_process_id = self.pool.get("pre.shipping.process").create(cr, uid, {}, context=context)
             return {
                 'name':_("Shipping Process"),
