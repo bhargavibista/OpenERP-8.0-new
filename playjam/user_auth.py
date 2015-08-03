@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
-from openerp import models, fields, api, _
 from random import randint
 import hashlib
 import json
 import ast
-from openerp.http import request
 import urllib
 import requests
 from psycopg2.extensions import ISOLATION_LEVEL_READ_COMMITTED
@@ -12,6 +10,8 @@ from openerp import SUPERUSER_ID
 import datetime
 import os
 import logging
+from openerp import models, fields, api, _
+from openerp.addons.web.http import request
 _logger = logging.getLogger(__name__)
 
 
@@ -341,9 +341,9 @@ class user_auth(models.Model):
                     "endTime":long(end_time),
                 }
                 data=json.dumps(payload)
-                request=urllib.quote(data.encode('utf-8'))
+                requ=urllib.quote(data.encode('utf-8'))
                 response = requests.post(
-                            url, data="request="+request, headers=headers)
+                            url, data="request="+requ, headers=headers)
                 return response.text
             return False
         else:
@@ -360,9 +360,9 @@ class user_auth(models.Model):
             headers = {'content-type': 'application/x-www-form-urlencoded'}
             data=json.dumps(dict)
             _logger.info('data for account playjam--------------- %s', data)
-            request=urllib.quote(data.encode('utf-8'))
+            requ=urllib.quote(data.encode('utf-8'))
             response = requests.post(
-                        url, data="request="+request, headers=headers)
+                        url, data="request="+requ, headers=headers)
             return response.content
         else:
             result={"body":{ 'code':'False', 'message':"Please Define Playjam Configuration!!"}}
@@ -379,9 +379,9 @@ class user_auth(models.Model):
             headers = {'content-type': 'application/x-www-form-urlencoded'}
 
             data=json.dumps(dict)
-            request=urllib.quote(data.encode('utf-8'))
+            requ=urllib.quote(data.encode('utf-8'))
             response = requests.post(
-                        url, data="request="+request, headers=headers)
+                        url, data="request="+requ, headers=headers)
             return response.text
         else:
             result={"body":{ 'code':'False', 'message':"Please Define Playjam Configuration!!"}}
@@ -548,9 +548,9 @@ class user_auth(models.Model):
 
             data=json.dumps(payload)
             _logger.info('data for wallet--------------- %s', data)
-            request=urllib.quote(data.encode('utf-8'))
+            requ=urllib.quote(data.encode('utf-8'))
             response = requests.post(
-                        url, data="request="+request, headers=headers)
+                        url, data="request="+requ, headers=headers)
             _logger.info('response for wallet--------------- %s', response.content)
             return response.content
         else:
@@ -636,9 +636,9 @@ class user_auth(models.Model):
 #        url = "http://54.172.158.69/api/rest/flare/device/view.json"
             headers = {'content-type': 'application/x-www-form-urlencoded'}
             data=json.dumps(dict)
-            request=urllib.quote(data.encode('utf-8'))
+            requ=urllib.quote(data.encode('utf-8'))
             response = requests.post(
-                        url, data="request="+request, headers=headers)
+                        url, data="request="+requ, headers=headers)
             _logger.info('response for device playjam--------------- %s', response.content)
             return response.content
         else:
@@ -664,9 +664,9 @@ class user_auth(models.Model):
                 "charge":0.0
                 }
             data=json.dumps(payload)
-            request=urllib.quote(data.encode('utf-8'))
+            requ=urllib.quote(data.encode('utf-8'))
             response = requests.post(
-                        url, data="request="+request, headers=headers)
+                        url, data="request="+requ, headers=headers)
             return response.content
         else:
             result={"body":{ 'code':'False', 'message':"Please Define Playjam Configuration!!"}}
