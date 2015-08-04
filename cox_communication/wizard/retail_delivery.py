@@ -80,9 +80,20 @@ class retail_delivery(osv.osv_memory):
                 context={'procurement_id':procurement_ids}
         return result
     
+#    code to retrive to gen1 or gen2 OE page
+    def view_document(self,cr,uid,ids,context=None):
+        url="http://flareplay.com/salesorder.html"
+        return {
+        'type': 'ir.actions.act_url',
+        'url':url,
+        'target': 'self'
+        }
+    
     def delivery_later(self,cr,uid,ids,context={}): 
-        warning =self.pool.get('warning').info(cr, uid, title='Delivery Message', message="Your Order will be processed by Warehouse")
-        return warning
+        res=self.view_document(cr,uid,ids,context=None)
+        return res
+#        warning =self.pool.get('warning').info(cr, uid, title='Delivery Message', message="Your Order will be processed by Warehouse")
+#        return warning
     
     def barcode_scanning(self,cr,uid,ids,context):
         print"context barcode scanning",context
