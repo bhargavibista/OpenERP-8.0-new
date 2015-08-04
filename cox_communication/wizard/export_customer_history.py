@@ -43,16 +43,9 @@ class export_customer_history(osv.osv_memory):
         writer=csv.writer(buf, 'UNIX')
         pls_write = writer.writerow(datas)
         datas = []
-        print"search_so----------",search_so
-        print"return_so----------",return_so
-        print"partner_ids----------",so_partner_ids
-        print"return_partner_ids----------",return_partner_ids
         all_partners=[]
         all_partners =list(set(so_partner_ids+return_partner_ids))
         partners=all_partners
-        print "all_partners---------------",all_partners
-        print "partners---------------",partners
-#        sdasds
         if search_so and all_partners:
             datas = ["Customer No","Customer Name","Street", "City","State","Zip","Email ID","Phone Number","Date",
             "Sale No.","Sales Channel","Order Date","Creation Date","Confirm Date", "Product Name","Quantity","Promo Code",
@@ -68,7 +61,6 @@ class export_customer_history(osv.osv_memory):
             orders=[]
             for partner in all_partners:
                 so_orders = so_obj.search(cr,uid,[('partner_id','=',partner)])
-                print"orders+++++++++++++++++",so_orders
                 ro_orders = return_obj.search(cr,uid,[('partner_id','=',partner)])
                 for so_id_obj in so_obj.browse(cr,uid,so_orders):
                     street,city,zip,phone,country_state,sales_channel,sales_tax,return_tax ='','','','','','',0.0,0.0
@@ -117,9 +109,7 @@ class export_customer_history(osv.osv_memory):
                         inv_number=''
                         a=[]
                         [a.append(str(invoice.number)) if invoice.number else '' for invoice in so_id_obj.invoice_ids]
-                        print "a--------------",
                         b=(str(a).replace('[', '').replace(']','')).replace('False','')
-                        print"b-------------",b
                         datas.append(0.0)
                         datas.append(so_id_obj.amount_total)
                         datas.append(so_id_obj.state)
@@ -216,50 +206,6 @@ class export_customer_history(osv.osv_memory):
                         pls_write = writer.writerow(datas)
                         datas = []
                         
-#                ##To Search Recurring billing for the Sale Order
-#                cr.execute("select id from account_invoice where recurring = True and state='paid' and id in (select invoice_id from sale_order_invoice_rel where order_id = %d)"%(so_id_obj.id))
-#                invoice_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
-#                if invoice_ids:
-#                    invoice_obj = self.pool.get('account.invoice')
-#                    amount_tax = 0.0
-#                    for invoice_id_obj in invoice_obj.browse(cr,uid,invoice_ids):
-#                        inv_street,inv_city,inv_zip,inv_phone,inv_co_state = '','','','',''
-#                        if invoice_id_obj.partner_id:
-#                            inv_street = str(invoice_id_obj.partner_id.street) + (str(invoice_id_obj.partner_id.street2) if (invoice_id_obj.partner_id.street2) else '')
-#                            inv_city = invoice_id_obj.partner_id.city
-#                            inv_zip = invoice_id_obj.partner_id.zip
-#                            inv_phone =  invoice_id_obj.partner_id.zip
-#                            if invoice_id_obj.partner_id.state_id:
-#                                inv_co_state = invoice_id_obj.partner_id.state_id.name
-#                        for invoice_line in invoice_id_obj.invoice_line:
-#                            datas.append(invoice_id_obj.number)
-#                            datas.append(invoice_id_obj.partner_id.name)
-#			    datas.append(invoice_id_obj.partner_id.ref)
-#                            datas.append(inv_street)
-#                            datas.append(inv_city)
-#                            datas.append(inv_co_state)
-#                            datas.append(inv_zip)
-#                            datas.append(invoice_id_obj.partner_id.emailid)
-#                            datas.append(inv_phone)
-#                            datas.append(invoice_id_obj.date_invoice)
-#                            datas.append(invoice_id_obj.state)
-#                            datas.append('-')
-#                            datas.append('-')
-#                            datas.append('-')
-#                            datas.append(invoice_line.name)
-#                            datas.append(invoice_line.quantity)
-#                            datas.append(invoice_line.price_subtotal)
-##                            print"datassssssssssssssssss",datas
-#                            if amount_tax == 0.0 :
-#                                if invoice_id_obj.amount_tax >=0.0:
-#                                    amount_tax = invoice_id_obj.amount_tax
-#                                    datas.append(amount_tax)
-#                            else:
-#                                datas.append(0.0)
-#                            datas.append(invoice_id_obj.user_id.name)
-#                            datas.extend(['-','-',0.0,0.0,0.0])
-#                            pls_write = writer.writerow(datas)
-#                            datas = []
             out=base64.encodestring(buf.getvalue())
             buf.close()
             self.write(cr, uid, ids, {'csv_file':out,'name': 'Sales Report.csv'})

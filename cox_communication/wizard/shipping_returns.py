@@ -84,7 +84,6 @@ class shipping_response_returns(osv.osv):
                         if error:
                             raise osv.except_osv(_('Error'), _('Shipping service output settings not defined'))
                         return False
-                    print"refref",type(ref)
                     shippingfedex_ptr = shippingfedex_obj.browse(cr,uid,shippingfedex_id)
                     account_no = shippingfedex_ptr.account_no
                     key = shippingfedex_ptr.key
@@ -190,7 +189,6 @@ class shipping_response_returns(osv.osv):
                     package1.Dimensions=package1_dimensions
                     package1.PhysicalPackaging = fedex_servicedetails.physical_packaging_fedex
                     shipment.add_package(package1)
-                    print"shipment",shipment
 #                    try:
                     shipment.send_request()
 #                    except Exception, e:
@@ -299,7 +297,6 @@ class shipping_returns(osv.osv):
         active_id=context.get('active_id',False)
         prod_obj = self.pool.get('product.product')
         res = super(shipping_returns, self).default_get(cr, uid, fields, context=context)
-        print"res",res
         if active_id:
             weight = 0.0
             return_id_obj = self.pool.get('return.order').browse(cr,uid,active_id)
@@ -463,8 +460,6 @@ class shipping_returns(osv.osv):
         	active_id=context.get('active_id',False)
 	        return_data=self.pool.get(active_model).browse(cr,uid,active_id)
         	return_obj=new
-                print"new",new
-                print"new['warehouse_location_id']",new['warehouse_location_id']
 	        shipping_type = return_obj['shipping_type']
 	        weight = return_obj['weight_package']
         	if weight<=0.0:

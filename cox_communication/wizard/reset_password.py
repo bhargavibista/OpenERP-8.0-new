@@ -7,6 +7,8 @@ from datetime import date, datetime, timedelta
 import uuid
 import md5
 import hashlib
+import logging
+_logger = logging.getLogger(__name__)
 
 class reset_password_oe(osv.osv_memory):
     _name="reset.password.oe"
@@ -95,6 +97,6 @@ class reset_password_oe(osv.osv_memory):
                                     if queue_id:
                                         result=smtp_obj._my_check_queue(cr,uid,queue_id)
                     except Exception, e:
-                        print "error string",e
+                        _logger.info("Exception %s",e)
         return True
 reset_password_oe()

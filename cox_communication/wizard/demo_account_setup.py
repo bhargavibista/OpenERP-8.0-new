@@ -54,7 +54,6 @@ class demo_account_setup(osv.osv_memory):
         if send_email:
             template_obj=self.pool.get('email.template')
             template_search = template_obj.search(cr,uid,[('model','=','res.partner'),('email_type','=','welcome_email')])
-            #print "template_search",template_search
             if template_search:
                 template_id_obj = template_obj.browse(cr,uid,template_search[0])
                 content = template_id_obj.body_html
@@ -146,7 +145,6 @@ class demo_account_setup(osv.osv_memory):
                         raise osv.except_osv(_('Warning !'),_('Account is already Setup'))                     
 #                    cr.execute("insert into res_partner_policy (service_name,product_id,active_service,agmnt_partner,start_date) values('Flare Play Game Service',27,True,%s,'%s')"%(partner_brw.id,service_start_dt))
             except Exception, e:
-                print "error string",e
 		raise osv.except_osv(_('Warning !'),_('Account is already Setup'))
         return True
 demo_account_setup()

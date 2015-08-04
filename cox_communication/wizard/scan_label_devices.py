@@ -34,51 +34,27 @@ class scan_label_device(osv.osv_memory):
             sales_return_id = return_obj.search(cr,uid,[('name','=',number)])
         else:
 	    sales_return_id = return_obj.search(cr,uid,['|',('label_package_barcode','=',number),('carrier_tracking_ref','=',number)])	
-	    print "sales_return_id",sales_return_id
             if not sales_return_id:		
 	            cr.execute("select id from stock_production_lot where name='%s'"%(number))
         	    serial_data = cr.dictfetchone()
-		    print "serial_data",serial_data	
 	            if not serial_data:
         	        raise osv.except_osv(_('Warning !'), _('Record not Found'))
 	            else:
         	        linked_serial_no_id = serial_data.get('id')
                 	cr.execute("select stock_move_id from stock_move_lot where production_lot=%s"%(linked_serial_no_id))
 	                stock_moves_val = cr.dictfetchone()
-			print "stock_moves",stock_moves_val
         	        if stock_moves_val:
                 	    move_id = stock_moves_val.get('stock_move_id')
 	                    if move_id:
         	                stock_moves_ids = stock_move_obj.browse(cr, uid ,move_id)
                 	        picking_id = stock_moves_ids.picking_id
-				print "picking_0id",picking_id
 	                        if picking_id.type=='out':
         	                    sale_id = (picking_id.sale_id.id if picking_id.sale_id else False)
                 	            if not sale_id:
 	                       	        raise osv.except_osv(_('Warning !'), _('Record not Found'))
         	                    else:
                 	                sales_return_id = return_obj.search(cr,uid,[('linked_sale_order','=',sale_id)])
-#            else:
- #                   raise osv.except_osv(_('Warning !'), _('Record not Found'))
         if sales_return_id:
-#                if ids_brw.search_by_choice in ('search_returns','search_sales'):
- #                   tree_res = model_obj.get_object_reference(cr, uid, 'bista_order_returns', 'view_sales_return_tree')
-  #                  tree_id = tree_res and tree_res[1] or False
-   #                 form_res = model_obj.get_object_reference(cr, uid, 'bista_order_returns', 'view_sales_return_form')
-    #                form_id = form_res and form_res[1] or False
-     #               return {
-      #                      'name': _('Sales Returns'),
-       #                     'view_type': 'form',
-        #                    'view_mode': 'tree,form',
-         #                   'res_model': 'return.order',
-          #                  'res_id': False,
-           #                 'view_id': False,
-            #                'views': [(tree_id, 'tree'), (form_id, 'form')],
-             #               'target': 'current',
-              #              'type': 'ir.actions.act_window',
-               #             'domain': [('id','in',sales_return_id)]
-                #            }
-#                else: """
                     search_incoming_shipment = picking_obj.search(cr,uid,[('return_id','in',sales_return_id),('state','not in',('done','cancel'))])
                     tree_res = model_obj.get_object_reference(cr, uid, 'stock', 'view_picking_in_tree')
                     tree_id = tree_res and tree_res[1] or False

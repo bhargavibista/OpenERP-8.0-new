@@ -27,7 +27,6 @@ class send_mail_option(osv.osv):
         if context is None: context = {}
         context = dict(context, active_ids=context.get('active_ids'), active_model=context.get('active_model'))
         picking_id=context.get('active_ids')
-        print"picking_id",picking_id
         picking_obj = self.pool.get('stock.picking')
         active_model=context.get('active_model','')
         if context.get('active_model')=='stock.picking':
@@ -137,7 +136,6 @@ class shipping_send_mail(osv.osv_memory):
         subject = ids_obj.subject
         content = ids_obj.notes
         template = ids_obj.template.id  ##cox gen2
-        print"template",template
         active_model = context.get('active_model',False)
         active_id = context.get('active_id',False)
         if (not subject):
@@ -148,7 +146,6 @@ class shipping_send_mail(osv.osv_memory):
                 attachements_data.append({'name':each.name,'data':each.data})
         context['my_attachments']=attachements_data
         emailto=[e.strip() for e in email_to.split(';') if '@' in e]
-        print"emailto",emailto
         #cox gen2
         context['email_to'] = emailto
         if mail_server_id:
@@ -172,7 +169,6 @@ class shipping_send_mail(osv.osv_memory):
                         self.pool.get('receive.goods').receive_goods_wizard(cr,uid,ids,context)
                         #code ends here
 #                context.update({'active_id':picking.id, 'active_ids':[picking.id],'active_model':'stock.picking'})
-            print"picking_obj.browse(cr,uid,active_id).picking_type_id.code",picking_obj.browse(cr,uid,active_id).picking_type_id.code
             if context.get('active_model')=='stock.picking' and picking_obj.browse(cr,uid,active_id).picking_type_id.code == 'internal':
 #                    picking_state=picking_obj.write(cr,uid,active_id,{'state':'shipping'})
                 cr.execute("update stock_picking set state='shipping' where id = '%s'"%(active_id))  ##cox gen2 changed state field is functional field and using write function state does not updated 

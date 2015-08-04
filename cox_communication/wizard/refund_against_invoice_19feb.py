@@ -22,7 +22,6 @@ class refund_against_invoice(osv.osv_memory):
     
     def cancel_service(self,cr,uid,ids,context={}):
         active_id=context.get('active_id')
-#	print"context",context
         active_model=context.get('active_model')
         sale_obj = self.pool.get('sale.order')
         sale_line_obj = self.pool.get('sale.order.line')
@@ -122,7 +121,6 @@ class refund_against_invoice(osv.osv_memory):
 #                try:
                 if payment_profile_data.get('auth_transaction_id'):
                     transaction_status = authorize_obj.call(cr,uid,config_obj,'getTransactionDetailsRequest',auth_transaction_id)
-#                        print "transaction_status",transaction_status
                     if (transaction_status) and (transaction_status.get('transactionStatus') == 'settledSuccessfully'):
 			api_call =self.pool.get('authorize.net.config').check_authorize_net(cr,uid,'credit.service',credit_object.id,context)
 			if not api_call:

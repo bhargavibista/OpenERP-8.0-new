@@ -31,22 +31,11 @@ class return_shipment_label(osv.osv_memory):
             context['active_id'] = return_id.id
             context['active_ids'] = [return_id.id]
             context['active_model'] = 'return.order'
-            ##cox gen2
-#	    search_incoming_shipment = self.pool.get('stock.picking').search(cr,uid,[('return_id','=',return_id.id),('picking_type_id.code','=','incoming'),('state','=','draft')])
-#            print"search_incoming_shipment",search_incoming_shipment
-
-            ####
-#	    print "context",context
-            #print "search_incoming_shipmen",search_incoming_shipment
-#            search_shipment = self.pool.get('stock.picking').search(cr,uid,[('return_id','=',active_id),('state','=','draft')])	
             search_shipment = self.pool.get('stock.picking').search(cr,uid,[('return_id','=',return_id.id),('state','=','draft')])	
-            print"search_shipment",search_shipment
             if search_shipment:
                 for each in self.pool.get('stock.picking').browse(cr,uid,search_shipment):
-                    print"each",each
                     if each.picking_type_id.code=='incoming':
                         search_incoming_shipment.append(each.id)
-                        print"search_incoming_shipment",search_incoming_shipment
 	    if search_incoming_shipment:
 		context['picking_id_in'] = search_incoming_shipment[0]
             return self.pool.get('receive.goods').receive_goods_wizard(cr,uid,ids,context)
