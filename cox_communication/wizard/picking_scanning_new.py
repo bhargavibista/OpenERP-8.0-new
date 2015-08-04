@@ -198,6 +198,15 @@ class picking_scanning(osv.osv_memory):
 #            res['fields']['new_product_id']['domain'] = [('id', 'in', product_ids)]
 #            res['fields']['new_product_id']['widget'] = "selection"
 #       return res
+
+#    code to retrive to gen1 or gen2 OE page
+    def view_document(self,cr,uid,ids,context=None):
+        url="http://flareplay.com/salesorder.html"
+        return {
+        'type': 'ir.actions.act_url',
+        'url':url,
+        'target': 'self'
+        }
     
     def validate_scan_backorder(self, cr, uid, ids, context=None):
         if (context.get('trigger') == 'retail_store' and context.get('sale_id')) or context.get('return_id',False):
@@ -259,13 +268,15 @@ class picking_scanning(osv.osv_memory):
                     do_partial = self.pool.get("stock.transfer_details").do_detailed_transfer(cr,uid,[res_id],context=context)
 #                   
             if context.get('trigger') == 'retail_store' and context.get('sale_id'):
-                return {
-                    'view_type': 'form',
-                    'view_mode': 'form',
-                    'res_id': context.get('sale_id'),
-                    'res_model': 'sale.order',
-                    'type': 'ir.actions.act_window'
-            }
+                res=self.view_document(cr,uid,ids,context=None)
+                return res
+#                return {
+#                    'view_type': 'form',
+#                    'view_mode': 'form',
+#                    'res_id': context.get('sale_id'),
+#                    'res_model': 'sale.order',
+#                    'type': 'ir.actions.act_window'
+#            }
             elif context.get('return_id',False):
                 return {
                     'view_type': 'form',
