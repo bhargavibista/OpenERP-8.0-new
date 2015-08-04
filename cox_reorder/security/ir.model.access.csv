@@ -10,6 +10,13 @@ access_stock_replenish_third_party,stock.replenish_third_party_reseller,cox_reor
 access_stock_move_replenish_third_party,stock.move.replenish_third_party_reseller,cox_reorder.model_stock_move_replenish,cox_communication.group_third_party_reseller,1,0,0,0
 access_stock_replenish_vista_warehouse,stock.replenish_vista_warehouse,cox_reorder.model_stock_replenish,cox_communication.group_vista_warehouse,1,0,0,0
 access_stock_move_replenish_vista_warehouse,stock.move.replenish_vista_warehouse,cox_reorder.model_stock_move_replenish,cox_communication.group_vista_warehouse,1,0,0,0
+access_stock_move_replenish_rsassociate,stock.move.replenish_rsassociate,cox_reorder.model_stock_move_replenish,cox_communication.group_retail_sales_associate,1,1,1,0
+access_stock_move_replenish_rsmanager,stock.move.replenish_rsmanager,cox_reorder.model_stock_move_replenish,cox_communication.group_retail_sales_manager,1,1,1,0
+"access_stock_replenish_internal_ops","stock.replenish_internal_ops","cox_reorder.model_stock_replenish","cox_communication.group_internal_operations",1,1,1,0
+"access_stock_replenish_internal_ops_mgr","stock.replenish_internal_ops_mgr","cox_reorder.model_stock_replenish","cox_communication.group_internal_operations_manager",1,1,1,0
+"access_stock_replenish_support","stock.replenish_support","cox_reorder.model_stock_replenish","cox_communication.group_support",1,1,1,0
+"access_stock_replenish_warehouse_cox","stock.replenish_warehouse_cox","cox_reorder.model_stock_replenish","cox_communication.group_warehouse_cox",1,1,1,0
+
 
 
 

@@ -44,7 +44,6 @@ class credit_service_refund(osv.osv_memory):
                            "right outer join sale_order_line_invoice_rel sl on (l.id=sl.invoice_id) "
                            "and a.state='paid' and sl.order_line_id=%s and a.partner_id=%s"%(str(sale_line_id),str(partner_id.id)))
                 invoice_id=list(cr.fetchone())
-#                print "line.service_id.sale_order",line.service_id.sale_order
                 if (invoice_id and (not invoice_id[0])):
                     cr.execute("select max(id) "
                            "from account_invoice where origin=%s"%(line.service_id.sale_order))

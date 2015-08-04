@@ -101,7 +101,6 @@ class deliver_goods(osv.osv_memory):
         location_obj = self.pool.get('stock.location')
         receive_goods_obj = self.pool.get('receive.goods')
         line_obj = self.pool.get('sale.order.line')
-	#print "active_ive",context
         if context.get('active_id'):
             obj_self = return_obj.browse(cr,uid,context.get('active_id'))
             if not obj_self.order_line:

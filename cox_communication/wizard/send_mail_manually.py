@@ -97,7 +97,6 @@ class send_mail_manual(osv.osv_memory):
             raise osv.except_osv(_('Error !'),_('Please Specify Content'))
         for each in ids_obj.attachments:
                 attachements_data.append({'name':each.name,'data':each.data})
-        print"attachements_data",attachements_data
         context['my_attachments']=attachements_data
         emailto=[e.strip() for e in email_to.split(';') if '@' in e]
         context.update({'email_to':emailto})
@@ -118,10 +117,8 @@ class send_mail_manual(osv.osv_memory):
                 context['active_model'] = 'return.order'
                 context['incoming_shipment'] = True
                 search_shipment = self.pool.get('stock.picking').search(cr,uid,[('return_id','=',active_id),('state','=','draft')])	
-                print"search_shipment",search_shipment
                 if search_shipment:
                     for each in self.pool.get('stock.picking').browse(cr,uid,search_shipment):
-                        print"each",each
                         if each.picking_type_id.code=='incoming':
                             search_incoming_shipment.append(each.id)
                 if not search_incoming_shipment:	

@@ -26,30 +26,7 @@ class mrp_product_produce(osv.osv_memory):
         assert production_id, "Production Id should be specified in context as a Active ID."
         production=self.pool.get('mrp.production').browse(cr,uid,production_id)
         data = self.browse(cr, uid, ids[0], context=context)
-        ### code to check for the qty available at specified  location
-#        context = {'location': production.location_src_id.id}
-        ###code to check raw material stock and open confirmation wizard
-#        for move in production.move_lines:
-#            comp_prod = prod_obj.browse(cr, uid, move.product_id.id,context)
-#            if comp_prod.qty_available<move.product_qty:
-#                msg1 = "Raw materials running short of inventory, "
-#                prod_name = production.product_id.name_get()[0][1]
-#                new_prod_name = re.sub('"', '', prod_name)
-#                msg = msg1 + "Do you want to Proceed."
-#                cont = {'lang': 'en_US', 'tz': 'Europe/Brussels', 'uid': 1}
-#                return {
-#                        'name':_(""),
-#                        'view_mode': 'form',
-#                        'view_id': False,
-#                        'view_type': 'form',
-#                        'res_model': 'procurement.wizard',
-#                        'type': 'ir.actions.act_window',
-#                        'target': 'new',
-#                        'domain': '[]',
-#                        'context': dict(cont, active_ids=production_id,msg=msg,production_qty=data.product_qty,mode=data.mode)
-#                        }
         if context.get('scan',False)!= True:
-            print"iffffffff"
             cont = {'lang': 'en_US', 'tz': 'Europe/Brussels', 'uid': 1,'active_model':'mrp.production'}
             return {'name':_("Import Serials"),
                 'view_mode': 'form',

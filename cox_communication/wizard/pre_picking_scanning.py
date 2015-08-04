@@ -65,7 +65,6 @@ class pre_picking_scanning(osv.osv_memory):
         }
 
     def import_serial_number(self, cr, uid, ids, context=None):
-        print "inside import_serial_numberrrrrrrrrrrrr",context
         import_serails = False
         if context is None: context = {}
         if context.get('active_ids',False):

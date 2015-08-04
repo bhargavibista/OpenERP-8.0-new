@@ -82,7 +82,6 @@ class export_csv(osv.osv_memory):
         cr.execute("select * from res_partner_policy where (create_date is null or create_date >= '2013-10-31') and sale_id is null")
         search_active_policy = filter(None, map(lambda x:x[0], cr.fetchall()))
 	search_active_policy.sort(reverse=True)
-#        print"search_active_policy",search_active_policy
         if search_active_policy:
             datas = []
             datas.append("Customer Name")
@@ -143,7 +142,6 @@ class export_csv(osv.osv_memory):
 	partner_obj = self.pool.get('res.partner')
         cr.execute("select * from res_partner_policy where (create_date is null or create_date >= '2013-10-31') and sale_id is not null")
         search_active_policy = filter(None, map(lambda x:x[0], cr.fetchall()))
-#        print"search_active_policy",search_active_policy
         if search_active_policy:
             datas = []
             datas.append("Customer Name")
@@ -323,7 +321,6 @@ class export_csv(osv.osv_memory):
                                     datas.append(ser_name)
                                     datas.append(serv_price if ser_name else '')
                                     if ((pro_name and pro_price==0.0) and (ser_name and serv_price==0.0)) and (line.product_id.list_price==0.00):
-#                                        print"'Both are Free''Both are Free''Both are Free'"
                                         datas.append('Both are Free')
                                     elif pro_name and pro_price==0.0:
                                         datas.append('Free Device')
@@ -532,7 +529,6 @@ class export_cancel_service_csv(osv.osv_memory):
         cr.execute("select id,invoice_date from partner_payment_error where invoice_name = '%s' order by invoice_date desc"%(sale_reference),)
         exceptions = filter(None, map(lambda x:x[0], cr.fetchall()))
         if exceptions:
-#            print "exceptionsexceptionsexceptionsexceptions",exceptions
             street,city,zip,phone,country_state,return_type,sales_tax,return_tax ='','','','','','',0.0,0.0
             payment_brw=payment_obj.browse(cr,uid,exceptions[0])
             inv_id=acc_inv_obj.search(cr,uid,[('origin','=',sale_reference),('state','=','draft')])

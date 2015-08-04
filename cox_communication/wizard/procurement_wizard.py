@@ -49,7 +49,6 @@ class pre_import_serial(osv.osv):
             
     def scan(self,cr,uid,ids,context=None):
         context = dict(context, active_ids=context.get('active_ids'), active_model=context.get('active_model'),scan=True, trigger= 'mrp', manufacture_id = context.get('active_ids'))
-        print"context.get('active_ids')",context.get('active_ids')
         manufacturing_id = context.get('active_ids')
         manf_brw = self.pool.get('mrp.production').browse(cr,uid,manufacturing_id[0])
         product_qty = manf_brw.product_qty
@@ -76,7 +75,6 @@ class pre_import_serial(osv.osv):
         import_serails = False
         if context is None: context = {}
         if context.get('active_ids',False):
-            print"contextttttttttt",context
             if context.get('active_model',False) == 'mrp.production':
                 import_serails = self.pool.get("import.serials").create(cr, uid, {'mrp_object':True,'csv_file_supplier':False}, context=context)
 #            
@@ -118,10 +116,8 @@ class manual_scanning(osv.osv):
             manufacture_id = context.get('manufacture_id',False)
             cr.execute("select id from stock_move where raw_material_production_id='%s'"%(manufacture_id[0]))
             move_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
-            print"move_ids",move_ids
             cr.execute("select product_id from stock_move where id in %s and state not in ('done','cancel')", (tuple(move_ids),))
             product_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
-            print"product_ids",product_ids
             if product_ids:
                 for each_prod_id in product_obj.browse(cr,uid,product_ids): 
                     if each_prod_id.track_incoming==True or each_prod_id.track_production==True:

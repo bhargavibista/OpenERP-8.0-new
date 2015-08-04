@@ -64,20 +64,13 @@ class res_partner(osv.Model):
         #Start code Preeti for Billing Reminder
     def advance_billing_notice(self,cr,uid,ids,context=None):
         today=datetime.date.today()
-        print "Today is ", today
         billing_date = today+relativedelta(days=10)
-        print"billing_datebilling_datebilling_datebilling_date",billing_date
         cr.execute("select id from res_partner where billing_date='%s'"%(billing_date))
-#        cr.execute("select id from res_partner where billing_date = '2012-06-24'")
         partner_ids=filter(None, map(lambda x:x[0], cr.fetchall()))
-        print"partner_ids========>",partner_ids
         if partner_ids:
             for partner_id in self.browse(cr,uid,partner_ids):
                 email_to = self.browse(cr,uid,partner_id.id).emailid
-                print "email======>",email_to
                 res=self.pool.get('sale.order').email_to_customer(cr, uid, partner_id,'res.partner','advance_billing_notice',email_to,context)
-#                if res:
-#                        partner_id.write({'billing_reminder':True})
         return True
     #End code Preeti for Billing Reminder
     
@@ -85,17 +78,12 @@ class res_partner(osv.Model):
     def expiry_credit_card_check(self,cr,uid,ids,context):
         no_of_days=context.get('no_of_days')
         now = datetime.datetime.now()
-        print "nownownownownownownownownownownow",now,context
         sale_obj=self.pool.get('sale.order')
         partner_obj=self.pool.get('res.partner')
         billing_after_no_of_days=now+datetime.timedelta(days=no_of_days)
-        print "billing_after_no_of_days//////////////////",billing_after_no_of_days
         billing_date=billing_after_no_of_days.strftime("%Y-%m-%d")
-        print"billing_date",billing_date
         billing_month=billing_after_no_of_days.strftime("%Y-%m")
-        print "billing_monthbilling_month",billing_month
         customer_id=partner_obj.search(cr,uid,[('billing_date','=',billing_date)])
-        print "customer_idcustomer_idcustomer_id",customer_id
         if customer_id:
             for each in customer_id:
                 partner_brw=partner_obj.browse(cr,uid,each)
@@ -103,13 +91,9 @@ class res_partner(osv.Model):
                 if cust_profile_id:
                     cr.execute("select exp_date from custmer_payment_profile where customer_profile_id='%s' and active_payment_profile=True"%(str(cust_profile_id)))
                     payment_profile_data=cr.dictfetchall()
-                    print"payment_profile_data",payment_profile_data
                     if payment_profile_data:
-                        print"ifffffff"
                         expiration_date=payment_profile_data[0].get('exp_date')
-                        print"expiration_date",expiration_date
                         if expiration_date<billing_month:
-                            print"credit card expiredddddddddd"
                             partner_obj.write(cr,uid,each,{'comment':'Credit Card Expired'})
                             sale_obj.email_to_customer(cr,uid,partner_brw,'res.partner','expiry_card_mail_21_days',partner_brw.emailid,context)
                     else:
@@ -121,17 +105,13 @@ class res_partner(osv.Model):
             return True
         
     def cal_next_billing_amount(self,cr,uid,ids,context=None):
-        print"idsssssssssssssssss",ids
         if not context:
             context={}
         policy_obj=self.pool.get("res.partner.policy")
         partner_brw=self.browse(cr,uid,ids)
-        print"partner_brw.billing_date",partner_brw.billing_date
         billing_date=datetime.datetime.strptime(partner_brw.billing_date, "%Y-%m-%d").date()
-        print"billing_datebilling_date*****************************",billing_date
         cr.execute("select id from res_partner_policy where active_service =True and return_cancel_reason is null and agmnt_partner=%s and next_billing_date <='%s'"%(partner_brw.id,billing_date))
         active_services = filter(None, map(lambda x:x[0], cr.fetchall()))
-        print "active_servicesactive_services",active_services
         total_price,extra_days=0.0,0
         if active_services:
             for each_policy in policy_obj.browse(cr,uid,active_services):
@@ -151,35 +131,28 @@ class res_partner(osv.Model):
         #                    extra_days_old=start_current_service-cancel_date
                             extra_charges_old=(original_service.product_id.list_price/days)*int(extra_days_old.days)
                             total_price=total_price+extra_charges_old
-                            print"extra_daysextra_days----------------------66666666666666",extra_charges_old,original_service,total_price
                             upgrade_downgrade=original_service.up_down_service
                             original_service=original_service.from_package_id if original_service.from_package_id else original_service
-                            print"original_serviceoriginal_serviceoriginal_service+++++++++++",original_service
                             extra_days=original_service.extra_days if original_service.from_package_id else 0
                     extra_charges=policy_obj.up_down_charges(cr,uid,original_service,each_policy,partner_brw.billing_date,context)
-                    print"extra_chargesextra_chargesextra_chargesextra_charges",extra_charges
 #                    if extra_charges>0.0:
                     old_free_trial_date=datetime.datetime.strptime(str(original_service.free_trial_date), "%Y-%m-%d")
                     start_dt_current_service = datetime.datetime.strptime(str(each_policy.start_date), '%Y-%m-%d')
                     if (original_service.extra_days and original_service.extra_days>0) and ((old_free_trial_date < start_dt_current_service)):
                         cancel_date=datetime.datetime.strptime(str(original_service.cancel_date), "%Y-%m-%d")
                         extra_days_old1=cancel_date-old_free_trial_date
-                        print"extra_days_old1extra_days_old1extra_days_old1extra_days_old1",extra_days_old1
                         extra_charges_old1=(original_service.product_id.list_price/days)*int(extra_days_old1.days)
                         total_price=total_price+extra_charges_old1
-                        print"extra_charges_old1extra_charges_old1extra_charges_old1",extra_charges_old1,total_price
                     if (upgrade_downgrade and 'down' in upgrade_downgrade.lower()) and (not original_service.extra_days):
                         total_price=total_price+(unit_price-extra_charges)
                     else:
                         total_price=total_price+(unit_price+extra_charges)
                 else:
                     total_price=unit_price+total_price
-                    print"total_pricetotal_pricetotal_pricetotal_price",total_price
                     if each_policy.extra_days>0:
 #                        days=calendar.monthrange(billing_date.year,billing_date.month)[1]
                         partial_price=(unit_price/days)*int(each_policy.extra_days)
                         total_price=total_price+partial_price-unit_price
-        print"total_pricetotal_pricetotal_price================999999999999",total_price
         partner_brw.write({'next_billing_amount':total_price})
         return True
 
@@ -191,50 +164,28 @@ class res_partner(osv.Model):
 #        inactive_services=policy_obj.search(cr,uid,[('active_service','=',False)])
         cr.execute("select id from res_partner_policy where active_service =False and create_date >= '2013-11-01'")
         inactive_services = filter(None, map(lambda x:x[0], cr.fetchall()))
-        print"inactive_services--------",len(inactive_services)
         for each in policy_obj.browse(cr,uid,inactive_services):
-#            print"eachhhhhhhhhhhh---",each.agmnt_partner
-            print"sale_order---",each.sale_order
-#            print"cance_date---",each.cancel_date
-            
-#            return_order=return_obj.search(cr,uid,[('partner_id','=',each.agmnt_partner.id),('return_type','=','car_return')])
-#            payment_error=error_obj.search(cr,uid,[('partner_id','=',each.agmnt_partner.id),('active_payment','=',False)])
             if each.sale_order:
                 sale_id=sale_obj.search(cr,uid,[('name','=',each.sale_order)])
-                print"sale_id--------------",sale_id
                 return_order=return_obj.search(cr,uid,[('linked_sale_order','=',sale_id[0]),('return_type','=','car_return')])
-                
                 if return_order:
-                    print"return_order-========",return_order
                     for each_return in return_obj.browse(cr,uid,return_order):
-    #                    print"each_error----",each_error
                         if each_return.date_order :
-    #                        print"hi------------",each_error,each_error.invoice_date
                             date_order=each_return.date_order
                             return_date=datetime.datetime.strptime(date_order, '%Y-%m-%d').date()
-    #                        print"typweeeeeee",type(suspension_date)
                             each.write({'return_date':date_order})
                 payment_error=error_obj.search(cr,uid,[('invoice_name','ilike',each.sale_order),('active_payment','=',False)])
                 
                 if payment_error:
-                    print"payment_error-========+++",payment_error
                     for each_error in error_obj.browse(cr,uid,payment_error):
-    #                    print"each_error----",each_error
                         if each_error.invoice_id and each_error.invoice_id.state!="paid":
-    #                        print"hi------------",each_error,each_error.invoice_date
                             invoice_date=each_error.invoice_date
                             suspension_date=datetime.datetime.strptime(invoice_date, '%Y-%m-%d').date() + relativedelta(months=1)
-    #                        print"typweeeeeee",type(suspension_date)
                             each.write({'suspension_date':suspension_date})
-            
-                
-            
-#        fdfsdsd
         return True
 
     def return_cancel_reason_extract(self,string):
         string = string.replace("\\",'')
-#        string = string.replace("\'",'')
         dict_val = ast.literal_eval(string)
         return dict_val 
     def show_serial_number(self,cr,uid,ids,context):
@@ -322,15 +273,12 @@ class res_partner(osv.Model):
         line_obj = self.pool.get('sale.order.line')
         result = {}
         search_partner = partner_obj.search(cr,uid,['|',('ref','!=',''),('ref','!=',False)],order='id')
-        print"search_partner-----",search_partner
-	_logger.info('Create a with vals kuldeeeeeepppppp %s', len(search_partner))
-#        search_partner = [4525]
+	_logger.info('search_partner %s', len(search_partner))
         search_partner.sort()
         if search_partner:
             for each_partner in partner_obj.browse(cr,uid,search_partner):
                 cr.execute("select id from res_partner_policy where (create_date is null or create_date >= '2013-10-31') and (do_not_show=False or do_not_show is null) and service_name not ilike '%s' and agmnt_partner=%s order by id desc"%('%casual%',each_partner.id))
                 search_active_policy = filter(None, map(lambda x:x[0], cr.fetchall()))
-                print "search_active_policy",search_active_policy
                 if search_active_policy:
                     for each_policy in policy_obj.browse(cr,uid,search_active_policy):
                         price,subscription_data,cancel_return_reason,cancel_source,line_id_brw = 0.0,[],'','',False
@@ -375,78 +323,16 @@ class res_partner(osv.Model):
                                 if line_id_brw and not each_policy.start_date:
                                     continue
                                 result[str(each_partner.ref)]  = value + subscription_data
-        print "resulut",result                                
         return result
-        
-#    cox gen2 
-    '''def forgot_password(self,cr,uid,user_id,customerId):
-        referential_obj = self.pool.get('external.referential')
-        website_obj = self.pool.get('external.shop.group')
-        partner_obj = self.pool.get('res.partner')
-        sale_obj = self.pool.get('sale.order')
-        search_referential = referential_obj.search(cr,uid,[])
-        customer_id,partner_id='',''
-        if search_referential:
-            attr_conn = False
-            referential_id_obj = referential_obj.browse(cr,uid,search_referential[0])
-            try:
-                attr_conn = referential_id_obj.external_connection(True)
-                search_default_website = website_obj.search(cr,uid,[])
-                if search_default_website:
-                    website_ids = self.get_website_magento_id(cr,uid,search_default_website)
-                    if customerId:
-                        customer_id=customerId
-                        partner_id = self.pool.get('res.partner').search(cr,uid,[('ref','=',customer_id)])
-                    elif user_id:
-                        result = attr_conn.call('ol_customer.customerExists',[user_id,website_ids])
-                        if result.get('Id'):
-                            customer_id  =  result.get('Id')
-                            partner_id = partner_obj.search(cr,uid,[('ref','=',result.get('Id'))])
-                    if partner_id:
-                        password = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(6))
-                        salt = uuid.uuid4()
-                        hash_string = md5.md5(str(salt)[:2]+password).hexdigest()
-                        password_hash = hash_string + ':' + str(salt)[:2]
-                        data = {'password_hash': password_hash}
-                        attr_conn.call('customer.update',[customer_id,data])
-                        cr.execute("update res_partner set magento_pwd = '%s' where id=%d"%(password,partner_id[0]))
-                        cr.commit()
-                        partner_id_obj = partner_obj.browse(cr,uid,partner_id[0])
-                        sale_obj.email_to_customer(cr,uid,partner_id_obj,'res.partner','forgot_password',partner_id_obj.emailid,{})
-                        return True
-            except Exception, e:
-                #print "str",e
-                return False'''
             
     def forgot_password(self,cr,uid,user_id,customerId):
-#        referential_obj = self.pool.get('external.referential')
-#        website_obj = self.pool.get('external.shop.group')
         partner_obj = self.pool.get('res.partner')
         sale_obj = self.pool.get('sale.order')
-#        search_referential = referential_obj.search(cr,uid,[])
         customer_id,partner_id='',''
         if customerId:
-#            customer_id=customerId
             partner_id = self.pool.get('res.partner').search(cr,uid,[('ref','=',customerId)])
-#        if search_referential:
-#            attr_conn = False
-#            referential_id_obj = referential_obj.browse(cr,uid,search_referential[0])
-#            try:
-#                attr_conn = referential_id_obj.external_connection(True)
-#                search_default_website = website_obj.search(cr,uid,[])
-#                if search_default_website:
-#                    website_ids = self.get_website_magento_id(cr,uid,search_default_website)
-#                    if customerId:
-#                        customer_id=customerId
-#                        partner_id = self.pool.get('res.partner').search(cr,uid,[('ref','=',customer_id)])
-#                    elif user_id:
-#                        result = attr_conn.call('ol_customer.customerExists',[user_id,website_ids])
-#                        if result.get('Id'):
-#                            customer_id  =  result.get('Id')
-#                            partner_id = partner_obj.search(cr,uid,[('ref','=',result.get('Id'))])
             if partner_id:
                 password = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(6))
-            
                 cr.execute("update res_partner set magento_pwd = '%s' where id=%d"%(password,partner_id[0]))
                 cr.commit()
                 partner_id_obj = partner_obj.browse(cr,uid,partner_id[0])
@@ -468,15 +354,10 @@ class res_partner(osv.Model):
                 try:
                     attr_conn = referential_id_obj.external_connection(True)
                 except Exception, e:
-                    print "Error in URLLIB with connection",str(e)
-#
+                    _logger.info("Exception.....%s",e)
                 if attr_conn:
-#                    partner_id = self.pool.get('res.partner').search(cr,uid,[('emailid','ilike',emailid)])
-#                    ids_obj=self.pool.get('res.partner').browse(cr,uid,partner_id[0])
                     search_default_website = self.pool.get('external.shop.group').search(cr,uid,[])
-                    print"websites---------------",search_default_website
                     website_ids = self.get_website_magento_id(cr,uid,search_default_website)
-#                    website_id = self.pool.get('external.shop.group').oeid_to_extid(cr, uid, websites,websites)#will give Website magento ID
                     if customerId:
                         customer_id=customerId
                         partner_id = self.pool.get('res.partner').search(cr,uid,[('ref','=',customer_id)])
@@ -485,10 +366,8 @@ class res_partner(osv.Model):
                         if customer_id:
                             customer_id  =  customer_id.get('Id')
                             partner_id = self.pool.get('res.partner').search(cr,uid,[('ref','=',customer_id)])
-                    print"Partner_id",partner_id,customer_id
                     if partner_id:
                         search_services = policy_obj.search(cr,uid,[('agmnt_partner','in',partner_id),('do_not_show','=',False),('service_name','not ilike','%casual%')])
-        #		search_services = policy_obj.search(cr,uid,[('agmnt_partner','in',partner_id),('service_name','ilike','%play%')])
                         if search_services:
                             search_services.sort()
                             for each_policy in policy_obj.browse(cr,uid,search_services):
@@ -580,11 +459,6 @@ class res_partner(osv.Model):
                 search_default_website = website_obj.search(cr,uid,[])
                 if search_default_website:
                     website_ids = self.get_website_magento_id(cr,uid,search_default_website)
-#		    search_partner = partner_obj.search(cr,uid,[('emailid','ilike',user_id)])
-#		    if search_partner:
-#			result={'encrypted_password': 'ZmwyNDc2', 'customer_id': '', 'username_match': True, 'password_match': True}
-#		    else:
-#			result = {'encrypted_password': '', 'customer_id': '', 'username_match': False, 'password_match': False}
                     result = attr_conn.call('ol_customer.authenticate_customer',[user_id,password,website_ids,hash_pwd])
 		    if result:
                         vals={
@@ -614,18 +488,10 @@ class res_partner(osv.Model):
                                     serial_no_id=lot_obj.create(cr,uid,{'name':serial_no,'product_id':product_id[0]})
                                     cr.commit()
                                     if serial_no_id:
-                #                    user_vals = {'serial_no':serial_number[0],'mac_address':mac_address,'partner':search_partner[0]}
                                         auth_user_obj.create(cr,uid,{'serial_no':serial_no_id,'mac_address':mac_address,'partner_id':search_partner[0]})
-#                    if result.get('customer_id'):
-#                        partner_id = partner_obj.search(cr,uid,[('ref','=',result.get('customer_id'))])
-#                        if partner_id:
-#                            cr.execute("update res_partner set emailid = '%s' where id=%d"%(user_id,partner_id[0]))
-#                            cr.commit()
                     return result
             except Exception, e:
 		_logger.info("Error occured %s",str(e))
-                #print "e",str(e)
-#		search_partner = partner_obj.search(cr,uid,[('emailid','ilike',user_id)])
         	if search_partner:
               		result={'encrypted_password': 'ZmwyNDc2', 'customer_id': '', 'username_match': True, 'password_match': True}
 	        else:
@@ -664,110 +530,6 @@ class res_partner(osv.Model):
 
         return result
 
-    '''def authenticate_user(self,cr,uid,user_id,password,hash_pwd,mac_address=None,serial_no=None):
-        result  = []
-	vals={}
-        referential_obj = self.pool.get('external.referential')
-        website_obj = self.pool.get('external.shop.group')
-        partner_obj = self.pool.get('res.partner')
-	partner_log_obj=self.pool.get('res.partner.auth.log')
-        auth_user_obj = self.pool.get('user.auth')
-        lot_obj = self.pool.get('stock.production.lot')
-        search_referential = referential_obj.search(cr,uid,[])
-	search_partner = partner_obj.search(cr,uid,[('emailid','ilike',user_id)])
-	login_time=datetime.datetime.today() 
-        if search_referential:
-            attr_conn = False
-            referential_id_obj = referential_obj.browse(cr,uid,search_referential[0])
-	    _logger.info("Tried to login with EmailId %s and Password %s", user_id,password)
-            try:
-                attr_conn = referential_id_obj.external_connection(True)
-                search_default_website = website_obj.search(cr,uid,[])
-                if search_default_website:
-                    website_ids = self.get_website_magento_id(cr,uid,search_default_website)
-#		    search_partner = partner_obj.search(cr,uid,[('emailid','ilike',user_id)])
-#		    if search_partner:
-#			result={'encrypted_password': 'ZmwyNDc2', 'customer_id': '', 'username_match': True, 'password_match': True}	
-#		    else:
-#			result = {'encrypted_password': '', 'customer_id': '', 'username_match': False, 'password_match': False}	
-                    result = attr_conn.call('ol_customer.authenticate_customer',[user_id,password,website_ids,hash_pwd])
-		    if result:
-                        vals={
-                            'partner_id':search_partner[0] if search_partner else False,
-                            'user_id':user_id,
-                            'username_match':result.get('username_match',False),
-                            'password_match':result.get('password_match',False),
-                            'encrypted_password':result.get('encrypted_password',False),
-                            'login_time':login_time.strftime('%Y-%m-%d %H:%M:%S'),
-                            'customer_id':result.get('customer_id',False),
-			    'response_result':result,
-                        }
-                        partner_log_obj.create(cr,uid,vals)
-                        _logger.info("Sucessful login with Emailid %s ", user_id)
-			if mac_address and serial_no and result and result.get('username_match')==True and result.get('password_match')==True:
-                            if serial_no and search_partner:
-                                serial_number = lot_obj.search(cr,uid,[('name','=',serial_no)])
-                                if serial_number:
-                                    cr.execute("select id from auth_user where serial_no='%s' and partner='%s'",(serial_number[0],search_partner[0]))
-                                    auth_user_id = filter(None, map(lambda x:x[0], cr.fetchall()))
-                                    if not auth_user_id:
-                                        user_vals = {'serial_no':serial_number[0],'mac_address':mac_address,'partner':search_partner[0]}
-                                        auth_user_obj.create(cr,uid,user_vals)
-                                else:
-                                    product_id = self.pool.get('product.product').search(cr,uid,[('default_code','=','playdev')])
-                #                    osv.except_osv(_('Error !'),_('Customer with these Email ID already Exists On Magento'))
-                                    serial_no_id=lot_obj.create(cr,uid,{'name':serial_no,'product_id':product_id[0]})
-                                    cr.commit()
-                                    if serial_no_id:
-                #                    user_vals = {'serial_no':serial_number[0],'mac_address':mac_address,'partner':search_partner[0]}
-                                        auth_user_obj.create(cr,uid,{'serial_no':serial_no_id,'mac_address':mac_address,'partner':search_partner[0]})
-#                    if result.get('customer_id'):
-#                        partner_id = partner_obj.search(cr,uid,[('ref','=',result.get('customer_id'))])
-#                        if partner_id:
-#                            cr.execute("update res_partner set emailid = '%s' where id=%d"%(user_id,partner_id[0]))
-#                            cr.commit()
-                    return result
-            except Exception, e:
-		_logger.info("Error occured %s",str(e))
-                #print "e",str(e)
-#		search_partner = partner_obj.search(cr,uid,[('emailid','ilike',user_id)])
-        	if search_partner:
-              		result={'encrypted_password': 'ZmwyNDc2', 'customer_id': '', 'username_match': True, 'password_match': True}
-	        else:
-        	        result = {'encrypted_password': '', 'customer_id': '', 'username_match': False, 'password_match': False}
-		if result:
-                    vals={
-                                'partner_id':search_partner[0] if search_partner else False,
-                                'user_id':user_id,
-                                'username_match':result.get('username_match',False),
-                                'password_match':result.get('password_match',False),
-                                'encrypted_password':result.get('encrypted_password',False),
-                                'login_time':login_time.strftime('%Y-%m-%d %H:%M:%S'),
-                                'customer_id':result.get('customer_id',False),
-                                'login_error':str(e),
-				'response_result':result,
-                            }
-                    partner_log_obj.create(cr,uid,vals)
-                    _logger.info("Sucessful login with Emailid %s ", user_id)
-                    if mac_address and serial_no and result and result.get('username_match')==True and result.get('password_match')==True:
-                        if serial_no and search_partner:
-                            serial_number = lot_obj.search(cr,uid,[('name','=',serial_no)])
-                            if serial_number:
-                                cr.execute("select id from auth_user where serial_no='%s' and partner='%s'",(serial_number[0],search_partner[0]))
-                                auth_user_id = filter(None, map(lambda x:x[0], cr.fetchall()))
-                                if not auth_user_id:
-                                    user_vals = {'serial_no':serial_number[0],'mac_address':mac_address,'partner':search_partner[0]}
-                                    auth_user_obj.create(cr,uid,user_vals)
-                            else:
-                                product_id = self.pool.get('product.product').search(cr,uid,[('default_code','=','playdev')])
-            #                    osv.except_osv(_('Error !'),_('Customer with these Email ID already Exists On Magento'))
-                                serial_no_id=lot_obj.create(cr,uid,{'name':serial_no,'product_id':product_id[0]})
-                                cr.commit()
-                                if serial_no_id:
-            #                    user_vals = {'serial_no':serial_number[0],'mac_address':mac_address,'partner':search_partner[0]}
-                                    auth_user_obj.create(cr,uid,{'serial_no':serial_no_id,'mac_address':mac_address,'partner':search_partner[0]})
-
-        return result'''
     #Function is inherited because want to change email id if it gets changed in OE it should 
     #change on magento side also.
     def write(self,cr,uid,ids,vals,context={}):
@@ -788,8 +550,7 @@ class res_partner(osv.Model):
                         try:
                             attr_conn = referential_id_obj.external_connection(True)
                         except Exception, e:
-                            #print "Error in URLLIB",str(e)
-#                            self.log(cr,uid,ids[0],'Error while connecting with Magento')
+                            _logger.info("Error occured %s",str(e))
                             vals.update({'emailid':ids_obj.emailid})
                         if attr_conn:
                             website_id = self.pool.get('external.shop.group').oeid_to_extid(cr, uid, ids_obj.website_id,ids_obj.website_id.id)#will give Website magento ID
@@ -803,13 +564,10 @@ class res_partner(osv.Model):
         res = super(res_partner, self).write(cr, uid, ids,vals, context=context)
         if updated == True:
             if (new_emailid) and (ids_obj) and config_ids:
-#                print "email...................",new_emailid,config_ids
                 config_obj = authorize_net_config.browse(cr,uid,config_ids[0])
-#                print "config_objconfig_objconfig_obj",config_obj
                 profile_id=ids_obj.customer_profile_id
                 if profile_id:
                     auth_resp=authorize_net_config.call(cr,uid,config_obj,'GetCustomerProfileExistence',new_emailid)
-#                    print "auth_respauth_respauth_resp",auth_resp
                     if auth_resp:
                         auth_email_id=auth_resp.get('code')
                         if auth_email_id=='E00039':
@@ -817,7 +575,6 @@ class res_partner(osv.Model):
                         else:
                             del_profile_id=auth_resp.get('cust_profile_id')
                             res=authorize_net_config.call(cr,uid,config_obj,'updateCustomerProfileRequest',new_emailid,profile_id)
-                            #print "update call response.................",res
                             if res==True and del_profile_id:
                                 authorize_net_config.call(cr,uid,config_obj,'deleteCustomerProfileRequest',del_profile_id)
                             self.pool.get('sale.order').email_to_customer(cr,uid,ids_obj,'res.partner','email_change',new_emailid,context)
@@ -907,35 +664,28 @@ class res_partner(osv.Model):
 
     #and make another payment profile as inactive from Openerp and also from Magento site
     def cust_profile_payment(self,cr,uid,ids,profile_id,payment_profile_data,exp_date,context={}):
-        print "expiration date is .......................",exp_date
-
+        _logger.info("expiration date is %s",exp_date)
         ids =int(ids)
-	print "ids................................",ids
-    #    kjlkjlkj
         cr.execute("UPDATE res_partner SET customer_profile_id='%s' where id=%d"%(profile_id,ids))
         payment_obj = self.pool.get('custmer.payment.profile')
         active_payment_profile_id = []
         for cc_number in payment_profile_data.iterkeys():
-	    print "ccc number......................",cc_number,payment_profile_data
+            _logger.info("payment_profile_data %s",payment_profile_data)
             each_profile = payment_profile_data[cc_number]
             search_payment_profile = payment_obj.search(cr,uid,[('profile_id','=',each_profile),('credit_card_no','=',cc_number)])
-	    print "search payment prfile.............................",search_payment_profile
+            _logger.info("search_payment_profile %s",search_payment_profile)
             if not search_payment_profile:
-
                 create_payment = payment_obj.create(cr,uid,{'active_payment_profile':True,'profile_id':each_profile,'credit_card_no':cc_number,'customer_profile_id':profile_id,'exp_date':exp_date})
                 active_payment_profile_id.append(create_payment)
                 cr.execute('INSERT INTO partner_profile_ids \
                         (partner_id,profile_id) values (%s,%s)', (ids, create_payment))
             else:
-		print "else part callll///////////////////////////////"
                 active_payment_profile_id.append(search_payment_profile[0])
         if active_payment_profile_id:
-
             payment_obj.write(cr,uid,active_payment_profile_id,{'active_payment_profile':True,'exp_date':exp_date})
             cr.execute("select profile_id from partner_profile_ids where partner_id=%s and profile_id not in %s",(ids,tuple(active_payment_profile_id),))
             in_active_payment_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
             if in_active_payment_ids:
-		print "in active payment ids.........................",in_active_payment_ids
                 payment_obj.write(cr,uid,in_active_payment_ids,{'active_payment_profile':False})
         return True
     def get_magento_group_id(self,cr,uid,context):
@@ -981,28 +731,12 @@ class res_partner(osv.Model):
         else:
             return {'value':{'high_speed_internet':'no','cable':'no','flare_account':check_all_data}}
     def create(self, cr, uid, vals, context=None):
-        print "vals////////////////////////",vals
         if vals.has_key('emailid'):
             email_id=vals.get('emailid')
-            print "email_dd///////////////////////////",email_id
-            print(email_id.lower())
             vals.update({'emailid':email_id.lower()})
         res = super(res_partner, self).create(cr, uid, vals, context=context)
         return res
 
-#    def create(self, cr, uid, vals, context=None):
-#        if vals.get('address',False):
-#            if vals['address'][0]:
-#                defaul_address=vals['address'][0][2]
-#                name=''
-#                if defaul_address.get('firstname',''):
-#                    name=defaul_address.get('firstname')
-#                if defaul_address.get('lastname',''):
-#                    name=name+' '+defaul_address.get('lastname')
-#                if len(name)!=0:
-#                    vals['name']=name
-#        res = super(res_partner, self).create(cr, uid, vals, context=context)
-#        return res
 
     def export_recurring_profile(self,cr,uid,ids,context={}):
         if ids:
@@ -1063,7 +797,6 @@ class res_partner(osv.Model):
                     return return_val
 
     def recurring_billing(self,cr,uid,context={}):
-	print "in recurring billing"
         partner_ids,payment_profile_id,start_date=[],False,''
         sale_obj=self.pool.get('sale.order')
         invoice_obj = self.pool.get('account.invoice')
@@ -1084,7 +817,6 @@ class res_partner(osv.Model):
             partner_obj=self.browse(cr,uid,partner_id)
 	    if partner_obj.start_date:	
 	            start_date=datetime.datetime.strptime(partner_obj.start_date, "%Y-%m-%d").date()
-#        	    print "start_date",start_date
 	            if start_date and start_date.day==31:
         	        nextmonth=str(nextmonth.year)+'-'+str(nextmonth.month)+'-'+str(days_nextmonth)
                 	nextmonth=datetime.datetime.strptime(nextmonth, "%Y-%m-%d").date()
@@ -1095,7 +827,6 @@ class res_partner(osv.Model):
             maerge_invoice_data=[]
             cr.execute('select id from res_partner_policy where  active_service = True and agmnt_partner = %s  and ((free_trial_date is null) or free_trial_date < (select billing_date from res_partner where id=%s))'% (partner_id,partner_id))
             policies = filter(None, map(lambda x:x[0], cr.fetchall()))
-            #print policies
             partner_policy = self.pool.get('res.partner.policy')
             for policy_brw in partner_policy.browse(cr,uid,policies):
                 #Extra Code for Checking whether service is cancelled or not
@@ -1122,7 +853,6 @@ class res_partner(osv.Model):
                     payment_profile_id=payment_profile_data[0].get('profile_id')
                     context['cc_number'] = payment_profile_data[0].get('credit_card_no')
                 context['partner_id_obj'] = partner_obj
-		#print "action_invoice_merge",sale_info	
                 res_id=sale_obj.action_invoice_merge(cr, uid, maerge_invoice_data, today, nextmonth, start_date,payment_profile_id, context=context)
                 
                 if res_id:
@@ -1134,124 +864,10 @@ class res_partner(osv.Model):
                         try:
                             self.export_recurring_profile(cr,uid,[res_id],context)
                         except Exception, e:
-                            print "error string",e
+                            _logger.info('Exception %s', e)
         return True
 res_partner()
 
-'''class res_partner_address(osv.osv):
-    _inherit="res.partner"
-    def _get_default_country(self, cr, uid, context=None):
-        country_id = self.pool.get('res.country').search(cr,uid,[('code','ilike','US')])
-        if country_id:
-            return country_id[0]
-
-    def _get_default_state(self, cr, uid, context=None):
-        state_id = self.pool.get('res.country.state').search(cr,uid,[('code','ilike','CA')])
-        if state_id:
-            return state_id[0]
-    
-    _columns = {
-    'email': fields.char('E-Mail', size=240),
-    }
-    _defaults= {
-    'type':'default',
-    'country_id': _get_default_country,
-    'state_id': _get_default_state
-    }
-    def _record_one_external_resource(self, cr, uid, external_session, resource, defaults=None, mapping=None, mapping_id=None, context=None):
-        """
-        Used in _record_external_resources
-        The resource will converted into OpenERP data by using the function _transform_external_resources
-        And then created or updated, and an external id will be added into the table ir.model.data
-        :param dict resource: resource to convert into OpenERP data
-        :param int referential_id: external referential id from where we import the resource
-        :param dict defaults: defaults value
-        :return: dictionary with the key "create_id" and "write_id" which containt the id created/written
-        """
-        mapping, mapping_id = self._init_mapping(cr, uid, external_session.referential_id.id, mapping=mapping, mapping_id=mapping_id, context=context)
-        written = created = False
-        vals = self._transform_one_resource(cr, uid, external_session, 'from_external_to_openerp', resource, mapping=mapping, mapping_id=mapping_id, defaults=defaults, context=context)
-        if not vals:
-            # for example in the case of an update on existing resource if update is not wanted vals will be {}
-            return {}
-        referential_id = external_session.referential_id.id
-        external_id = vals.get('external_id')
-        external_id_ok = not (external_id is None or external_id is False)
-        alternative_keys = mapping[mapping_id]['alternative_keys']
-        alternative_keys = [] ## Extra Coding because it was searching partner by website_id which is wrong
-        existing_rec_id = False
-        existing_ir_model_data_id = False
-        if external_id_ok:
-            del vals['external_id']
-        existing_ir_model_data_id, existing_rec_id = self._get_oeid_from_extid_or_alternative_keys\
-                (cr, uid, vals, external_id, referential_id, alternative_keys, context=context)
-
-        if not (external_id_ok or alternative_keys):
-            external_session.logger.warning(_("The object imported need an external_id, maybe the mapping doesn't exist for the object : %s" %self._name))
-        #Extra code Starts here
-        vals['auto_import'] = True
-        if existing_rec_id:
-            existing_rec_id = existing_rec_id[0]
-        if existing_rec_id:
-            if not self._name in context.get('do_not_update', []):
-                if self.oe_update(cr, uid, external_session, existing_rec_id, vals, resource, defaults=defaults, context=context):
-                    written = True
-        else:
-            existing_rec_id = self.oe_create(cr, uid,  external_session, vals, resource, defaults, context=context)
-            created = True
-        if external_id_ok:
-            if existing_ir_model_data_id:
-                if created:
-                    # means the external ressource is registred in ir.model.data but the ressource doesn't exist
-                    # in this case we have to update the ir.model.data in order to point to the ressource created
-                    self.pool.get('ir.model.data').write(cr, uid, existing_ir_model_data_id, {'res_id': existing_rec_id}, context=context)
-            else:
-                ir_model_data_vals = \
-                self.create_external_id_vals(cr, uid, existing_rec_id, external_id, referential_id, context=context)
-                if not created:
-                    # means the external resource is bound to an already existing resource
-                    # but not registered in ir.model.data, we log it to inform the success of the binding
-                    external_session.logger.info("Bound in OpenERP %s from External Ref with "
-                                                "external_id %s and OpenERP id %s successfully" %(self._name, external_id, existing_rec_id))
-        if created:
-            if external_id:
-                external_session.logger.info(("Created in OpenERP %s from External Ref with"
-                                        "external_id %s and OpenERP id %s successfully" %(self._name, external_id_ok and str(external_id), existing_rec_id)))
-            elif alternative_keys:
-                external_session.logger.info(("Created in OpenERP %s from External Ref with"
-                                        "alternative_keys %s and OpenERP id %s successfully" %(self._name, external_id_ok and str (vals.get(alternative_keys)), existing_rec_id)))
-            return {'create_id' : existing_rec_id}
-        elif written:
-            if external_id:
-                external_session.logger.info(("Updated in OpenERP %s from External Ref with"
-                                        "external_id %s and OpenERP id %s successfully" %(self._name, external_id_ok and str(external_id), existing_rec_id)))
-            elif alternative_keys:
-                external_session.logger.info(("Updated in OpenERP %s from External Ref with"
-                                        "alternative_keys %s and OpenERP id %s successfully" %(self._name, external_id_ok and str (vals.get(alternative_keys)), existing_rec_id)))
-            return {'write_id' : existing_rec_id}
-        return {}
-    
-    def write(self, cr, uid, ids, vals, context=None):
-        if ids:
-            name=''
-            if type(ids) in [int, long]:
-                ids = [ids]
-            address_obj=self.browse(cr, uid, ids[0])
-            ids=super(res_partner_address, self).write(cr, uid, ids, vals, context=context)
-            if 'firstname' in vals and 'lastname' in vals:
-                name=vals.get('firstname','')+' '+vals.get('lastname','')
-            elif 'firstname' in vals:
-                name=vals.get('firstname','')+' '+address_obj.lastname
-            elif 'lastname' in vals:
-                name=(address_obj.firstname if address_obj.firstname else '')+' '+vals.get('lastname','')
-            else:
-                name=(address_obj.firstname if address_obj.firstname else '')+' '+(address_obj.lastname if address_obj.firstname else '')
-            if address_obj.type=='default':
-                partner_id=address_obj.partner_id.id
-                self.pool.get('res.partner').write(cr,uid,[partner_id],{'name':name},context)
-        return ids
-    
-res_partner_address()'''
 
 class res_partner_policy(osv.osv):
     _name = "res.partner.policy"
@@ -1320,23 +936,16 @@ class res_partner_policy(osv.osv):
 ########## function to set cancel_date for all customers whose no_recurring is true
     def cancellation_for_no_recurring(self,cr,uid,ids,context=None):
         today=datetime.datetime.now()
-#        today='2015-03-01 00:00:00'
-#        today=datetime.datetime.strptime(str(today), "%Y-%m-%d %H:%M:%S")
         free_trial_end=today+relativedelta(months=1)
-#        policy_ids=self.search(cr,uid,[('no_recurring','=',True),('free_trial_date','>=',today.strftime("%Y-%m-%d")),('free_trial_date','<=',last_day.strftime("%Y-%m-%d"))])
         cr.execute("select id from res_partner_policy where active_service=True and no_recurring=True and recurring_reminder=False\
                 and cancel_date is null and return_date is null and suspension_date is null \
                 and free_trial_date<='%s'"%(free_trial_end))
         policy_ids=filter(None, map(lambda x:x[0], cr.fetchall()))
-#        policy_ids=self.search(cr,uid,[('no_recurring','=',True),('free_trial_date','<=',free_trial_end),('recurring_reminder','=',False),('cancel_date','=','')])
         if policy_ids:
             cancel_service = self.pool.get('cancel.service')
-#            context['cancellation_reason']='Recurring Billing is not active'
             for each_policy in self.browse(cr,uid,policy_ids):
                 free_trial_date=datetime.datetime.strptime(each_policy.free_trial_date, "%Y-%m-%d")
-                #print "free_trial_datefree_trial_date",free_trial_date
                 cancellation_date= free_trial_date + relativedelta(days=1)
-                #print "cancellation_datecancellation_date",cancellation_date
                 cancellation_reason='Opt Out for Recurring Billing.'
                 if (not each_policy.cancel_date):
                     cancel_service.create(cr,uid,{'service_name':each_policy.service_name,
@@ -1397,64 +1006,24 @@ class company(osv.osv):
         policy_obj = self.pool.get('res.partner.policy')
         partner_obj = self.pool.get('res.partner')
         search_partner_policy = policy_obj.search(cr,uid,[('additional_info','!=','null')])
-        #print "lenght",len(search_partner_policy)
-
         if search_partner_policy:
             for each_policy in policy_obj.browse(cr,uid,search_partner_policy):
-         #       print "each_policy",each_policy
-	#	print "eachfdfddsfdsfffffffffffffffff",each_policy.additional_info
                 if each_policy.additional_info:
 			additional_info_dict = partner_obj.return_cancel_reason_extract(each_policy.additional_info)
-	#		print "eachfdfddsfdsf",each_policy.additional_info
-			
         	        cancel_return_reason = additional_info_dict.get('cancel_return_reason')
 	                cancel_return_source = additional_info_dict.get('source')
         	        policy_obj.write(cr,uid,each_policy.id,{'return_cancel_reason':cancel_return_reason,'source':cancel_return_source})
         return True
-#        data = {'partner_id':1,'store_id':1}
-#        self.pool.get('schedular.function').eula_reminder(cr,uid,context)
-#        search_sale_order = self.pool.get('sale.order').search(cr, uid, [])
-#        for each in search_sale_order:
-#            self.pool.get('sale.order').write(cr,uid,each,{})
-#        context['do_not_update'] = True
-#        search_id = self.pool.get('return.order').search(cr,uid,[('id','=',7)])
-#        print "search_id",search_id
-#        fdf
         result =  self.pool.get('res.partner').subscriber_list(cr,uid)
-        print result
-#        fdfsd
-#        self.pool.get('schedular.function').agreement_status(cr,uid,{})
-#        magento_shop_brw = self.pool.get('sale.shop').browse(cr,uid,2)
-#        attr_conn = magento_shop_brw.referential_id.external_connection(True)
-
         result = attr_conn.call('sales_order.new_credit_card', [])
-        print "result",result
-        fdf
-#        result = attr_conn.call('ol_customer.authenticate_customer',['poonam.dafal@bistasolutions.com','solutions','1'])
-#        print "result",result
-#        service_data= [{'order_id':'100000113','customer_id':'29','product_id':'20'},{'order_id':'100000114','customer_id':'29','product_id':'20'}]
-#        deactived_services = attr_conn.call('sales_order.recurring_services', ['update',service_data,''])
-#        print "deactived_services",deactived_services
-#        fdfs
         increment_ids = ['2','33']
         return_val = attr_conn.call('sales_order.agreement_acceptance_check', [increment_ids])
-        #print "return_val",return_val
-        fdf
         invoice_id_obj = self.pool.get('account.invoice').browse(cr,uid,12)
         date_invoice = invoice_id_obj.date_invoice
-        #print "ffdfdfd",invoice_id_obj.partner_id.billing_date
-        #print date_invoice
         val = ( str(invoice_id_obj.partner_id.billing_date)+" 00:00:00" if invoice_id_obj.partner_id.billing_date else '')
-        #print "val",type(val),val
         new_val = ( str(invoice_id_obj.date_invoice)+" 00:00:00" if invoice_id_obj.date_invoice else '')
-        #print "new_val",new_val
-        fdefdfd
         cr.execute("select name from ir_model_data where model='%s' and res_id=%d and name like '%s'"%('res.partner',3,'%/%'))
         id = filter(None, map(lambda x:x[0], cr.fetchall()))
-        #print "id",id
-        fdf
-#        sale_object = self.pool.get('sale.order').browse(cr,uid,102)
-#        magento_shop_brw = sale_object.shop_id
         magento_shop_brw = self.pool.get('sale.shop').browse(cr,uid,2)
         attr_conn = magento_shop_brw.referential_id.external_connection(True)
 #        return True
@@ -1677,14 +1246,12 @@ class partner_payment_error(osv.osv):
         config_obj=self.pool.get('service.configuration')
         user_auth_obj=self.pool.get('user.auth')
         config_ids=config_obj.search(cr,uid,[('scheduler_type','=','cancel_service_not_paid')])
-        print"config_idsconfig_idsconfig_idsconfig_ids",config_ids
         if config_ids:
             no_days=config_obj.browse(cr,uid,config_ids[0]).no_days
         else:
             no_days=30
         today = datetime.date.today()
         lastMonth = today + relativedelta(days=-no_days)
-	print"lastMonth-------",lastMonth
         so_name=[]
         final_dict,service_to_cancel = {},[]
         payment_exce = self.search(cr, uid, [('invoice_date','<=',lastMonth),('active_payment','=',True),('status','=',False)])
@@ -1705,16 +1272,7 @@ class partner_payment_error(osv.osv):
                             need_to_update_data = []
                             user_id=partner_id
                             app_id=policy_brw.product_id.app_id
-                            print "user_id---------",user_id,policy_brw
-                            print "app_id---------",app_id
-#                            print "expiry_epoch---------",start_date
-#                            expiry_epoch=time.mktime(datetime.datetime.strptime(str(today), "%Y-%m-%d").timetuple())
-#                            print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch
-#                            expiry_epoch=expiry_epoch+3600.0
-#                            print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
                             rental_result = user_auth_obj.rental_playjam(cr,uid,user_id,app_id,0)
-                            print "voucher_return----------",old_policy_result
-            #                    result=4113
                             if ast.literal_eval(str(rental_result)).has_key('body') and ast.literal_eval(str(rental_result)).get('body')['result'] == 4113:
                             #Code to write cancellation data and marking service as deactive
                                 additional_info = str({'source':'COX','cancel_return_reason':"Recurring Charges not Paid."})
@@ -1723,28 +1281,7 @@ class partner_payment_error(osv.osv):
                                 return_obj.update_billing_date(cr,uid,pay_error.partner_id.id,pay_error.partner_id.billing_date,policy_brw.sale_line_id)
                                 sale_obj.email_to_customer(cr,uid,pay_error,'partner.payment.error','cancel_service',each_rec.partner_id.emailid,context)
                             ######################
-         #                   if each_rec.magento_so_id:
-          #                      data={}
-           #                     data = {'customer_id':each_rec.partner_id.ref,
-           #                     'order_id':each_rec.magento_so_id}
-           #                     if 'mag' not in each_name:
-           #                         data.update({'product_id': policy_obj.browse(cr, uid, policy_id[0]).product_id.magento_product_id})
-            #                    if data:
-            #                        need_to_update_data.append(data)
-            #                    if not each_rec.shop_id.referential_id.id in final_dict.iterkeys():
-            #                        final_dict[each_rec.shop_id.referential_id.id] = need_to_update_data
-             #                   else:
-              #                      value = final_dict[each_rec.shop_id.referential_id.id]
-              #                      new_value = value + need_to_update_data
-               #                     final_dict[each_rec.shop_id.referential_id.id] = new_value
             self.write(cr,uid,pay_error.id,{'active_payment':False,'next_retry_date':False})
-       # if final_dict:
-        #    referential_obj = self.pool.get('external.referential')
-        #    for each_key in final_dict.iterkeys():
-        #        value = final_dict[each_key]
-        #        referential_id_obj = referential_obj.browse(cr,uid,each_key)
-        #        attr_conn = referential_id_obj.external_connection(True)
-	#       deactived_services = attr_conn.call('sales_order.recurring_services', ['update',value,''])
 
 partner_payment_error()
 

@@ -74,7 +74,6 @@ class serial_stock_move(osv.osv_memory):
     _name = "serial.stock.move"
     def onchange_serial(self,cr,uid,ids,serial_number,context):
         res={}
-    #    print "onchange_serail number"
         warning = {'title': _('Warning!')}
         prodlot_id = self.pool.get('stock.production.lot').search(cr,uid,[('name','=',serial_number)])
         if prodlot_id:

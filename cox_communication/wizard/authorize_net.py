@@ -15,6 +15,8 @@ from dateutil.relativedelta import relativedelta
 #from openerp.addons.base_external_referentials.external_osv import ExternalSession
 import time
 import ast
+import logging
+_logger = logging.getLogger(__name__)
 
 class profile_transaction(osv.osv_memory):
     _inherit = "profile.transaction"
@@ -134,15 +136,13 @@ class charge_customer(osv.osv_memory):
                     tax_obj = self.pool.get('account.tax')
                     wf_service.trg_validate(uid, 'sale.order', active_id, 'order_confirm', cr)
                     email_to = sale_object.partner_id.emailid
-                    if sale_object.cox_sales_channels in ('retail','ecommerce','tru','playjam','call_center'):
-			print "active id////////////////////////////////",active_id
-                        cr.execute('select invoice_id from sale_order_invoice_rel where order_id=%s'%(active_id))
-                        invoice_id=cr.fetchone()
-                        print"invoice_id",invoice_id
-                        if invoice_id:
-                            wf_service.trg_validate(uid, 'account.invoice', invoice_id[0], 'invoice_open', cr)
-                            returnval = invoice_obj.make_payment_of_invoice(cr, uid, invoice_id, context=context)
-                            so_obj.email_to_customer(cr, uid, sale_object,'sale.order','payment_confirmation',email_to,context)
+#                    if sale_object.cox_sales_channels in ('retail','ecommerce','tru','playjam','call_center'):
+                    cr.execute('select invoice_id from sale_order_invoice_rel where order_id=%s'%(active_id))
+                    invoice_id=cr.fetchone()
+                    if invoice_id:
+                        wf_service.trg_validate(uid, 'account.invoice', invoice_id[0], 'invoice_open', cr)
+                        returnval = invoice_obj.make_payment_of_invoice(cr, uid, invoice_id, context=context)
+                        so_obj.email_to_customer(cr, uid, sale_object,'sale.order','payment_confirmation',email_to,context)
 #                    cox gen2
 #                    try:
 #                        magento_shop_brw = sale_object.shop_id
@@ -194,7 +194,6 @@ class charge_customer(osv.osv_memory):
 #                                    if sale_object.cox_sales_channels == 'call_center':
 #                                        so_obj.email_to_customer(cr, uid, sale_object,'sale.order','account_set_up',email_to,context)
 #                    except Exception, e:
-#                        print "error string",e
                     if not flag and sale_object.cox_sales_channels == 'retail':
 #                        cr.execute("update res_partner set magento_pwd='ZmwyNDc2' where id=%d"%(sale_object.partner_id.id))
                         self.pool.get('res.partner').write(cr,uid,sale_object.partner_id.id,{'magento_pwd':'ZmwyNDc2'})
@@ -298,25 +297,21 @@ class customer_profile_payment(osv.osv_memory):
                 account_id = so_obj.search_income_account(cr,uid,[active_id],context)
 		response =self.pool.get('authorize.net.config').check_authorize_net(cr,uid,'sale.order',active_id,context)
 		if not response and not context.has_key('tru') and not context.has_key('wallet_purchase'):
-		    print "context1324526364747586869970",context
                     result = super(customer_profile_payment, self).charge_customer(cr, uid, ids, context=context)
-		    print "result///////////7676768779///////////////////",result
                 invoice_id,flag = False,False
                 sale_object = so_obj.browse(cr,uid,active_id)
                 if (sale_object.auth_transaction_id) or context.get('call_from','') != 'wizard':
                     invoice_obj = self.pool.get('account.invoice')
                     tax_obj = self.pool.get('account.tax')
-                    print "ctive id///////////////////////",active_id
                     wf_service.trg_validate(uid, 'sale.order', active_id, 'order_confirm', cr)
                     email_to = sale_object.partner_id.emailid
-                    if sale_object.cox_sales_channels in ('retail','ecommerce','tru','playjam'):
-                        cr.execute('select invoice_id from sale_order_invoice_rel where order_id=%s'%(active_id))
-                        invoice_id=cr.fetchone()
-			print "invoice id now//////////////////////////////////////////////",invoice_id
-                        if invoice_id:
-                            wf_service.trg_validate(uid, 'account.invoice', invoice_id[0], 'invoice_open', cr)
-                            returnval = invoice_obj.make_payment_of_invoice(cr, uid, invoice_id, context=context)
-                            so_obj.email_to_customer(cr, uid, sale_object,'sale.order','payment_confirmation',email_to,context)
+#                    if sale_object.cox_sales_channels in ('retail','ecommerce','tru','playjam'):
+                    cr.execute('select invoice_id from sale_order_invoice_rel where order_id=%s'%(active_id))
+                    invoice_id=cr.fetchone()
+                    if invoice_id:
+                        wf_service.trg_validate(uid, 'account.invoice', invoice_id[0], 'invoice_open', cr)
+                        returnval = invoice_obj.make_payment_of_invoice(cr, uid, invoice_id, context=context)
+                        so_obj.email_to_customer(cr, uid, sale_object,'sale.order','payment_confirmation',email_to,context)
                     try:
                         magento_shop_brw = sale_object.shop_id
                         magento_exported = sale_object.magento_exported
@@ -367,7 +362,7 @@ class customer_profile_payment(osv.osv_memory):
                                     if sale_object.cox_sales_channels == 'call_center':
                                         so_obj.email_to_customer(cr, uid, sale_object,'sale.order','account_set_up',email_to,context)
                     except Exception, e:
-                        print "error string",e
+                        _logger.info('exception------------ %s', e)
                     if not flag and sale_object.cox_sales_channels == 'retail':
 #                            cr.execute("update res_partner set magento_pwd='ZmwyNDc2' where id=%d"%(sale_object.partner_id.id))
                             self.pool.get('res.partner').write(cr,uid,sale_object.partner_id.id,{'magento_pwd':'ZmwyNDc2'})
