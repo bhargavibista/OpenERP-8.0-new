@@ -64,7 +64,6 @@
 "access_account_sequence_fiscal_retail_store","account.sequence.fiscalyear_retail_store","account.model_account_sequence_fiscalyear","group_retail_store",1,1,1,0
 "access_sale_exception_retail_store","sale.exception_retail_store","sale_exceptions.model_sale_exception","group_retail_store",1,1,1,0
 "access_product_pricelist_version_retail_store","product.pricelist.version_retail_store","product.model_product_pricelist_version","group_retail_store",1,1,1,0
-"access_agreement_retail_store","retail.agreement_retail_store","model_retail_agreement","group_retail_store",1,1,1,0
 "access_agreement_retail_delivery_retail_store","retail.delivery_retail_store","model_retail_delivery","group_retail_store",1,1,1,0
 "access_tr_barcode_retail_store","tr.barcode_retail_store","tr_barcode.model_tr_barcode","group_retail_store",1,1,1,0
 "access_reasons_title_retail_store","reasons.title_retail_store","model_reasons_title","group_retail_store",1,1,1,0
@@ -182,7 +181,6 @@
 "access_account_sequence_fiscal_call_center","account.sequence.fiscalyear_call_center","account.model_account_sequence_fiscalyear","group_call_center",1,1,1,0
 "access_sale_exception_call_center","sale.exception_call_center","sale_exceptions.model_sale_exception","group_call_center",1,1,1,0
 "access_product_pricelist_version_call_center","product.pricelist.version_call_center","product.model_product_pricelist_version","group_call_center",1,1,1,0
-"access_agreement_call_center","retail.agreement_call_center","model_retail_agreement","group_call_center",1,1,1,1
 "access_agreement_retail_delivery_call_center","retail.delivery_call_center","model_retail_delivery","group_call_center",1,1,1,1
 "access_tr_barcode_call_center","tr.barcode_call_center","tr_barcode.model_tr_barcode","group_call_center",1,1,1,1
 "access_reasons_title_call_center","reasons.title_call_center","model_reasons_title","group_call_center",1,1,1,1
@@ -293,7 +291,6 @@
 "access_account_move_vista_warehouse","account.move_vista_warehouse","account.model_account_move","group_vista_warehouse",1,1,1,0
 "access_account_move_line_vista_warehouse","account.move.line_vista_warehouse","account.model_account_move_line","group_vista_warehouse",1,1,1,0
 "access_account_analytic_line_vista_warehouse","account.analytic.line_vista_warehouse","account.model_account_analytic_line","group_vista_warehouse",1,1,1,0
-"access_stock_move_replenish_vista_warehouse","stock.move.replenish_vista_warehouse","cox_reorder.model_stock_move_replenish","group_vista_warehouse",1,1,1,1
 "access_sale_order_vista_warehouse","sale.order_vista_warehouse","sale.model_sale_order","group_vista_warehouse",1,1,0,0
 "access_sale_order_line_vista_warehouse","sale.order.line_vista_warehouse","sale.model_sale_order_line","group_vista_warehouse",1,1,0,0
 "access_account_journal_vista_warehouse","account.journal_vista_warehouse","account.model_account_journal","group_vista_warehouse",1,0,0,0
@@ -405,7 +402,6 @@
 "access_account_sequence_fiscal_rsassociate","account.sequence.fiscalyear_rsassociate","account.model_account_sequence_fiscalyear","group_retail_sales_associate",1,1,1,0
 "access_sale_exception_rsassociate","sale.exception_rsassociate","sale_exceptions.model_sale_exception","group_retail_sales_associate",1,1,1,0
 "access_product_pricelist_version_rsassociate","product.pricelist.version_rsassociate","product.model_product_pricelist_version","group_retail_sales_associate",1,1,1,0
-"access_agreement_rsassociate","retail.agreement_rsassociate","model_retail_agreement","group_retail_sales_associate",1,1,1,0
 "access_agreement_retail_delivery_rsassociate","retail.delivery_rsassociate","model_retail_delivery","group_retail_sales_associate",1,1,1,0
 "access_tr_barcode_rsassociate","tr.barcode_rsassociate","tr_barcode.model_tr_barcode","group_retail_sales_associate",1,1,1,0
 "access_reasons_title_rsassociate","reasons.title_rsassociate","model_reasons_title","group_retail_sales_associate",1,1,1,0
@@ -460,8 +456,6 @@
 "access_sale_churn_ending_subs_rsassociate","sale_churn_ending_subs_rsassociate","model_sale_churn_ending_subs","group_retail_sales_associate",1,0,0,0
 "access_report_avg_customer_lifetime_rsassociate","report_avg_customer_lifetime_rsassociate","model_report_avg_customer_lifetime","group_retail_sales_associate",1,0,0,0
 "access_purchase_order_rsassociate","purchase.order.rsassociate","purchase.model_purchase_order","group_retail_sales_associate",1,0,0,0
-"access_stock_replenish_rsassociate","stock.replenish_rsassociate","cox_reorder.model_stock_replenish","group_retail_sales_associate",1,1,1,0
-"access_stock_move_replenish_rsassociate","stock.move.replenish_rsassociate","cox_reorder.model_stock_move_replenish","group_retail_sales_associate",1,1,1,0
 "access_server_printer_rsassociate","server.printer.sale_rsassociate","model_server_printer","group_retail_sales_associate",1,1,1,0
 "access_similar_packages_rsassociate","similar.packages_rsassociate","model_similar_packages","group_retail_sales_associate",1,1,1,0
 "access_package_dimensions_rsassociate","package.dimensions_rsassociate","model_package_dimension","group_retail_sales_associate",1,1,1,0
@@ -585,7 +579,6 @@
 "access_account_sequence_fiscal_rsmanager","account.sequence.fiscalyear_rsmanager","account.model_account_sequence_fiscalyear","group_retail_sales_manager",1,1,1,0
 "access_sale_exception_rsmanager","sale.exception_rsmanager","sale_exceptions.model_sale_exception","group_retail_sales_manager",1,1,1,0
 "access_product_pricelist_version_rsmanager","product.pricelist.version_rsmanager","product.model_product_pricelist_version","group_retail_sales_manager",1,1,1,0
-"access_agreement_rsmanager","retail.agreement_rsmanager","model_retail_agreement","group_retail_sales_manager",1,1,1,0
 "access_agreement_retail_delivery_rsmanager","retail.delivery_rsmanager","model_retail_delivery","group_retail_sales_manager",1,1,1,0
 "access_tr_barcode_rsmanager","tr.barcode_rsmanager","tr_barcode.model_tr_barcode","group_retail_sales_manager",1,1,1,0
 "access_reasons_title_rsmanager","reasons.title_rsmanager","model_reasons_title","group_retail_sales_manager",1,1,1,0
@@ -640,8 +633,6 @@
 "access_sale_churn_ending_subs_rsmanager","sale_churn_ending_subs_rsmanager","model_sale_churn_ending_subs","group_retail_sales_manager",1,0,0,0
 "access_report_avg_customer_lifetime_rsmanager","report_avg_customer_lifetime_rsmanager","model_report_avg_customer_lifetime","group_retail_sales_manager",1,0,0,0
 "access_purchase_order_rsmanager","purchase.order.rsmanager","purchase.model_purchase_order","group_retail_sales_manager",1,0,0,0
-"access_stock_replenish_rsmanager","stock.replenish_rsmanager","cox_reorder.model_stock_replenish","group_retail_sales_manager",1,1,1,0
-"access_stock_move_replenish_rsmanager","stock.move.replenish_rsmanager","cox_reorder.model_stock_move_replenish","group_retail_sales_manager",1,1,1,0
 "access_server_printer_rsmanager","server.printer.sale_rsmanager","model_server_printer","group_retail_sales_manager",1,1,1,0
 "access_similar_packages_rsmanager","similar.packages_rsmanager","model_similar_packages","group_retail_sales_manager",1,1,1,0
 "access_package_dimensions_rsmanager","package.dimensions_rsmanager","model_package_dimension","group_retail_sales_manager",1,1,1,0
@@ -729,7 +720,6 @@
 "access_account_sequence_fiscal_internal_ops","account.sequence.fiscalyear_internal_ops","account.model_account_sequence_fiscalyear","group_internal_operations",1,1,1,0
 "access_sale_exception_internal_ops","sale.exception_internal_ops","sale_exceptions.model_sale_exception","group_internal_operations",1,1,1,0
 "access_product_pricelist_version_internal_ops","product.pricelist.version_internal_ops","product.model_product_pricelist_version","group_internal_operations",1,1,1,0
-"access_agreement_internal_ops","retail.agreement_internal_ops","model_retail_agreement","group_internal_operations",1,1,1,0
 "access_agreement_retail_delivery_internal_ops","retail.delivery_internal_ops","model_retail_delivery","group_internal_operations",1,1,1,0
 "access_tr_barcode_internal_ops","tr.barcode_internal_ops","tr_barcode.model_tr_barcode","group_internal_operations",1,1,1,0
 "access_reasons_title_internal_ops","reasons.title_internal_ops","model_reasons_title","group_internal_operations",1,1,1,0
@@ -784,8 +774,6 @@
 "access_sale_churn_ending_subs_internal_ops","sale_churn_ending_subs_internal_ops","model_sale_churn_ending_subs","group_internal_operations",1,0,0,0
 "access_report_avg_customer_lifetime_internal_ops","report_avg_customer_lifetime_internal_ops","model_report_avg_customer_lifetime","group_internal_operations",1,0,0,0
 "access_purchase_order_internal_ops","purchase.order.internal_ops","purchase.model_purchase_order","group_internal_operations",1,0,0,0
-"access_stock_replenish_internal_ops","stock.replenish_internal_ops","cox_reorder.model_stock_replenish","group_internal_operations",1,1,1,0
-"access_stock_move_replenish_internal_ops","stock.move.replenish_internal_ops","cox_reorder.model_stock_move_replenish","group_internal_operations",1,1,1,0
 "access_server_printer_internal_ops","server.printer.sale_internal_ops","model_server_printer","group_internal_operations",1,1,1,0
 "access_similar_packages_internal_ops","similar.packages_internal_ops","model_similar_packages","group_internal_operations",1,1,1,0
 "access_package_dimensions_internal_ops","package.dimensions_internal_ops","model_package_dimension","group_internal_operations",1,1,1,0
@@ -893,7 +881,6 @@
 "access_account_sequence_fiscal_internal_ops_mgr","account.sequence.fiscalyear_internal_ops_mgr","account.model_account_sequence_fiscalyear","group_internal_operations_manager",1,1,1,0
 "access_sale_exception_internal_ops_mgr","sale.exception_internal_ops_mgr","sale_exceptions.model_sale_exception","group_internal_operations_manager",1,1,1,0
 "access_product_pricelist_version_internal_ops_mgr","product.pricelist.version_internal_ops_mgr","product.model_product_pricelist_version","group_internal_operations_manager",1,1,1,0
-"access_agreement_internal_ops_mgr","retail.agreement_internal_ops_mgr","model_retail_agreement","group_internal_operations_manager",1,1,1,0
 "access_agreement_retail_delivery_internal_ops_mgr","retail.delivery_internal_ops_mgr","model_retail_delivery","group_internal_operations_manager",1,1,1,0
 "access_tr_barcode_internal_ops_mgr","tr.barcode_internal_ops_mgr","tr_barcode.model_tr_barcode","group_internal_operations_manager",1,1,1,0
 "access_reasons_title_internal_ops_mgr","reasons.title_internal_ops_mgr","model_reasons_title","group_internal_operations_manager",1,1,1,1
@@ -949,8 +936,6 @@
 "access_sale_churn_ending_subs_internal_ops_mgr","sale_churn_ending_subs_internal_ops_mgr","model_sale_churn_ending_subs","group_internal_operations_manager",1,0,0,0
 "access_report_avg_customer_lifetime_internal_ops_mgr","report_avg_customer_lifetime_internal_ops_mgr","model_report_avg_customer_lifetime","group_internal_operations_manager",1,0,0,0
 "access_purchase_order_internal_ops_mgr","purchase.order.internal_ops_mgr","purchase.model_purchase_order","group_internal_operations_manager",1,0,0,0
-"access_stock_replenish_internal_ops_mgr","stock.replenish_internal_ops_mgr","cox_reorder.model_stock_replenish","group_internal_operations_manager",1,1,1,0
-"access_stock_move_replenish_internal_ops_mgr","stock.move.replenish_internal_ops_mgr","cox_reorder.model_stock_move_replenish","group_internal_operations_manager",1,1,1,0
 "access_server_printer_internal_ops_mgr","server.printer.sale_internal_ops_mgr","model_server_printer","group_internal_operations_manager",1,1,1,0
 "access_similar_packages_internal_ops_mgr","similar.packages_internal_ops_mgr","model_similar_packages","group_internal_operations_manager",1,1,1,0
 "access_package_dimensions_internal_ops_mgr","package.dimensions_internal_ops_mgr","model_package_dimension","group_internal_operations_manager",1,1,1,0
@@ -1057,7 +1042,6 @@
 "access_account_sequence_fiscal_support","account.sequence.fiscalyear_support","account.model_account_sequence_fiscalyear","group_support",1,1,1,0
 "access_sale_exception_support","sale.exception_support","sale_exceptions.model_sale_exception","group_support",1,1,1,0
 "access_product_pricelist_version_support","product.pricelist.version_support","product.model_product_pricelist_version","group_support",1,1,1,0
-"access_agreement_support","retail.agreement_support","model_retail_agreement","group_support",1,1,1,0
 "access_agreement_retail_delivery_support","retail.delivery_support","model_retail_delivery","group_support",1,1,1,0
 "access_tr_barcode_support","tr.barcode_support","tr_barcode.model_tr_barcode","group_support",1,1,1,0
 "access_reasons_title_support","reasons.title_support","model_reasons_title","group_support",1,1,1,1
@@ -1112,8 +1096,6 @@
 "access_sale_churn_ending_subs_support","sale_churn_ending_subs_support","model_sale_churn_ending_subs","group_support",1,0,0,0
 "access_report_avg_customer_lifetime_support","report_avg_customer_lifetime_support","model_report_avg_customer_lifetime","group_support",1,0,0,0
 "access_purchase_order_support","purchase.order.support","purchase.model_purchase_order","group_support",1,0,0,0
-"access_stock_replenish_support","stock.replenish_support","cox_reorder.model_stock_replenish","group_support",1,1,1,0
-"access_stock_move_replenish_support","stock.move.replenish_support","cox_reorder.model_stock_move_replenish","group_support",1,1,1,0
 "access_server_printer_support","server.printer.sale_support","model_server_printer","group_support",1,1,1,0
 "access_similar_packages_support","similar.packages_support","model_similar_packages","group_support",1,1,1,0
 "access_package_dimensions_support","package.dimensions_support","model_package_dimension","group_support",1,1,1,0
@@ -1218,7 +1200,6 @@
 "access_account_sequence_fiscal_warehouse_cox","account.sequence.fiscalyear_warehouse_cox","account.model_account_sequence_fiscalyear","group_warehouse_cox",1,1,1,0
 "access_sale_exception_warehouse_cox","sale.exception_warehouse_cox","sale_exceptions.model_sale_exception","group_warehouse_cox",1,1,1,0
 "access_product_pricelist_version_warehouse_cox","product.pricelist.version_warehouse_cox","product.model_product_pricelist_version","group_warehouse_cox",1,1,1,0
-"access_agreement_warehouse_cox","retail.agreement_warehouse_cox","model_retail_agreement","group_warehouse_cox",1,1,1,0
 "access_agreement_retail_delivery_warehouse_cox","retail.delivery_warehouse_cox","model_retail_delivery","group_warehouse_cox",1,1,1,0
 "access_tr_barcode_warehouse_cox","tr.barcode_warehouse_cox","tr_barcode.model_tr_barcode","group_warehouse_cox",1,1,1,0
 "access_reasons_title_warehouse_cox","reasons.title_warehouse_cox","model_reasons_title","group_warehouse_cox",1,1,1,0
@@ -1274,8 +1255,6 @@
 "access_sale_churn_ending_subs_warehouse_cox","sale_churn_ending_subs_warehouse_cox","model_sale_churn_ending_subs","group_warehouse_cox",1,0,0,0
 "access_report_avg_customer_lifetime_warehouse_cox","report_avg_customer_lifetime_warehouse_cox","model_report_avg_customer_lifetime","group_warehouse_cox",1,0,0,0
 "access_purchase_order_warehouse_cox","purchase.order.warehouse_cox","purchase.model_purchase_order","group_warehouse_cox",1,0,0,0
-"access_stock_replenish_warehouse_cox","stock.replenish_warehouse_cox","cox_reorder.model_stock_replenish","group_warehouse_cox",1,1,1,0
-"access_stock_move_replenish_warehouse_cox","stock.move.replenish_warehouse_cox","cox_reorder.model_stock_move_replenish","group_warehouse_cox",1,1,1,0
 "access_shipping_response_returns_warehouse_cox","shipping.response.returns_warehouse_cox","model_shipping_response_returns","group_warehouse_cox",1,1,1,1
 "access_server_printer_warehouse_cox","server.printer.sale_warehouse_cox","model_server_printer","group_warehouse_cox",1,1,1,0
 "access_similar_packages_warehouse_cox","similar.packages_warehouse_cox","model_similar_packages","group_warehouse_cox",1,1,1,0
@@ -1369,7 +1348,6 @@
 "access_account_sequence_fiscal_third_party_reseller","account.sequence.fiscalyear_third_party_reseller","account.model_account_sequence_fiscalyear","group_third_party_reseller",1,1,1,0
 "access_sale_exception_third_party_reseller","sale.exception_third_party_reseller","sale_exceptions.model_sale_exception","group_third_party_reseller",1,1,1,0
 "access_product_pricelist_version_third_party_reseller","product.pricelist.version_third_party_reseller","product.model_product_pricelist_version","group_third_party_reseller",1,1,1,0
-"access_agreement_third_party_reseller","retail.agreement_third_party_reseller","model_retail_agreement","group_third_party_reseller",1,1,1,0
 "access_agreement_retail_delivery_third_party_reseller","retail.delivery_third_party_reseller","model_retail_delivery","group_third_party_reseller",1,1,1,0
 "access_tr_barcode_third_party_reseller","tr.barcode_third_party_reseller","tr_barcode.model_tr_barcode","group_third_party_reseller",1,1,1,0
 "access_reasons_title_third_party_reseller","reasons.title_third_party_reseller","model_reasons_title","group_third_party_reseller",1,1,1,0
