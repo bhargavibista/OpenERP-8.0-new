@@ -12,7 +12,6 @@ class active_recurring_billing(osv.osv_memory):
 
     def default_get(self, cr, uid, fields, context=None):
         created_ids,res=[],{}
-        print"contextcontextcontext",context
         active_id=context.get('active_id',False)
         active_model=context.get('active_model',False)
         policy_obj=self.pool.get('res.partner.policy')
@@ -31,7 +30,6 @@ class active_recurring_billing(osv.osv_memory):
                     created_ids.append(vals)
                 if created_ids:
                     res.update({'active_policy_id':created_ids})
-#                print"ressssssssssssssssssss",res
         return res
     def active_recurring_billing(self,cr,uid,ids,context=None):
         policy_obj=self.pool.get('res.partner.policy')
@@ -39,9 +37,6 @@ class active_recurring_billing(osv.osv_memory):
         rb_activation_obj=self.pool.get('recurring.billing.activation')
         if context and context.get('active_model')=='res.partner':
             data_obj=self.browse(cr,uid,ids[0]).active_policy_id
-#            print"data_objdata_objdata_obj",data_obj
-#            policy_ids=[s.policy_id.id for s in data_obj]
-#            print"policy_idspolicy_idspolicy_ids",policy_ids
             if data_obj:
                 for each_policy in data_obj:
                     no_recurring=each_policy.no_recurring
@@ -79,7 +74,6 @@ class active_recurring_billing(osv.osv_memory):
                     no_recurring=each_policy.no_recurring
                     if no_recurring==True:
                         policy_brw=policy_obj.browse(cr,uid,each_policy.policy_id.id)
-                        print"policy_brwpolicy_brwpolicy_brw",policy_brw.id
                         if policy_brw.no_recurring==False:
                             cr.execute("update res_partner_policy set no_recurring=True where id=%d"%policy_brw.id)
                             partner_obj.next_billing_amount(cr,uid,policy_brw.agmnt_partner.id)

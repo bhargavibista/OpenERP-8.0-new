@@ -9,6 +9,9 @@ import types
 import socket
 import xmlrpclib
 from urllib import urlopen
+import logging
+_logger = logging.getLogger(__name__)
+
 class server_printer(osv.osv):
    '''
    This class store printer name and there server address with port number used in label printing in MO
@@ -121,7 +124,6 @@ class stock_picking(osv.osv):
               try:
                     ext_shipping_id = conn.call('sales_order_shipment.create', [magento_incrementid, item_qty, _("Shipping Created"), mail_notification, True])
               except Exception, e:
-                    #print "error string",e
                     return False
               return ext_shipping_id
     #Function is inherited because wants to send tracking number after processing order i.e after creating
@@ -153,7 +155,7 @@ class stock_picking(osv.osv):
                                         res= conn.call('sales_order_shipment.addTrack', [mag_shipmentid, carrier_code[0], carrier['magento_tracking_title'] or '', tracking_number or '']) ###bista code
                                     return mag_shipmentid
                     except Exception, e:
-                        print "error string",e
+                        _logger.info('exception------------ %s', e)
                         
     #Function is inherited to show Bar Code Scanning instead of main Process Wizard
     
@@ -592,7 +594,7 @@ class shipping_response(osv.osv):
                     for each in split_string:
                             mag_shipmentid = stock_obj.export_shipment(cr,uid,id_obj.picking_id.id,each,'stock.picking',mag_shipmentid,{})
         except Exception, e:
-            print "error string",e
+            _logger.info('exception------------ %s', e)
         context['active_id'] = id_obj.picking_id.id
         context['active_ids'] = [id_obj.picking_id.id]
         context['active_model'] = 'stock.picking'

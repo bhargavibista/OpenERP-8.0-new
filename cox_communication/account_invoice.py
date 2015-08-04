@@ -33,7 +33,6 @@ account_move_line()
 class account_voucher(osv.osv):
     _inherit = "account.voucher"
     def onchange_journal(self, cr, uid, ids, journal_id, line_ids, tax_id, partner_id, date, amount, ttype, company_id, context=None):
-        print "onchange partner_id-----------",partner_id
         if partner_id:
             parent_id=self.pool.get('res.partner').browse(cr,uid,partner_id).parent_id.id
             if parent_id:
@@ -48,7 +47,7 @@ class account_invoice(models.Model):
     
     @api.multi
     def check_tax_lines(self, compute_taxes):
-        print"self.tax_lineself.tax_lineself.tax_line",self.tax_line
+
         account_invoice_tax = self.env['account.invoice.tax']
         company_currency = self.company_id.currency_id
         if not self.tax_line:
@@ -75,56 +74,6 @@ class account_invoice(models.Model):
     
 #    @api.one
 #    @api.depends('invoice_line')
-    '''def _avatax_calc(self, cr, uid, ids, name, args, context=None):
-        res = {}
-        avatax_config_obj = self.pool.get('account.salestax.avatax')
-        avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid)
-        print"avatax_config",avatax_config
-        for invoice in self:
-            #Extra Code Starts here
-            #Code to skip avalara tax calculation for the recurring billing because they are not
-            #applying tax for the services
-            if invoice.recurring:
-                res[invoice.id] = False
-            ###Ends Here###############
-            #Code to skip avalara tax calculation for the magento Orders
-            if invoice.origin:
-                cr.execute("select cox_sales_channels from sale_order where name='%s'"%(invoice.origin))
-                sales_channel = filter(None, map(lambda x:x[0], cr.fetchall()))
-                if sales_channel and len(sales_channel) > 0:
-                    if sales_channel[0] == 'ecommerce':
-                        res[invoice.id] = False
-                        return res
-            #Ends Here
-            ####Code Ends here
-            if invoice.type in ['out_invoice', 'out_refund'] and \
-            avatax_config and not avatax_config.disable_tax_calculation and \
-            avatax_config.default_tax_schedule_id.id == invoice.partner_id.tax_schedule_id.id:
-                cr.execute("select tax_id from account_invoice_line_tax where invoice_line_id in (select id from account_invoice_line where invoice_id = %d)"%(invoice.id))
-                tax_id = filter(None, map(lambda x:x[0], cr.fetchall()))
-                if tax_id:
-                    res[invoice.id] = False
-                else:
-                    if invoice.origin:
-                        amount_tax = 0.0
-                        if 'SO' in invoice.origin:
-                            cr.execute("select amount_tax from sale_order where name='%s'"%(invoice.origin))
-                            amount_tax = filter(None, map(lambda x:x[0], cr.fetchall()))
-                            print"amount_tax",amount_tax
-                            
-                        elif 'RO' in invoice.origin:
-                            cr.execute("select amount_tax from return_order where name='%s'"%(invoice.origin))
-                            amount_tax = filter(None, map(lambda x:x[0], cr.fetchall()))
-                        if amount_tax and amount_tax[0] > 0.0:
-                            res[invoice.id] = True
-                        else:
-                            res[invoice.id] = False
-                    else:
-                        res[invoice.id] = True
-            else:
-                res[invoice.id] = False
-        return res'''
-
     @api.multi
     def action_move_create(self):
         """
@@ -136,7 +85,6 @@ class account_invoice(models.Model):
         for inv in self.browse():
             if not inv.date_invoice:
                 date_confirm = sale_obj.date_order_confirm(cr,uid,context)
-                print"date_invoicedate_invoicedate_invoicedate_invoicedate_invoice------------",inv.date_invoice,date_confirm
                 self.write({'date_invoice':date_confirm})
                 inv.refresh()
         super(account_invoice,self).action_move_create()
@@ -150,7 +98,6 @@ class account_invoice(models.Model):
                 for inv in self:
                     if inv.type in ('out_invoice','in_invoice'):
                         move_line_obj=self.pool.get('account.move.line')
-                        print'inv.move_id.idinv.move_id.idinv.move_id.id',inv.move_id.id
                         request.cr.execute("select id from account_move_line where credit!=0.00 and product_id in (select id from product_product where product_tmpl_id in (select id from product_template where product_type='service')) and move_id=%s"%(inv.move_id.id))
                         move_line_ids=filter(None, map(lambda x:x[0], request.cr.fetchall()))
                         if move_line_ids:
@@ -180,19 +127,16 @@ class account_invoice(models.Model):
         if invoice.recurring==True:
             return
         for each_line in line:
-            print"request.cr,request.uidrequest.cr,request.uid",request.cr,request.uid
             line_brw = self.pool.get('account.move.line').browse(request.cr,self._uid,each_line)
             # Get the revenue recognition journal
             domain = [('code','=',_('RCJ')),'|',('company_id','=',invoice.company_id.id),('company_id','=',False)]
             journal_ids = self.pool.get('account.journal').search(request.cr,self._uid, domain) 
-            print"journal_idsjournal_idsjournal_idsjournal_ids",journal_ids
             if len(journal_ids)==0:
                 raise osv.except_osv(_("Error in Invoice Line '%s'" % line_brw.name), _("Cannot find the Recognition Journal for this company."))
             # Generate the revenue recognition schedule
             self._create_schedule(each_line, invoice, journal_ids[0])
 
     def _create_schedule(self,line, invoice, journal_id): 
-        print"_create_schedule_create_schedule_create_schedule_create_schedule",invoice,journal_id
         """
         Generate the revenue recognition schedule records, based on the contract start and end
         and the net invoice line value.
@@ -209,7 +153,6 @@ class account_invoice(models.Model):
                 return
         contract_end = datetime.datetime.strptime(str(contract_end), '%Y-%m-%d').date()
         days = (contract_end - contract_start).days
-        print"contract_startcontract_start",contract_start,contract_end,days
             # Create revenue recognition as a list
         if contract_start > datetime.date.today():
             this_date = contract_start
@@ -219,22 +162,17 @@ class account_invoice(models.Model):
         while this_date<contract_end:
             move_lines=[]
             amount,total_amount,total_amounts=0.0000,0.0000,0.0000
-            print"this_datethis_datethis_datethis_datethis_date",this_date
             for each_line in move_line_obj.browse(request.cr,request.uid,line): 
-                print"each_lineeach_lineeach_line",each_line
             # Calculate last day of month (or contract)
                 amount = self._amount_currency(each_line, invoice)
                 day_rate = round(amount / free_trail_months,3)
-                print"day_rateday_rateday_rateday_rateday_rateday_rateday_rateday_rateday_rateday_rate",day_rate
                 last_day = this_date+relativedelta(months=1)
 
                 if last_day > contract_end:
                     last_day = contract_end
-                print"last_daylast_daylast_day",last_day,day_rate
                 # Calculate the pro-rata revenue for the last period
                 period_amount=day_rate
                 total_amount +=period_amount
-                print"period_amountperiod_amountperiod_amountperiod_amount-",period_amount,day_rate,amount,total_amount
                 # Save this scheduled amount
 
                 if invoice.type=='out_invoice':
@@ -261,8 +199,6 @@ class account_invoice(models.Model):
                         'account_id': debit_account_id,
                         'debit': period_amount})
                 move_lines.append((0,0,ml_debit))
-#                period_id = self._period_get(invoice.company_id.id,last_day)
-#                print"period_idperiod_idperiod_idperiod_idperiod_idperiod_id",period_id
             move = {
                 'ref': invoice.move_id.name,
                 'line_id': move_lines,
@@ -273,7 +209,6 @@ class account_invoice(models.Model):
             context = {'journal_id': journal_id}
             move_id = self.pool.get('account.move').create(request.cr, request.uid, move, context=context)
             this_date = last_day
-            print"move_idmove_idmove_idmove_id",move_id
 
     def _move_line_create(self, invoice, journal_id):
         return {
@@ -312,7 +247,6 @@ class account_invoice(models.Model):
             move_obj=self.pool.get('account.move')
             for each_move in move_obj.browse(request.cr, request.uid,move_ids):
                 period_id = self._period_get(request.cr, request.uid, each_move.company_id.id,each_move.date) 
-                print"period_idperiod_idperiod_idperiod_idperiod_id",period_id
                 each_move.write({'period_id':period_id})
             move_obj.post(request.cr, request.uid, move_ids)
 
@@ -344,11 +278,9 @@ class account_invoice(models.Model):
     @api.one
     @api.depends('invoice_line')
     def _avatax_calc(self):
-#        print"avatax function "
         res = {}
         avatax_config_obj = self.env['account.salestax.avatax']
         avatax_config = avatax_config_obj._get_avatax_config_company()
-        print"avatax_config",avatax_config
         for invoice in self:
             #Extra Code Starts here
             #Code to skip avalara tax calculation for the recurring billing because they are not
@@ -358,7 +290,6 @@ class account_invoice(models.Model):
             ###Ends Here###############
             #Code to skip avalara tax calculation for the magento Orders
             if invoice.origin:
-                print"invoice.origin",invoice.origin
                 self._cr.execute("select cox_sales_channels from sale_order where name='%s'"%(invoice.origin))
                 sales_channel = filter(None, map(lambda x:x[0], self._cr.fetchall()))
                 if sales_channel and len(sales_channel) > 0:
@@ -373,7 +304,6 @@ class account_invoice(models.Model):
             avatax_config.default_tax_schedule_id.id == invoice.partner_id.tax_schedule_id.id:
                 self._cr.execute("select tax_id from account_invoice_line_tax where invoice_line_id in (select id from account_invoice_line where invoice_id = %d)"%(invoice.id))
                 tax_id = filter(None, map(lambda x:x[0], self._cr.fetchall()))
-                print"tax_id",tax_id
                 if tax_id:
                     res[invoice.id] = False
                 else:
@@ -382,7 +312,6 @@ class account_invoice(models.Model):
                         if 'SO' in invoice.origin:
                             self._cr.execute("select amount_tax from sale_order where name='%s'"%(invoice.origin))
                             amount_tax = filter(None, map(lambda x:x[0], self._cr.fetchall()))
-                            print"amount_tax",amount_tax
                             
                         elif 'RO' in invoice.origin:
                             self._cr.execute("select amount_tax from return_order where name='%s'"%(invoice.origin))
@@ -402,10 +331,8 @@ class account_invoice(models.Model):
         account_tax_obj = self.pool.get('account.tax')
 #        partner_obj = self.pool.get('res.partner')
         for invoice in self.browse(cr, uid, ids, context=context):
-            print"invoice.avatax_calc",invoice.avatax_calc
             if invoice.avatax_calc:
                 avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid)
-                print"avatax_config",avatax_config
                 sign = invoice.type == 'out_invoice' and 1 or -1
                 lines = self.create_lines(cr, uid, invoice.invoice_line, sign)
 		refund_or_not = invoice.type == 'out_invoice' and 'SalesInvoice' or 'ReturnInvoice'
@@ -422,7 +349,6 @@ class account_invoice(models.Model):
                                                        invoice.origin,context=context)
                     except Exception, e:
                         self.pool.get('account.invoice').write(cr,uid,invoice.id,{'comment':str(e)})
-                        print "error in avatax",str(e)
         return True
     
     def charge_customer_recurring_or_etf(self,cr,uid,ids,context={}):
@@ -441,13 +367,11 @@ class account_invoice(models.Model):
             current_obj=self.browse(cr,uid,ids[0])
             config_ids = authorize_net_config.search(cr,uid,[])
             customer_profile_id=current_obj.partner_id.customer_profile_id
-            print"customer_profile_idcustomer_profile_id",customer_profile_id,config_ids
             act_model='account.invoice'
             next_try_date=current_obj.date_invoice
             next_retry_date=datetime.datetime.strptime(next_try_date, "%Y-%m-%d")
             next_retry_date=next_retry_date+datetime.timedelta(weeks=1)
             if config_ids and customer_profile_id:
-		print "config ids//////////////////////////////",config_ids,customer_profile_id
                 config_obj = authorize_net_config.browse(cr,uid,config_ids[0])
                 cust_payment_profile_id = current_obj.customer_payment_profile_id
                 
@@ -456,7 +380,6 @@ class account_invoice(models.Model):
                 amount=current_obj.amount_total
                 try:
                     capture_status = current_obj.capture_status
-		    print "cpature status///////////////////////////////////",capture_status
                     if not capture_status:
                         ccv=''
                         #context['recurring_billing'] =True
@@ -495,7 +418,6 @@ class account_invoice(models.Model):
                         wf_service.trg_validate(uid, 'account.invoice', ids[0], 'invoice_open', cr)
                         returnval = self.make_payment_of_invoice(cr, uid, ids, context=context)
                 except Exception, e:
-                        #print "Error in URLLIB",str(e)
                         self.write(cr,uid,ids,{'comment':str(e)})
 			if not context.get('called_from_rentals',False):
 		        	vals={
@@ -575,7 +497,6 @@ class account_tax(osv.osv):
     #Function is inherited because want to send customer billing address not shipping address
     def _check_compute_tax(self, cr, uid, avatax_config, doc_date, doc_code, doc_type, partner, ship_from_address_id, billing_address_id,
                           lines, shipping_charge, user=None, commit=False, invoice_date=False, reference_code=False, context=None):
-        print"invoice_dateeeeeeeeeeee",invoice_date
         address_obj = self.pool.get('res.partner')
         if not ship_from_address_id:
             raise osv.except_osv(_('No Ship from Address Defined !'), _('There is no company address defined.'))
@@ -633,7 +554,6 @@ account_tax()
 class account_invoice_line(osv.osv):
     _inherit = "account.invoice.line"
     def move_line_get(self, cr, uid, invoice_id, context=None):
-#        print"move line get context",context
         if context==None:
             context = {}
         res,cox_sales_channels = [],''
@@ -660,7 +580,6 @@ class account_invoice_line(osv.osv):
                 else:
                     cr.execute("select id from sale_order_line where parent_so_line_id in (select order_line_id from sale_order_line_invoice_rel where invoice_id = %s)"%(line.id))
                     child_so_line_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
-                    print"child_so_line_ids",child_so_line_ids
                 if line.product_id.free_trail_days>0:
                     context={'free_trail_days':line.product_id.free_trail_days}
             elif inv_type == 'out_refund':
@@ -694,7 +613,6 @@ class account_invoice_line(osv.osv):
 #                            if date_invoice > '2014-04-03':
 #                                cr.execute("select id from sale_order_line where parent_so_line_id in (select sale_line_id from return_order_line where id in (select order_line_id from return_order_line_invoice_rel where invoice_id = %s))"%(line.id))
 #                                child_so_line_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
-            print"child_so_line_ids",child_so_line_ids,context
 #            fjkdhgjf
             if child_so_line_ids:
                 for each_so_line in child_so_line_ids:
@@ -742,7 +660,6 @@ class account_invoice_line(osv.osv):
         return res
 
     def move_line_get_item(self, cr, uid, line, context=None):
-        print"contextcontextcontextcontext--------------------",context
         ##Extra Code Starts here
         if context and context.get('so_line_id'):
             so_line_id_brw = self.pool.get('sale.order.line').browse(cr,uid,context.get('so_line_id'))
@@ -756,7 +673,6 @@ class account_invoice_line(osv.osv):
                         account_id = so_line_id_brw.product_id.property_account_line_prepaid_revenue.id
                     else:
                         account_id = so_line_id_brw.product_id.categ_id.property_account_line_prepaid_revenue_categ.id
-            print"account_idaccount_idaccount_idaccount_idaccount_id",account_id
             return {
             'type':'src',
             'name': so_line_id_brw.name.split('\n')[0][:64],
@@ -791,7 +707,6 @@ class account_invoice_tax(models.Model):
     _inherit = 'account.invoice.tax'
     #Function is inherited because want to pass location address id
     def compute(self, cr, uid, invoice, context=None):
-        print"cox communication"
 #        invoice = invoice_id
 #        invoice_id = invoice_id.id
         try:
@@ -803,9 +718,7 @@ class account_invoice_tax(models.Model):
             state_obj = self.pool.get('res.country.state')
 #            invoice = invoice_obj.browse(cr, uid, invoice_id, context=context)
             tax_grouped = {}
-            print"invoiceeeeeeeeeeeeeeeeeeeeeeeee",invoice
             if invoice._avatax_calc():
-                print"invoice111111111111"
                 cur = invoice.currency_id
                 company_currency = invoice.company_id.currency_id.id
                 lines = invoice_obj.create_lines(cr, uid, invoice.invoice_line, 1)
@@ -821,7 +734,6 @@ class account_invoice_tax(models.Model):
                                                                   lines, invoice.shipcharge, invoice.user_id, False,
                                                                   invoice.date_invoice or time.strftime('%Y-%m-%d'),
                                                                   context=context).TaxSummary[0]:
-                        print"taxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",tax
                         val = {}
                         state_ids = state_obj.search(cr, uid, [('code', '=', tax.Region)], context=context)
                         state_id = state_ids and state_ids[0] or False
@@ -890,10 +802,8 @@ class account_invoice_tax(models.Model):
                         t['amount'] = cur_obj.round(cr, uid, cur, t['amount'])
                         t['base_amount'] = cur_obj.round(cr, uid, cur, t['base_amount'])
                         t['tax_amount'] = cur_obj.round(cr, uid, cur, t['tax_amount'])
-                    print "tax_grouped",tax_grouped    
                     return tax_grouped
         except Exception, e:
-            print"exceptionnnnnnnnnnnn",e,invoice
             self.pool.get('account.invoice').write(cr,uid,invoice.id,{'comment':str(e)})
 #            invoice_obj.write(cr,uid,invoice_id,{'comment':str(e)})
         return super(account_invoice_tax, self).compute(cr, uid,invoice)

@@ -24,7 +24,6 @@ class sales_returns_analysis(osv.osv_memory):
     }
 
     def generate_reports(self,cr,uid,ids,context={}):
-        print"generate_reportsssssssssssss"
         self_browse=self.browse(cr,uid,ids[0])
         start_date=self_browse.start_date
         end_date=self_browse.end_date
@@ -33,7 +32,6 @@ class sales_returns_analysis(osv.osv_memory):
         writer=csv.writer(buf, 'UNIX')
         cr.execute("select name from stock_location where usage='internal'")
         locations = filter(None, map(lambda x:x[0], cr.fetchall()))
-        print"locations",locations
         datas1=[]
         datas1.append("Date")
         datas1.append("Product")

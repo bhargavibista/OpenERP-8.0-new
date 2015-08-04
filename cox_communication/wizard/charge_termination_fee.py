@@ -176,7 +176,6 @@ class charge_termination_fee(osv.osv_memory):
                 context['customer_profile_id'] = cust_profile_id
                 context['termination_fees'] = id_brw.termination_fees
                 invoice_id = self.create_invoice(cr,uid,return_id_brw,context)
-		print"invoice_id",invoice_id
                 if invoice_id:
 		    invoice_id_obj = invoice_obj.browse(cr,uid,int(invoice_id))
                     cr.execute("insert into return_order_invoice_rel (order_id,invoice_id) values(%s,%s)",(return_id_brw.id,invoice_id))
