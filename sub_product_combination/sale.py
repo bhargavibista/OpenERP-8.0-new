@@ -13,7 +13,8 @@ class sub_components(osv.osv):
      'product_id': fields.many2one('product.product', 'Product', required=True),
      'price':fields.float('Price',digits=(12,4)),
      'so_line_id': fields.many2one('sale.order.line', 'SO Line Id'),
-     'product_type': fields.char('Product type')	
+     'product_type': fields.char('Product type'),
+     
      }
 
 sub_components()
