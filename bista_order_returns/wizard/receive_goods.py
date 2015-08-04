@@ -16,7 +16,10 @@ class receive_goods(osv.osv_memory):
                             'product_id' : model_id_obj.product_id.id,
                             'location_id' : source_id,
                             'location_dest_id' : dest_id,
-                            'product_qty' : model_id_obj.product_uom_qty,
+                             ##odoo8 start
+                #            'product_qty' : model_id_obj.product_uom_qty,
+                            'product_uom_qty' : model_id_obj.product_uom_qty,
+                            ##end
                             'product_uom' : model_id_obj.product_uom.id,
                             'name' : model_id_obj.product_id.name,
                             'price_unit' : model_id_obj.price_unit,
@@ -53,7 +56,8 @@ class receive_goods(osv.osv_memory):
         ##Code to create incoming stock move for the child product itself
         todo_moves = []
         obj_stock_move = self.pool.get('stock.move')
-        cr.execute("select id from stock_move where parent_stock_mv_id in (select id from stock_move where sale_line_id = %d)"%(sale_line_id))
+#        cr.execute("select id from stock_move where parent_stock_mv_id in (select id from stock_move where sale_line_id = %d)"%(sale_line_id))  ##odoo8 changes
+        cr.execute("select id from stock_move where procurement_id in (select id from procurement_order where sale_line_id = %d)"%(sale_line_id))  #cox gen2
         stock_move = filter(None, map(lambda x:x[0], cr.fetchall()))
         if stock_move:
             for each in stock_move:
@@ -72,12 +76,13 @@ class receive_goods(osv.osv_memory):
                 todo_moves.append(return_move)
         return todo_moves
 
-    def receive_goods(self,cr,uid,ids,context):
+    def receive_goods(self,cr,uid,ids,context=None):
         obj_picking = self.pool.get('stock.picking')
         obj_stock_move = self.pool.get('stock.move')
         return_obj = self.pool.get('return.order')
         location_obj = self.pool.get('stock.location')
         line_obj = self.pool.get('sale.order.line')
+        picking_type = self.pool.get('stock.picking.type')
         if context.get('active_id'):
             obj_self = return_obj.browse(cr,uid,context.get('active_id'))
             if obj_self.linked_sale_order:
@@ -97,9 +102,9 @@ class receive_goods(osv.osv_memory):
             ##Destination Location
             source_location = obj_self.source_location
             dest_id = source_location.id
-            search_return_location = location_obj.search(cr, uid, [('return_location','=',True)])
-            if search_return_location:
-                dest_id = search_return_location[0]
+#            search_return_location = location_obj.search(cr, uid, [('return_location','=',True)])
+#            if search_return_location:
+#                dest_id = search_return_location[0]
             # below code is to find the destination location of one of the moves of the sales order
             # which has to be returned and use it as a source location for the sales return moves
             if obj_self.actual_linked_order:
@@ -124,9 +129,11 @@ class receive_goods(osv.osv_memory):
                 origin = obj_self.name
             else:
                 origin = obj_self.linked_sale_order.name
+            picking_type_id = picking_type.search(cr,uid,[('code','=','incoming'),('warehouse_id','=',obj_self.warehouse_id.id)])
             order_details = {
-                'origin' : origin,
+                'origin' : origin, 
                 'type' : 'in',
+                'picking_type_id' : picking_type_id[0],
                 'address_id' : obj_self.partner_shipping_id.id,
                 'return_id' : obj_self.id,
             }
@@ -155,20 +162,33 @@ class receive_goods(osv.osv_memory):
                                 if (each_line.product_id.type != 'service'):
                                     todo_moves += self.create_parent_stock_mv(cr,uid,each_line.id,'sale.order.line',pick,obj_self.linked_serial_no,source_id,dest_id,context)
                     obj_stock_move.action_confirm(cr, uid, todo_moves)
-                    obj_picking.draft_force_assign(cr,uid,[picking_exchange_in_id],context)
+#                    obj_picking.draft_force_assign(cr,uid,[picking_exchange_in_id],context)  ###cox gen2
+#                    obj_picking.force_assign(cr,uid,[picking_exchange_in_id],context)      ###cox gen2
                     obj_picking.force_assign(cr,uid,[picking_exchange_in_id],context)
-                    obj_picking.test_assigned(cr,uid,[picking_exchange_in_id])
-                    pick.action_assign_wkf()
+#                    obj_picking.test_assigned(cr,uid,[picking_exchange_in_id])
+#                    pick.action_assign_wkf()
                     context['action_process_original'] = True ##Extra Line of Code
-                    process = obj_picking.action_process(cr, uid, [pick.id], context=context)
-                    context = process['context']
-                    context['active_id']=ids[0]
-                    partial_obj = self.pool.get('stock.partial.picking')
+#                    process = obj_picking.action_process(cr, uid, [pick.id], context=context) ##cox odoo8 gen2 
+#                    context = process['context']        ###cox gen2
+#                    context['active_id']=ids[0]         ###cox gen2
+#                    partial_obj = self.pool.get('stock.partial.picking')   ###cox gen2
+                    process = obj_picking.do_enter_transfer_details(cr, uid, [pick.id], context=context)  ##cox gen2
+#                    context = process.get('context')
+#                    print"contexxxxxxxxxxxt",context
+                    if not context:
+                        context={'active_id':ids[0]}
+                    else:
+                        context['active_id']=ids[0]
+                    res_id = process.get('res_id')
 #                    res_id = process['res_id']
-                    partial_picking_id = partial_obj.create(cr,uid,{},context)
-#                    if res_id:
-                    if partial_picking_id:
-                        partial_obj.do_partial( cr, uid, [partial_picking_id], context)
+                    ##### odoo8 changes
+#                    partial_picking_id = partial_obj.create(cr,uid,{},context)
+##                    if res_id:
+#                    if partial_picking_id:
+#                        partial_obj.do_partial( cr, uid, [partial_picking_id], context)
+#                        pick.action_done()
+                    if res_id:
+                        self.pool.get('stock.transfer_details').do_detailed_transfer( cr, uid, [process['res_id']], context)
                         pick.action_done()
                 if obj_self.manual_invoice_invisible:
                     state = 'done'

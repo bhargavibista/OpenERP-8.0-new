@@ -12,7 +12,7 @@
                     <separator colspan="4" string="Scan Method"/>
                     <!--<label colspan="8" width="1250" string="Barcode Scanning"/>-->
 <!--                    <field name="default_code" default_focus="1" on_change="onchange_defaultcode(default_code,bcquantity,picking_ids,line_ids,new_product_id,start_range,range_scan,reference_no,carrier_track_done,context)"/>-->
-                    <field name="new_product_id" required="1"/>
+                    <field name="new_product_id" />
                     <newline/>
                     <field name="start_range"/>
                     <field name="default_code" default_focus="1" attrs="{'readonly':[('new_product_id', '=', False)]}" on_change="onchange_defaultcode(default_code,picking_ids,line_ids,new_product_id,start_range,range_scan,reference_no,carrier_track_done,context)"/>

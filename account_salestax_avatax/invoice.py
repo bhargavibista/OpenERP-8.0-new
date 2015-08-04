@@ -110,6 +110,7 @@ class account_invoice(models.Model):
     @api.multi
     def check_tax_lines(self, compute_taxes):
         print"customizeee"
+        inv=self.browse()
         super(account_invoice, self).check_tax_lines(compute_taxes)
         if inv.avatax_calc:
             for tax in inv.tax_line:

@@ -10,6 +10,7 @@ from openerp.osv import osv, fields
 #import time
 import authorize_osv
 from openerp.tools.translate import _
+
 class authorize_net_config(authorize_osv.authorize_osv):
     _name = "authorize.net.config"
     _rec_name = "api_username"

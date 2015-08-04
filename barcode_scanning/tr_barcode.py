@@ -16,6 +16,7 @@ class tr_barcode(osv.osv):
             res = {'value': {'code': False}}
             return res
         default_code = self.pool.get('product.product').browse(cr,uid,product_id).default_code
+#        print"default_code",default_code
         vals = {
                'code' : default_code,
                'barcode_type': 'Standard39',

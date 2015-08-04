@@ -315,10 +315,7 @@ class CreateCustomerProfileTransaction:
     </transaction>
     <extraOptions><![CDATA[x_duplicate_window=0]]></extraOptions>
     </createCustomerProfileTransactionRequest>"""
-        print"api.RequestDatae546", api.RequestData
         responseDOM = api.MakeCall()
-        print" responseDOM", responseDOM.toprettyxml()
-        print"api.RequestData", api.RequestData
         directResponse = ''
         response_ok = self.get_response(responseDOM.getElementsByTagName('messages'))
         if response_ok.get('resultCode',False) == 'Ok':
@@ -878,7 +875,6 @@ class updateCustomerProfileRequest:
        return info
    
     def Get(self,emailid,profile_id):
-        print "emailidemailidemailidemailid",emailid,profile_id
         api = Call()
         api.Session = self.Session
         api.RequestData ="""<?xml version='1.0' encoding='utf-8'?>

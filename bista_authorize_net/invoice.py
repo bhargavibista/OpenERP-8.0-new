@@ -29,7 +29,7 @@ class account_invoice(osv.osv):
             customer_profile_id = customer_id.customer_profile_id
             context['captured_api'] = True
             transaction_details =self.pool.get('authorize.net.config').call(cr,uid,config_obj,'CreateCustomerProfileTransaction',ids[0],'profileTransPriorAuthCapture',amount_total,customer_profile_id,customer_payment_profile_id,approval_code,model,'',context)
-            print "transaction_details",transaction_details
+            
             if transaction_details:
                 if transaction_details.get('resultCode') == 'Ok':
                     cr.execute("UPDATE account_invoice SET capture_status='captured' where id=%d"%(ids[0]))
@@ -110,10 +110,9 @@ class account_invoice(osv.osv):
          account_data = self.get_accounts(cr,uid,inv_obj.partner_id.id,bank_journal_ids[0])
          account_id=account_data['value']['account_id']
          if context.has_key('wallet_purchase'):
-            account_id=account_obj.search(cr, uid, [('code', 'ilike', 'Deferred Revenue')])
+            account_id=inv_obj.partner_id.deferred_revenue_account.id
             if account_id:
                 account_id = account_id[0]
-         print "account_data['value']['account_id']",account_id
          date = time.strftime('%Y-%m-%d')
          voucher_data = {
                  'period_id': inv_obj.period_id.id,

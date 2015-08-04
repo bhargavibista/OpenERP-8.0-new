@@ -257,7 +257,7 @@ class account_voucher(osv.osv):
             elif voucher_brw.type in ('sale', 'receipt'):
                 account_id = voucher_brw.partner_id.property_account_receivable.id
                 if context.has_key('wallet_top_up'):
-                    account_id=account_obj.search(cr, uid, [('code', 'ilike', 'Deferred Revenue')])
+                    account_id=voucher_brw.partner_id.deferred_revenue_account.id
                     print "account_idaccount_idaccount_id for wallet top up.....",account_id
                     if account_id:
                         account_id = account_id[0]

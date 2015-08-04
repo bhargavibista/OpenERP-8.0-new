@@ -89,7 +89,7 @@ class GetProfileIDS:
             text = response_ok.get('message',False)
             if text:
                 raise osv.except_osv(_('Error!'), _('%s')%(text))
-        print"xml########",responseDOM.toprettyxml()
+        print"xml",responseDOM.toprettyxml()
         responseDOM.unlink()
         return response_ids
 

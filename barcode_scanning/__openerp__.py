@@ -31,7 +31,7 @@
     'website': 'http://www.openerp.com',
     'depends': ["tr_barcode" ,"delivery"],
     'init_xml': [],
-    'update_xml': [
+    'data': [
                 
                 'wizard/picking_scanning_view.xml',
                 'wizard/shipping_process_view.xml',
