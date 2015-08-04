@@ -57,7 +57,6 @@ class billing_date_update(osv.osv_memory):
 #            same_order_ids=policy_object.search(cr,uid,[('sale_id','=',sale_id),('id','!=',minimum_id),('active_service','=','True')])
             cr.execute("select id from res_partner_policy where agmnt_partner=%s and active_service=True and id!=%s"%(active_id,minimum_id))
             same_order_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
-            #print same_order_ids
             for service in services_wizard:
                 start_date=service.start_date
                 if start_date!=service.policy_id.start_date:

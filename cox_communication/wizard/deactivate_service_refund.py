@@ -2,6 +2,8 @@
 from openerp.osv import fields, osv
 from openerp.tools.translate import _
 from openerp import netsvc
+import logging
+_logger = logging.getLogger(__name__)
 
 class refund_customer_payment(osv.osv_memory):
     _inherit = "refund.customer.payment"
@@ -38,7 +40,6 @@ class refund_customer_payment(osv.osv_memory):
             invoice_obj = self.pool.get('account.invoice')
             line_obj = self.pool.get('sale.order.line')
             if config_ids:
-                print "config_idsconfig_ids",config_ids
                 context['linked_refund'] = False
                 return_obj = return_object.browse(cr,uid,active_id)
                 total= return_obj.amount_total
@@ -60,12 +61,10 @@ class refund_customer_payment(osv.osv_memory):
                 if act_model and cust_payment_profile_id:
 #                    try:
                         transaction_status = authorize_obj.call(cr,uid,config_obj,'getTransactionDetailsRequest',auth_transaction_id)
-    #                    print "transaction_status",transaction_status
                         if (transaction_status) and (transaction_status.get('transactionStatus') == 'settledSuccessfully'):
                             if wizard_obj.diff_cc_refund and wizard_obj.refund_cc_number:
                                 exp_date = wizard_obj.refund_cc_expiration_date[-4:] + '-' + wizard_obj.refund_cc_expiration_date[:2]
                                 cust_payment_profile_id = self.pool.get('custmer.payment.profile').create_payment_profile(cr,uid,return_obj.partner_id.id,return_obj.partner_invoice_id,return_obj.partner_shipping_id,cust_profile_id,wizard_obj.refund_cc_number,exp_date,wizard_obj.ccv,context)
-#                                print "cust_payment_profile_id",cust_payment_profile_id
                                 cc_number = wizard_obj.refund_cc_number[-4:]
                                 ccv=wizard_obj.ccv
 #            maxmind api call to check for restricting prpeaid cards by bhargavi
@@ -160,7 +159,6 @@ class refund_customer_payment(osv.osv_memory):
                             sale_name = self.pool.get('sale.order').browse(cr,uid,return_obj.linked_sale_order.id).name
                             cr.execute("select id from stock_picking where origin='%s' and state != 'done'"%(sale_name))
                             picking_id=filter(None, map(lambda x:x[0], cr.fetchall()))
-                            print"picking_id",picking_id
                             if picking_id:
                                 return_object.change_delivery_qty(cr,uid,[return_obj.id],context)
                             return_lines=return_obj.order_line
@@ -192,7 +190,7 @@ class refund_customer_payment(osv.osv_memory):
                                     'context':context
                             } 	
                         except Exception, e:
-                            print "Error in URLLIB",str(e)
+                            _logger.info('exception------------ %s', str(e))
                             return_object.write(cr,uid,[return_obj.id],{'note': str(e)})
         return {'type': 'ir.actions.act_window_close'}
 refund_customer_payment()
