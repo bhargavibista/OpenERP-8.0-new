@@ -136,13 +136,13 @@ class charge_customer(osv.osv_memory):
                     tax_obj = self.pool.get('account.tax')
                     wf_service.trg_validate(uid, 'sale.order', active_id, 'order_confirm', cr)
                     email_to = sale_object.partner_id.emailid
-                    if sale_object.cox_sales_channels in ('retail','ecommerce','tru','playjam','call_center'):
-                        cr.execute('select invoice_id from sale_order_invoice_rel where order_id=%s'%(active_id))
-                        invoice_id=cr.fetchone()
-                        if invoice_id:
-                            wf_service.trg_validate(uid, 'account.invoice', invoice_id[0], 'invoice_open', cr)
-                            returnval = invoice_obj.make_payment_of_invoice(cr, uid, invoice_id, context=context)
-                            so_obj.email_to_customer(cr, uid, sale_object,'sale.order','payment_confirmation',email_to,context)
+#                    if sale_object.cox_sales_channels in ('retail','ecommerce','tru','playjam','call_center'):
+                    cr.execute('select invoice_id from sale_order_invoice_rel where order_id=%s'%(active_id))
+                    invoice_id=cr.fetchone()
+                    if invoice_id:
+                        wf_service.trg_validate(uid, 'account.invoice', invoice_id[0], 'invoice_open', cr)
+                        returnval = invoice_obj.make_payment_of_invoice(cr, uid, invoice_id, context=context)
+                        so_obj.email_to_customer(cr, uid, sale_object,'sale.order','payment_confirmation',email_to,context)
 #                    cox gen2
 #                    try:
 #                        magento_shop_brw = sale_object.shop_id
@@ -305,13 +305,13 @@ class customer_profile_payment(osv.osv_memory):
                     tax_obj = self.pool.get('account.tax')
                     wf_service.trg_validate(uid, 'sale.order', active_id, 'order_confirm', cr)
                     email_to = sale_object.partner_id.emailid
-                    if sale_object.cox_sales_channels in ('retail','ecommerce','tru','playjam'):
-                        cr.execute('select invoice_id from sale_order_invoice_rel where order_id=%s'%(active_id))
-                        invoice_id=cr.fetchone()
-                        if invoice_id:
-                            wf_service.trg_validate(uid, 'account.invoice', invoice_id[0], 'invoice_open', cr)
-                            returnval = invoice_obj.make_payment_of_invoice(cr, uid, invoice_id, context=context)
-                            so_obj.email_to_customer(cr, uid, sale_object,'sale.order','payment_confirmation',email_to,context)
+#                    if sale_object.cox_sales_channels in ('retail','ecommerce','tru','playjam'):
+                    cr.execute('select invoice_id from sale_order_invoice_rel where order_id=%s'%(active_id))
+                    invoice_id=cr.fetchone()
+                    if invoice_id:
+                        wf_service.trg_validate(uid, 'account.invoice', invoice_id[0], 'invoice_open', cr)
+                        returnval = invoice_obj.make_payment_of_invoice(cr, uid, invoice_id, context=context)
+                        so_obj.email_to_customer(cr, uid, sale_object,'sale.order','payment_confirmation',email_to,context)
                     try:
                         magento_shop_brw = sale_object.shop_id
                         magento_exported = sale_object.magento_exported
