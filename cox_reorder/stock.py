@@ -13,7 +13,6 @@ import openerp
 class stock_picking(osv.osv):
     _inherit = "stock.picking"
     def action_done(self, cr, uid, ids, context=None):
-        
         super(stock_picking,self).action_done(cr,uid,ids,context)
         replenish_obj = self.pool.get('stock.replenish')
         search_replenish_record = replenish_obj.search(cr,uid,[('linked_picking_id','in',ids),('state','!=','done')])
@@ -200,7 +199,6 @@ class stock_replenish(osv.osv):
     ]
 
     def draft_confirm(self,cr,uid,ids,context=None):
-#        print"calling stock pickingsdasdasd"
         picking = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
 	todo_moves,picking_out_id = [],False
@@ -213,7 +211,6 @@ class stock_replenish(osv.osv):
                 'picking_type_id':picking_type_id[0],   ##cox gen2
                 'date': obj.date,
                 'origin': obj.name},{})
-#            print "picking_out",picking_internal_id 		
             for line in obj.move_lines:
                 move_id = move_obj.create(cr, uid, {
                 'name': line.product_id.name,
@@ -410,7 +407,6 @@ class stock_warehouse_replenish(osv.osv):
         for orderpoint in self.browse(cr, uid, ids, context=context):
             stock_ids = stock_obj.search(cr, uid , [('state', '=', 'draft'), ('origin', '=', orderpoint.name)])
             result[orderpoint.id] = stock_ids
-        print"resultresultresult",result
         return result
 
     def _check_product_uom(self, cr, uid, ids, context=None):
@@ -523,7 +519,6 @@ class stock_warehouse_replenish(osv.osv):
 #                'origin': orderpoint.name}
 
     def _prepare_stock_move(self,cr,uid,ids,orderpoint,qty,picking_id,source,context={}):
-        print"calling _prepare_stock_move",orderpoint
         move_obj = self.pool.get('stock.move.replenish')
         id = move_obj.create(cr, uid, {
                 'name': orderpoint.product_id.name,
@@ -578,7 +573,6 @@ class stock_warehouse_replenish(osv.osv):
 #            self.create_automatic_op(cr, uid, context=context)
 #        while ids:
         ids = orderpoint_obj.search(cr, uid, [], offset=offset, limit=100)
-        print"idsidsids",ids
         for op in orderpoint_obj.browse(cr, uid, ids, context=context):
             prods = self._product_virtual_get(cr, uid, op)
             if prods is None:

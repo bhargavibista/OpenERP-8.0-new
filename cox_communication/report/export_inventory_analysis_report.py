@@ -209,11 +209,9 @@ order by 1,3
 
 
         search_result= cr.fetchall()
-        print "search_resultsearch_result",search_result
         buf=cStringIO.StringIO()
         len_result=len(search_result)
         writer=csv.writer(buf, 'UNIX')
-        print "len_resultlen_resultlen_resultlen_result newwwwwwwwww",len_result
         if search_result:
             datas = ["Location ID","Location Name","Product ID","Product Name","Total Product Quantity","Current Product Quantity","Previous Product Quantity","Active","Yesterday Sale Quantity","Yesterday Exchange Quantity"]
             writer.writerow(datas)

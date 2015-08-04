@@ -77,12 +77,10 @@ class charge_customer(osv.osv_memory):
 #                        raise osv.except_osv(_('Warning!'), _('This record has already been authorize !'))
 #            if not obj_all.auth_transaction_id:
             config_ids = authorize_net_config.search(cr,uid,[])
-            print"config_idsconfig_idsconfig_ids",config_ids,customer_profile_id
             if config_ids and customer_profile_id:
 #                online purchase order
                 if context.has_key('tru') or context.has_key('magento_orderid'):
                     cust_payment_profile_id = context.get('cust_payment_profile_id')
-                    print "cust_payment_profil456576764448e_id",cust_payment_profile_id
                     transaction_type = 'profileTransAuthCapture'
                 else:
                     cust_payment_profile_id = current_obj.cust_payment_profile_id

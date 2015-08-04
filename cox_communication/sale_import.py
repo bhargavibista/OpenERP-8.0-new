@@ -17,6 +17,8 @@ from openerp.osv import osv, fields
 import base64
 import csv
 from openerp.tools.translate import _
+import logging
+_logger = logging.getLogger(__name__)
 
 
 
@@ -58,7 +60,6 @@ class sale_report_wizard(osv.osv_memory):
     def import_report(self,cr,uid,ids,context={}):
         if context is None:
             context={}
-#         FDSFDF
         report_obj = self.browse(cr,uid,ids[0])
         pick_obj = self.pool.get('stock.picking')
         partner_obj=self.pool.get('res.partner')
@@ -84,7 +85,6 @@ class sale_report_wizard(osv.osv_memory):
             if i and len(i) > 0:
                 Date = i[9]
                 if Date == '7/29/2014':
-#                    print"Start Date:",datetime.now()
                     Sale_No = i[0]
                     Customer_Name = i[1]
                     Customer_No = i[2]
@@ -120,15 +120,9 @@ class sale_report_wizard(osv.osv_memory):
                     Magento_DB_Id = i[33]
                     Magento_So_Id = i[34]
                     date_confirm= i[35]
-                    print "Location_Name",Location_Name
-#                    print"transaction_id",transaction_id,"customer_profile",customer_profile,"payment_profile",payment_profile,"cc_number",cc_number,"Magento_Increment_id",Magento_Increment_id
-#                    print"Magento_DB_Id",Magento_DB_Id,"Magento_So_Id",Magento_So_Id
-#                    errorororo
                     state_id = state_obj.search(cr,uid,[('name','=',State)])
                     country_id = country_obj.search(cr,uid,[('name','=','United States')])
                     user_id = user_obj.search(cr,uid,[('name','=',User)])
-#                    print"DateDateDateDate",Date
-#                    if Date == '7/30/2014':
                     res_partner = {
                         'name':Customer_Name,
                         'ref':Customer_No,
@@ -148,7 +142,6 @@ class sale_report_wizard(osv.osv_memory):
                         partner = partner_obj.create(cr,uid,res_partner)
                     else:
                         partner = part[0]
-    #                print"partner88888",partner
                     profile = self.pool.get('custmer.payment.profile').create(cr,uid,{
                         'profile_id':payment_profile,
                         'customer_profile_id':customer_profile,
@@ -159,24 +152,15 @@ class sale_report_wizard(osv.osv_memory):
                         (partner_id,profile_id) values (%s,%s)", (partner, profile))
                     shop = shop_obj.search(cr,uid,[('name','ilike','Play')])
                     location_id = location_obj.search(cr,uid,[('name','=',Location_Name)])
-                    print "location_id",location_id
                     if not location_id:
                         location_id = [47]
-    #                print"Product_Name222222",Product_Name
-#                    if Product_Name.find('[free device + 9.99 service]') > 0:
-#                       Product_Name = string.replace(Product_Name, ' [free device + 9.99 service]', '', 1)
                     product_id = product_obj.search(cr,uid,[('default_code','=',Product_Name)])
-    #                print"product_idproduct_id*****",product_id,Quantity
-
                     context={'partner_id':partner, 'quantity':int(Quantity), 'pricelist':1, 'shop':shop[0], 'uom':False}
                     if product_id:
                         line = line_obj.product_id_change(cr, uid, ids, 1, product_id[0], int(Quantity),
                             False, 0, False, '', partner,False, True, False, False, False, False, context)
-#                        print "line",line
                         sale_line = line['value']
                         sale_line['product_id'] = product_id[0]
-#                        print"sale_line********",sale_line
-#                        error
                         sale_order = {
                             'name':Sale_No,
                             'date_order':Date,
@@ -208,48 +192,29 @@ class sale_report_wizard(osv.osv_memory):
                         order_id = order.search(cr,uid,[('name','=',Sale_No)])
                         if len(order_id)==0:
                             orderid = order.create(cr,uid,sale_order)
-    #                    print"orderid*****",orderid
-#                            print"Order_StateOrder_State",Order_State
                             if Order_State == 'done':
                                 sale_object=order.browse(cr,uid,orderid)
                                 wf_service.trg_validate(uid, 'sale.order', orderid, 'order_confirm', cr)
-
                                 if sale_object.cox_sales_channels in ('retail','ecommerce'):
-#                                    invoice_ids = sale_object.invoice_ids
-        #                            print"invoice_idsinvoice_ids",invoice_ids
                                     cr.execute('select invoice_id from sale_order_invoice_rel where order_id=%s'%(orderid))
                                     invoice_id=cr.fetchone()
-        #                            print"invoice_idinvoice_id",invoice_id
                                     if invoice_id:
                                         cr.execute("update account_invoice set date_invoice='%s' where id=%s"%(Date,invoice_id[0]))
                                         wf_service.trg_validate(uid, 'account.invoice', invoice_id[0], 'invoice_open', cr)
-#                                        print"after confirm"
                                         returnval = invoice_obj.make_payment_of_invoice(cr, uid, invoice_id, context=context)
                                 picking_ids = sale_object.picking_ids
-        #                        print"picking_ids",picking_ids
                                 for picking in picking_ids:
                                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_confirm', cr)
                                     pick_obj.action_move(cr, uid, [picking.id], context=context)
                                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
-#                                print"End Date:",datetime.now()
-#                                break
-#                print"whole dale lines iffdfdfs",sale_line
-#                lineid = line_obj.create(cr,uid,sale_line)
-#                print"lineidlineidlineid",lineid
-#                print"orderid",orderid
-#                break
-#                error
         return {'type': 'ir.actions.act_window_close'}
 
     def process_order(self,cr,uid,ids,context={}):
         wf_service = netsvc.LocalService("workflow")
         wf_service.trg_validate(uid, 'sale.order',3824, 'order_confirm', cr)
-
-
         cr.execute('select invoice_id from sale_order_invoice_rel where order_id=%s'%(3824))
         invoice_id=cr.fetchone()
         if invoice_id:
-            print"payyyyyyyyyyyyyyyyyy",invoice_id
             wf_service.trg_validate(uid, 'account.invoice', invoice_id[0], 'invoice_open', cr)
             returnval = self.pool.get("account.invoice").make_payment_of_invoice(cr, uid, invoice_id, context=context)
         return {'type': 'ir.actions.act_window_close'}

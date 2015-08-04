@@ -32,6 +32,7 @@ class account_tax(osv.osv):
 
     def _check_compute_tax(self, cr, uid, avatax_config, doc_date, doc_code, doc_type, partner, ship_from_address_id, shipping_address_id,
                           lines, shipping_charge, user=None, commit=False, invoice_date=False, reference_code=False, context=None):
+        
         address_obj = self.pool.get('res.partner')
         if not ship_from_address_id:
             raise osv.except_osv(_('No Ship from Address Defined !'), _('There is no company address defined.'))

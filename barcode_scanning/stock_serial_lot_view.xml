@@ -13,6 +13,7 @@
                 <xpath expr="//button[@string='Traceability']" position="after">
                     <button name="%(action_view_serial_no_ref_wizard)d" string="Serial No Reference" type="action"/>
                 </xpath>
+                
             </field>
         </record>
 

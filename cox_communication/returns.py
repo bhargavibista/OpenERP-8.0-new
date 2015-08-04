@@ -6,6 +6,8 @@ from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 from openerp import netsvc
 import time
+import logging
+_logger = logging.getLogger(__name__)
 
 class return_order(osv.osv):
     _inherit = 'return.order'
@@ -165,7 +167,6 @@ class return_order(osv.osv):
         return {'value':vals}
     
     def no_of_days_passed(self,cr,uid,sale_id_obj,context={}): 
-        print"sale_id_objsale_id_obj",sale_id_obj
 	today=date.today()
         confirmed_date=datetime.strptime(sale_id_obj.date_confirm, "%Y-%m-%d").date()
         difference=today-confirmed_date
@@ -457,8 +458,7 @@ class return_order(osv.osv):
                                 'product_uom_qty':1,            
                                 'type': 'make_to_stock',
                                 })  
-                    
-                print "order_line_vals====>",order_line_vals
+                _logger.info("order_line_vals.....%s",order_line_vals)
                 break;
             vals.update({'partner_id' : obj_sale_link_order.partner_id.id,
                'partner_invoice_id' : obj_sale_link_order.partner_invoice_id.id,
@@ -479,8 +479,6 @@ class return_order(osv.osv):
             return {'value': vals}                
     
     def onchange_sale_order(self, cr, uid, ids,  linked_sale_id,serial_no,line_ids,return_type,context):
-        #print "context.................def onchange_sa......",context
-        
         obj_sale_order = self.pool.get('sale.order')
         line_obj = self.pool.get('sale.order.line')
         policy_obj = self.pool.get('res.partner.policy')
@@ -521,7 +519,7 @@ class return_order(osv.osv):
                         'partner_invoice_id':False,'partner_order_id':False,'partner_shipping_id':False,'pricelist_id':False,'show_components':False,'bundle_configuration':False}
                         return {'value': vals, 'warning': warning}
 #                   raise osv.except_osv(_('Error !'),_('You Cannot Place a Return for this Sale Order since its service is already cancelled.'))
-           print"obj_sale_link_order",obj_sale_link_order
+           
            days = self.no_of_days_passed(cr,uid,obj_sale_link_order,{})
            
 	  # if days <= 30:
@@ -562,7 +560,6 @@ class return_order(osv.osv):
                 if picking_id:
 		    picking_id.sort()       
                     state_picking = obj_stock_picking.browse(cr,uid,picking_id[0]).state
-                    print"state_picking",state_picking
                     if state_picking != 'done':
                        warn_msg = _("Delivery is not yet done for the selected sale order")
                        warning = { 'title': _('Alert!'),
@@ -631,7 +628,7 @@ class return_order(osv.osv):
                                             'state':'draft',
 #                                             'type': each_line.type,
                                              'sale_line_id':each_line.id })
-                            print "order_line_vals",order_line_vals
+                            
                         tax_ids_used   = tax_ids_used + tax_ids
                if order_line_vals:
                        vals['order_line'] = order_line_vals
@@ -696,12 +693,7 @@ class return_order(osv.osv):
 			address =  address.id
 		lines = self.create_lines(cr, uid, return_order.order_line)
 		if lines:
-#                        return_date = False
-#                        if return_order.date_confirm:
-#                            return_date = (return_order.date_confirm).split(' ')[0]
-#                        elif return_order.date_order:
-#                            return_date = (return_order.date_order).split(' ')[0]
-#                        print"return_date",return_date
+
 			tax_amount = account_tax_obj._check_compute_tax(cr, uid, avatax_config, return_order.date_confirm or return_order.date_order,
                                                                 return_order.name, 'ReturnOrder', return_order.partner_id,address,
                                                                 return_order.partner_invoice_id.id,lines,0.0, return_order.user_id,
@@ -729,7 +721,6 @@ class return_order(osv.osv):
                     val += self._amount_line_tax(cr, uid, line, context=context)
                     flag = True
             if not flag:
-#                print "flag",flag
                 if order.linked_sale_order.amount_tax == 0.0:
                     val = order.linked_sale_order.amount_tax
                 else:
@@ -870,7 +861,6 @@ class return_order(osv.osv):
 #                    cr.execute("select product_qty from stock_move where sale_line_id=%d and state!='done'"%(return_line.sale_line_id.id))
                     cr.execute("select product_qty from stock_move where  state != 'done' and procurement_id in (select id from procurement_order where sale_line_id = '%s')" %(return_line.sale_line_id.id)) ##cox gen2
                     move_qty = filter(None, map(lambda x:x[0], cr.fetchall()))
-                    print"move_qty",move_qty
                     if move_qty:
                         if return_line.product_uom_qty > move_qty[0]:
                             raise osv.except_osv(_('Warning!'),_('Please Change Quantity for %s because you cannot return more quantity than delivered quantity'%(return_line.product_id.name)))
@@ -1009,30 +999,23 @@ class return_order(osv.osv):
     
     #this function is added to update billing date at the time of returns
     def update_billing_date(self,cr,uid,partner_id,billing_date,sale_line_id):
-        #print "call to update billig dae...........",partner_id,billing_date,sale_line_id
 #        cr.execute("select id from res_partner_policy where agmnt_partner='%s' and active_service=True and free_trial_date > '%s' and cancel_date is null"%(str(partner_id),str(billing_date),))
         cr.execute("select id from res_partner_policy where agmnt_partner='%s' and active_service=True and cancel_date is null"%(str(partner_id)))
         cancelation_req_date=time.strftime('%Y-%m-%d')
         cancelation_req_date=datetime.strptime(cancelation_req_date, "%Y-%m-%d")
         policy_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
-        #print "policy_idspolicy_idspolicy_idspolicy_idspolicy_idspolicy_ids",policy_ids
         policy_obj=self.pool.get('res.partner.policy')
         partner_obj=self.pool.get('res.partner')
         sale_order_obj=self.pool.get('sale.order')
-        #print "policy_ids",policy_ids
         billing_date=datetime.strptime(billing_date,'%Y-%m-%d')
-        #print "billing_datebilling_date",billing_date
         if policy_ids and len(policy_ids)==1:
             policy_brw=policy_obj.browse(cr,uid,policy_ids[0])
-            #print "polcy browse...........",policy_brw
             free_trial_date=policy_brw.free_trial_date
-            #print "free tral date of opolicyyyyy",free_trial_date
             if free_trial_date:
                 free_trial_date=datetime.strptime(free_trial_date,'%Y-%m-%d')
                 new_billing_date=free_trial_date + relativedelta(days=1)
                 if new_billing_date<cancelation_req_date:
                     new_billing_date=billing_date+relativedelta(months=1)
-                #print "new_billing_datenew_billing_date",new_billing_date
                 if new_billing_date>billing_date and new_billing_date>cancelation_req_date:
                     new_billing_date=free_trial_date + relativedelta(days=1)
                     policy_brw.write({'extra_days':0,'next_billing_date':new_billing_date})
@@ -1043,32 +1026,24 @@ class return_order(osv.osv):
         elif len(policy_ids) > 1:
             cr.execute("select min(free_trial_date) from res_partner_policy where id in %s"%(tuple(policy_ids),))
             min_free_trial_date = cr.fetchone()
-            #print "min_free_trial_datemin_free_trial_date",min_free_trial_date
             if min_free_trial_date and min_free_trial_date[0]:
                 min_free_trial_date = datetime.strptime(min_free_trial_date[0],'%Y-%m-%d')
                 new_billing_date = min_free_trial_date + relativedelta(days=1)
-                #print "new billing date for multiple servivces.......",new_billing_date,billing_date
                 if new_billing_date>billing_date or cancelation_req_date<min_free_trial_date:
                     new_billing_date=min_free_trial_date + relativedelta(days=1)
-                    #print "new_billing_date for f1111111111111",new_billing_date
                 else:
                     new_billing_date=billing_date
-                    #print "condition f2222222222222222",new_billing_date
                 if new_billing_date<cancelation_req_date:
                     new_billing_date=billing_date+relativedelta(months=1)
                 partner_obj.write(cr,uid,partner_id,{'billing_date':new_billing_date})
                 for policy in policy_obj.browse(cr,uid,policy_ids):
                     free_trial_date = datetime.strptime(policy.free_trial_date,'%Y-%m-%d') #assuming free trials is gonna written in every case, son no exception handling here
                     free_trail_date1 = free_trial_date + relativedelta(days=1)
-                    #print "free_trail_date1free_trail_date1",free_trail_date1,new_billing_date
                     if free_trail_date1 == new_billing_date:
                        policy.write({'extra_days':0,'next_billing_date':new_billing_date})
                     elif free_trail_date1 >new_billing_date:
-                        #print "new billlllll date...........",new_billing_date
                         future_date = sale_order_obj.get_future_bill_date(cr,uid,new_billing_date,free_trail_date1)
-                        #print "future_datefuture_datefuture_date",future_date
                         diff = future_date-free_trail_date1
-                        #print "diffdiffdiffdiffdiffdiffdiff",diff
                         if diff:
                             policy.write({'extra_days':int(diff.days),'next_billing_date':new_billing_date})
         partner_obj.cal_next_billing_amount(cr,uid,partner_id)
@@ -1182,16 +1157,6 @@ class return_order(osv.osv):
                 else:
                     state = 'progress'
                 self.write(cr,uid,[return_obj.id],{'manual_invoice_invisible': True,'state':state,'return_option':type_return},context)
-                #will Update service as inactive on the magento site
-#                cox gen2 start
-#                try:
-#                    if need_to_update_data:
-#                        attr_conn = return_obj.linked_sale_order.shop_id.referential_id.external_connection(True)
-#                        deactived_services = attr_conn.call('sales_order.recurring_services', ['update',need_to_update_data,''])
-#                except Exception, e:
-#                    print "Error in URLLIB",str(e)
-
-##end
                 return True
     def change_delivery_qty(self,cr,uid,ids,context={}):
         so_line_ids = []
@@ -1289,7 +1254,6 @@ class return_order(osv.osv):
                         }
 
     def process_order(self,cr,uid,ids,context):
-        print"context",context
         return_obj=self.browse(cr,uid,ids[0])
         obj_sale_order=self.pool.get('sale.order')
         policy_object=self.pool.get('res.partner.policy')     
@@ -1314,7 +1278,6 @@ class return_order(osv.osv):
                         'target': 'new',
                         }
             elif(context.get('device_option') == 'no'):
-                print"return without hardware"                
                 if (days >= 0) and (days <= 30):
 	            id = self.pool.get('return.refund.cancellation').create(cr,uid,{'refund_cancel':'refund','return_id':ids[0]})
 		    if not return_obj.manual_invoice_invisible:	
@@ -1332,7 +1295,6 @@ class return_order(osv.osv):
                     
             elif (context.get('credit_option') == 'yes'):
                 if (context.get('cancel_option') == 'yes'):
-                    print "No Device Return"
                     
                     if context.get('cancel_option') == 'yes':                           
                         if context.get('service_id'):
@@ -1343,10 +1305,8 @@ class return_order(osv.osv):
                     self.pool.get('refund.against.invoice').refund_cancel_service(cr,uid,ids,context)
                     return True
                 else:
-                    print"credit only"
                     self.pool.get('refund.against.invoice').refund_service(cr,uid,ids,context)
             elif (context.get('cancel_option') == 'yes'):
-                    print "Cancel Only"           
                     service_id = context.get('service_id')
                     policy_object=self.pool.get('res.partner.policy')     
 #                    if cancel_option == 'yes':   
@@ -1361,18 +1321,11 @@ class return_order(osv.osv):
                 raise osv.except_osv(_("Warning"),
                         _("To proceed, Atleast one of the options should be yes."))
         else:
-            print"Context is empty"
             return True
     
-    def create(self,cr,uid,vals,context={}): 
-        print"valsssssss",vals
-        print"valsssssss",vals['order_line'][0]
-        print"price_unit",vals['order_line'][0][2].get('price_unit')
-        print"price_unit",vals['order_line'][0][2].get('copy_unit_price')        
+    def create(self,cr,uid,vals,context={}):        
         if vals.get('refund_type') == 'partial_refund':            
             if vals['order_line'][1][2].get('price_unit') >= vals['order_line'][1][2].get('copy_unit_price'):
-                print"copy_unit_price=======>",vals.get('copy_unit_price')
-                print"price_unit=======>",vals.get('price_unit')
                 raise osv.except_osv(_('Error !'),
                             _('Partial refund amount should be less than subscription price. Please modify unit price in return order lines to refund partial amount. If the field is invisible for you, please call support manager.'))        
         return super(return_order, self).create(cr,uid,vals,context=context)
@@ -1409,7 +1362,6 @@ class return_order_line(osv.osv):
     def onchange_price_unit(self,cr,uid,ids,price_unit,qty,return_type,sale_line_id,copy_unit_price,context={}):
         res={}
         res['value']={}
-        print"copy_unit_price",copy_unit_price
         if sale_line_id:
             line_brw = self.pool.get('sale.order.line').browse(cr,uid,sale_line_id)            
             if return_type == 'complete_refund':
@@ -1426,7 +1378,6 @@ class return_order_line(osv.osv):
                         res['value']['product_uom_qty'] = stored_qty
             elif return_type == 'partial_refund':
                 if float(copy_unit_price) * float(qty) < float(price_unit) * float(qty):
-                    print"float(price_unit) * float(qty)",float(price_unit) * float(qty)
                     warning = {
                     'title': _('Warning!'),
                     'message' : _("Entered price should be less than Original price.")

@@ -46,11 +46,7 @@ class account_invoice(models.Model):
     invoice_doc_no = fields.Char('Invoice No',size=32,readonly=True, states={'draft':[('readonly',False)]}, help="Reference of the invoice")
     invoice_date = fields.Date('Invoice Date',readonly=True)
     avatax_calc = fields.Boolean(string='Avatax Calculation',store=True,compute='_avatax_calc')
-#    _columns = {
-#        'invoice_doc_no': fields.char('Invoice No', size=32, readonly=True, states={'draft':[('readonly',False)]}, help="Reference of the invoice"),
-#        'invoice_date': fields.date('Invoice Date', readonly=True),
-#        'avatax_calc': fields.function(_avatax_calc, method=True, string='Avatax Calculation', type='boolean', store=True)
-#    }
+
 
     def action_commit_tax(self, cr, uid, ids, context=None):
         avatax_config_obj = self.pool.get('account.salestax.avatax')
@@ -114,6 +110,7 @@ class account_invoice(models.Model):
     @api.multi
     def check_tax_lines(self, compute_taxes):
         print"customizeee"
+        inv=self.browse()
         super(account_invoice, self).check_tax_lines(compute_taxes)
         if inv.avatax_calc:
             for tax in inv.tax_line:
@@ -126,7 +123,6 @@ account_invoice()
 class account_invoice_tax(osv.osv):
     _inherit = "account.invoice.tax"
     def compute(self, cr, uid, invoice, context=None):
-        print"account salestax"
         try:
             avatax_config_obj = self.pool.get('account.salestax.avatax')
             invoice_obj = self.pool.get('account.invoice')
@@ -161,7 +157,7 @@ class account_invoice_tax(osv.osv):
                                                                             ('tax_schedule_id', '=', avatax_config.default_tax_schedule_id.id),
                                                                             ('state_id', '=', state_id)],
                                                                             context=context)
-                        print"jurisdiction_code_ids",jurisdiction_code_ids
+                        
                         if not jurisdiction_code_ids:
                             jurisdiction_code_ids = jurisdiction_code_obj.create(cr,uid,
                             {'name': str(tax.Region) + tax['JurisType'].lower(),
@@ -178,8 +174,6 @@ class account_invoice_tax(osv.osv):
                                 _('You must define a jurisdiction code for %s type for %s state in the tax schedule for %s.'
                                   % (tax['JurisType'], tax['Region'], avatax_config.default_tax_schedule_id.name)))
                         jurisdiction_code = jurisdiction_code_obj.browse(cr, uid, jurisdiction_code_ids[0], context=context)
-                        print"jurisdiction_code",jurisdiction_code
-                    
                         
                         
                         val['invoice_id'] = invoice.id
@@ -187,7 +181,7 @@ class account_invoice_tax(osv.osv):
                         val['amount'] = tax['Tax']
                         val['manual'] = False
                         val['base'] = tax['Base']
-                        print"invoice.type",invoice.type
+                        
                         if invoice.type == 'out_invoice':
                             val['base_code_id'] = jurisdiction_code.base_code_id.id
                             val['tax_code_id'] = jurisdiction_code.tax_code_id.id
@@ -203,7 +197,7 @@ class account_invoice_tax(osv.osv):
 
 
                             val['base_sign'] = jurisdiction_code.base_sign
-                            print"jurisdiction_code.account_collected_id.id",jurisdiction_code.account_collected_id.id
+                            
                         else:
                             val['base_code_id'] = jurisdiction_code.ref_base_code_id.id
                             val['ref_base_code_id'] = jurisdiction_code.ref_base_code_id.id
@@ -231,7 +225,7 @@ class account_invoice_tax(osv.osv):
                         t['amount'] = cur_obj.round(cr, uid, cur, t['amount'])
                         t['base_amount'] = cur_obj.round(cr, uid, cur, t['base_amount'])
                         t['tax_amount'] = cur_obj.round(cr, uid, cur, t['tax_amount'])
-                    print"tax_groupedddddddddddddddd",tax_grouped
+                    
                     return tax_grouped
         except Exception, e:
             print "error in avatax",str(e)

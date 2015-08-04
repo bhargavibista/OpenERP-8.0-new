@@ -32,9 +32,9 @@ class stock_return_picking(osv.osv_memory):
         returned_lines = 0
 
 #        Create new picking for returned products
-        if pick.picking_type_id.code=='out':
+        if pick.picking_type_id.code=='outgoing':
             new_type = 'in'
-        elif pick.picking_type_id.code=='in':
+        elif pick.picking_type_id.code=='incoming':
             new_type = 'out'
         else:
             new_type = 'internal'

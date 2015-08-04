@@ -11,7 +11,6 @@ class tr_barcode(osv.osv):
     }
     
     def onchange_product_id(self, cr, uid, ids, product_id):
-#        print"idsssssssss",ids,product_id
         res={}
         if not product_id:
             res = {'value': {'code': False}}

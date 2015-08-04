@@ -17,7 +17,7 @@
         "depends" : ['base','sale','stock'],
         "init_xml" : [ ],
         "demo_xml" : [ ],
-        "update_xml" : ['authorize_net.xml',
+        "data" : ['authorize_net.xml',
             'sale_view.xml',
             'invoice_view.xml',
             'partner_view.xml',

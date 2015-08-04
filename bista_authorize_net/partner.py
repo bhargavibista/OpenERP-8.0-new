@@ -24,10 +24,9 @@ class custmer_payment_profile(osv.osv):
                     numberstring = numberstring[0]
                 if not numberstring:
                     profile_info = authorize_net_config.call(cr,uid,config_obj,'GetCustomerProfile',profile_id)
-                    print "profile_info",profile_info
                     if not profile_info.get('payment_profile'):
                       response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',False,partner_id,billing_address,shipping_address,profile_id,cc_number,exp_date,'return.order')
-                      print"response CreateCustomerPaymentProfile bista authorize .net",response
+                      
                       
                       numberstring = response.get('customerPaymentProfileId',False)
                     else:
@@ -54,13 +53,11 @@ class res_partner(osv.osv):
     _name = "res.partner"
     _inherit = "res.partner"
     def cust_profile_payment(self,cr,uid,ids,profile_id,payment_profile_data,context={}):
-        print"payment_profile_data",payment_profile_data
         ids =int(ids)
         cr.execute("UPDATE res_partner SET customer_profile_id='%s' where id=%d"%(profile_id,ids))
         payment_obj = self.pool.get('custmer.payment.profile')
         active_payment_profile_id = []
         for cc_number in payment_profile_data.iterkeys():
-            print"cc_number",cc_number
             each_profile = payment_profile_data[cc_number]
             search_payment_profile = payment_obj.search(cr,uid,[('profile_id','=',each_profile),('credit_card_no','=',cc_number)])
             if not search_payment_profile:

@@ -571,7 +571,7 @@ class return_order(osv.osv):
                                         'serial_no':linked_serial_no,
                                         'tax_id':[(6, 0,tax_ids)],
                                         'state':'draft',
-                                        'type': order_line_val.get('type',''),
+#                                        'type': order_line_val.get('type',''),
                                         'sale_line_id':order_line_val.get('id',False),
                                         'guarantee_limit_ro':limitless})
                                 vals['order_line'] = order_line_vals
@@ -613,7 +613,7 @@ class return_order(osv.osv):
                                     'discount':each_line.discount,
                                     'tax_id':[(6, 0,tax_ids)],
                                     'state':'draft',
-                                     'type': each_line.type,
+#                                     'type': each_line.type,
                                      'sale_line_id':each_line.id
                                     })
                if order_line_vals:
@@ -778,8 +778,10 @@ class return_order(osv.osv):
                     netsvc.LocalService("workflow").trg_validate(uid, 'account.invoice', refund_invoice_id, 'invoice_open', cr)
                     account_refund.make_payment_of_invoice(cr, uid, [refund_invoice_id], context=context)
                     ###Code to Change Delivery Qty
-                    cr.execute("select id from stock_picking where sale_id=%d and state != 'done'"%(return_obj.linked_sale_order.id))
+                    
+                    cr.execute("select id from stock_picking where group_id=%d and state != 'done'"%(return_obj.linked_sale_order.procurement_group_id.id))
                     picking_id=filter(None, map(lambda x:x[0], cr.fetchall()))
+                    print"picking_idpicking_iddhpicking_id",picking_id
                     if picking_id:
                         self.change_delivery_qty(cr,uid,[return_obj.id],context)
                 cr.execute("insert into return_order_invoice_rel (order_id,invoice_id) values(%s,%s)",(ids[0],refund_invoice_id))

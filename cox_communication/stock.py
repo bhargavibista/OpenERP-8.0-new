@@ -9,6 +9,9 @@ import types
 import socket
 import xmlrpclib
 from urllib import urlopen
+import logging
+_logger = logging.getLogger(__name__)
+
 class server_printer(osv.osv):
    '''
    This class store printer name and there server address with port number used in label printing in MO
@@ -21,103 +24,6 @@ class server_printer(osv.osv):
            }
 
 server_printer()
-#class stock_picking_out(osv.osv):
-#    _inherit = "stock.picking.out"
-#    _columns = {
-#    'printed' : fields.boolean('Printed'),
-#    'printer_id' : fields.many2one('server.printer','Printer'),
-#    'print_label' : fields.boolean('Print Label'),
-#    'no_of_prints' : fields.integer('Label Quantity',size = 32, help = 'Number of prints per label '),
-#    'pick_up_back_office': fields.boolean('In Store Pick Up'),
-#    'carrier_tracking_ref': fields.char('Carrier Tracking Ref', size=256),
-#    'shipping_rate':fields.float('Shipping Rate'),
-#    'ship_date':fields.char('Date',size=256),
-#    'total_boxes':fields.integer('Total Boxes'),
-#    'no_of_prdct_units':fields.integer('Total Product Units')
-#    }
-#    ##Function is inherited to show length,height and width of product
-#    def create(self,cr,uid,vals,context={}):
-#        if vals.get('move_lines'):
-#            for each_move in vals.get('move_lines'):
-#                if each_move[2].get('product_id',True):
-#                    product_dimension = self.product_dimensions(cr,uid,each_move[2].get('product_id',False),{}) 
-#                    vals.update(product_dimension)
-#                    break
-#        return super(stock_picking_out, self).create(cr, uid, vals, context)
-#
-#    def product_dimensions(self,cr,uid,prod_id,context={}):
-#        prod_brw = self.pool.get('product.product').browse(cr,uid,prod_id)
-#        data = {'pack_length': prod_brw.prod_length,
-#        'pack_width': prod_brw.prod_width,
-#        'pack_height': prod_brw.prod_height}
-#        if context:
-#            data.update({'weight_package': prod_brw.weight_net})
-#        return data
-#	
-#    def action_process(self, cr, uid, ids, context=None):
-#        if context is None: context = {}
-#        if ids:
-#            ids_obj =self.browse(cr,uid,ids[0])
-#            context = dict(context, active_ids=ids, active_model='stock.picking')
-#            if ids_obj.type == 'out':
-#                if not context.get('action_process_original'):
-#                    return {
-#                            'name':_("Bar Code Scanning"),
-#                            'view_mode': 'form',
-#                            'view_type': 'form',
-#                            'res_model': 'pre.picking.scanning',
-#                            'type': 'ir.actions.act_window',
-#                            'nodestroy': True,
-#                            'target': 'new',
-#                            'domain': '[]',
-#                            'context': context,
-#                        }
-#            elif ids_obj.type == 'internal':
-#                if not context.get('action_process_original'):
-#                    return {
-#                            'name':_("Shipping Process"),
-#                            'view_mode': 'form',
-#                            'view_type': 'form',
-#                            'res_model': 'pre.shipping.process',
-#                            'type': 'ir.actions.act_window',
-#                            'nodestroy': True,
-#                            'target': 'new',
-#                            'domain': '[]',
-#                            'context': context,
-#                        }
-##            cox gen2
-#            return True
-##            partial_id = self.pool.get("stock.partial.picking").create(cr, uid, {}, context=context)
-##            return {
-##                    'name':_("Products to Process"),
-##                    'view_mode': 'form',
-##                    'view_id': False,
-##                    'view_type': 'form',
-##                    'res_model': 'stock.partial.picking',
-##                    'res_id': partial_id,
-##                    'type': 'ir.actions.act_window',
-##                    'nodestroy': True,
-##                    'target': 'new',
-##                    'domain': '[]',
-##                    'context': context,
-##                }	    
-#    def in_store_pickup(self,cr,uid,ids,context):
-#        context['active_ids']=ids
-#        context['active_id']=ids[0]
-#        return {
-#                    'name':_("In Store Pick UP"),
-#                    'view_mode': 'form',
-#                    'view_id': False,
-#                    'view_type': 'form',
-#                    'res_model': 'in.store.pickup',
-##                    'res_id': partial_id,
-#                    'type': 'ir.actions.act_window',
-#                    'nodestroy': True,
-#                    'target': 'new',
-#                    'domain': '[]',
-#                    'context': context,
-#                }
-#stock_picking_out()
 
 class stock_picking(osv.osv):
     _inherit = "stock.picking"
@@ -218,7 +124,6 @@ class stock_picking(osv.osv):
               try:
                     ext_shipping_id = conn.call('sales_order_shipment.create', [magento_incrementid, item_qty, _("Shipping Created"), mail_notification, True])
               except Exception, e:
-                    #print "error string",e
                     return False
               return ext_shipping_id
     #Function is inherited because wants to send tracking number after processing order i.e after creating
@@ -250,7 +155,7 @@ class stock_picking(osv.osv):
                                         res= conn.call('sales_order_shipment.addTrack', [mag_shipmentid, carrier_code[0], carrier['magento_tracking_title'] or '', tracking_number or '']) ###bista code
                                     return mag_shipmentid
                     except Exception, e:
-                        print "error string",e
+                        _logger.info('exception------------ %s', e)
                         
     #Function is inherited to show Bar Code Scanning instead of main Process Wizard
     
@@ -350,7 +255,6 @@ class stock_picking(osv.osv):
                 }'''
                 
     def _state_get(self, cr, uid, ids, field_name, arg, context=None):
-        print"state getttttttttttttt"
         '''The state of a picking depends on the state of its related stock.move
             draft: the picking has no line or any one of the lines is draft
             done, draft, cancel: all lines are done / draft / cancel
@@ -479,7 +383,6 @@ class stock_picking(osv.osv):
 #        res_id = function.get('res_id')
         res_id = context.get('partial_id')
         if res_id:
-#            print"dsajkhfd"
 #            cox gen2
             do_partial = self.pool.get("stock.transfer_details").do_detailed_transfer(cr,uid,[res_id],context=context)
 stock_picking()
@@ -563,6 +466,7 @@ class stock_move(osv.osv):
             raise osv.except_osv(_('Error!'), _('There is no inventory Valuation account defined on the product category: "%s" (id: %d)') % \
                                     (move.product_id.categ_id.name, move.product_id.categ_id.id,))
         return journal_id, acc_src, acc_dest, acc_valuation
+    
     def create(self, cr, uid, vals, context=None):
         id=super(stock_move, self).create(cr, uid, vals, context)
         if vals.get('product_id',False) and vals.get('picking_id',False):
@@ -581,6 +485,7 @@ class stock_move(osv.osv):
                     height = prod_brw.prod_height
                     cr.execute("update stock_picking set pack_length=%s,pack_width=%s,pack_height=%s where id=%s"%(length,width,height,picking_brw.id))
         return id
+    
     def create_subproduct_move(self, cr, uid, vals, sub_products, context=None):
         for product in sub_products:
             vals.update({'product_id':product})
@@ -675,6 +580,7 @@ stock_move()
 
 class shipping_response(osv.osv):
     _inherit = 'shipping.response'
+    
     def generate_tracking_no(self, cr, uid, ids, context={}, error=True):
         res = super(shipping_response, self).generate_tracking_no(cr, uid, ids, context)
         id_obj = self.browse(cr,uid,ids[0])
@@ -688,7 +594,7 @@ class shipping_response(osv.osv):
                     for each in split_string:
                             mag_shipmentid = stock_obj.export_shipment(cr,uid,id_obj.picking_id.id,each,'stock.picking',mag_shipmentid,{})
         except Exception, e:
-            print "error string",e
+            _logger.info('exception------------ %s', e)
         context['active_id'] = id_obj.picking_id.id
         context['active_ids'] = [id_obj.picking_id.id]
         context['active_model'] = 'stock.picking'

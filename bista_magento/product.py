@@ -1,9 +1,7 @@
 
 from openerp.osv import osv, fields
 import openerp.tools as tools
-from random import randint
 import os
-import urllib
 from openerp.http import request
 import json
 import ast
@@ -24,12 +22,10 @@ class product_product(models.Model):
     _inherit = 'product.product'
     
     def write(self, cr, uid, ids, vals, context={}):
-	print "ids-----------------------------------",ids,type(ids)
 	if isinstance(ids,(int,str)) :
 	    ids=int(ids)
             ids = [ids]
         vals.update({'exported':False})
-  	print "ids......................878787...",ids
         res = super(product_product, self).write(cr, uid, ids, vals, context)
 
         return res
@@ -39,7 +35,7 @@ class product_product(models.Model):
         result=[]
 	cr.execute('select id from product_product where exported = %s and pj_product=%s', (False,False))
         product_ids = filter(None, map(lambda x:x[0], request.cr.fetchall()))
-        print "product_id-------",product_ids
+        
          
         for each in product_ids:
 	    dict={}
@@ -54,8 +50,6 @@ class product_product(models.Model):
             price= prod_obj.product_tmpl_id.list_price
             #if price:
             dict.update({'Price':price})
-
-            print "prod_obj.ext_prod_config",prod_obj.ext_prod_config
             if prod_obj.ext_prod_config:
                 item_products=[]
                 for each in prod_obj.ext_prod_config:
@@ -77,7 +71,6 @@ class product_product(models.Model):
 
 
     def update_product_info(self, context=None):
-#        cr.execute('select id from product_product where exported = %s', (False,))
 	try:
 
 	    request.cr.execute("update product_product set exported=True where id in (select id from product_product where exported = False)")

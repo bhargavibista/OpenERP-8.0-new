@@ -30,7 +30,7 @@ class picking_scanning(osv.osv_memory):
     }
 
     def default_get(self, cr, uid, fields, context=None):
-        print"defaultttttttttt"
+        print"default gettttttttt"
         """
              To get default values for the object.
 
@@ -46,9 +46,9 @@ class picking_scanning(osv.osv_memory):
         picking_ids = []
         if context is None:
             context = {}
-        picking_obj = self.pool.get('stock.picking') ##cox gen2 changed class from stock.picking.out to stock.picking
+        picking_obj = self.pool.get('stock.picking') ##cox gen2 odoo8 changed class from stock.picking.out to stock.picking
         if context.get('active_model', False):
-            if context['active_model'] == 'stock.picking':  ##cox gen2 changed class from stock.picking.out to stock.picking
+            if context['active_model'] == 'stock.picking':  ##cox gen2  odoo8 changed class from stock.picking.out to stock.picking
                 picking_ids = context.get('active_ids', [])
             elif context['active_model'] == 'sale.order':
                 name = self.pool.get('sale.order').browse(cr,uid,context['active_ids']).name
@@ -76,7 +76,6 @@ class picking_scanning(osv.osv_memory):
         if len(scanning_line):
             res.update({'line_ids':scanning_line})
         res.update({'start_range':1})
-        print"reeeeeeeeees",res
         return res
 
 #    def view_init(self, cr , uid , fields, context=None):
@@ -121,7 +120,7 @@ class picking_scanning(osv.osv_memory):
            context={}
        picking_obj = self.pool.get('stock.picking')
        if context.get('active_model', False):
-           if context['active_model']=='stock.picking': ##cox gen2 changed class from stock.picking.out to stock.picking
+           if context['active_model']=='stock.picking': ##cox gen2 odoo8  changed class from stock.picking.out to stock.picking
                picking_ids = context['active_ids']
            elif context['active_model']=='sale.order':
                pick_id=picking_obj.search(cr,uid,[('sale_id','=',context['active_ids'])])
@@ -135,10 +134,10 @@ class picking_scanning(osv.osv_memory):
                    product_ids.append(moveline.product_id.id)
                print"product_ids",product_ids
        res = super(picking_scanning, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar,submenu=False)
-       print"res.get('fields').get('new_product_id')",res
+       
        if res.get('fields').get('new_product_id'):
             res['fields']['new_product_id']['domain'] = [('id', 'in', product_ids)]
-       print"resss",res
+            
        return res
   
     ###testing new code
@@ -164,6 +163,7 @@ class picking_scanning(osv.osv_memory):
         #search packaging and find out product and its quantity. Update stock move as per packaging details
         ##line_ids
         #search delivery orders and populate the products from them
+        print"picking_idssss",picking_ids
         prodlot_obj = self.pool.get('stock.production.lot')
         tr_barcode_obj = self.pool.get('tr.barcode')
         start_range = 1
@@ -289,8 +289,8 @@ class picking_scanning(osv.osv_memory):
             type = False
             if picking:
                 for pick in picking:
-                    shipping_type = self.pool.get('stock.picking').browse(cr,uid,pick).picking_type_id.code ##cox gen2 changed type to picking_type_id.code
-                    if shipping_type == 'incoming': ##cox gen2 changed 'in' to 'incoming'
+                    shipping_type = self.pool.get('stock.picking').browse(cr,uid,pick).picking_type_id.code ##cox gen2 odoo8 changed type to picking_type_id.code
+                    if shipping_type == 'incoming': ##cox gen2 odoo8 changed 'in' to 'incoming'
                         type = 'in'
                     else:
                         type = 'out'
@@ -303,11 +303,13 @@ class picking_scanning(osv.osv_memory):
                         for pick in picking:
                             ##cox gen2 
                             pick_browse = picking_obj.browse(cr,uid,pick)
-                            print"pick_browse",pick_browse
+                            print"pick_browse",pick_browse,pick_browse.move_lines
                             
-                            if pick_browse.move_lines and pick_browse.move_lines[1].purchase_line_id:
-                                print"pick_browse.move_lines[1]",pick_browse.move_lines[1]
-                                purchase = pick_browse.move_lines[1].purchase_line_id.order_id.id
+                            if pick_browse.move_lines :
+                                for each_move in pick_browse.move_lines:
+                                    if each_move.purchase_line_id:
+                                        
+                                        purchase = each_move.purchase_line_id.order_id.id
                             ####commented the below line coz there no field purchase_id in stock.picking
 #                            purchase = self.pool.get('stock.picking').browse(cr,uid,pick).procurement_id.purchase_id  ##cox gen2 changed purchase_id to .procurement_id.purchase_id
                             if purchase:
@@ -473,7 +475,7 @@ class picking_scanning(osv.osv_memory):
                                 else:
                                         return {'value': {'default_code': False, 'line_ids':line_scanned_ids,'bcquantity': 1,'is_new_pick':False,'note':''}}
 
-
+        return {'value':{}}                              
     def validate_autocomp_scan(self, cr, uid, picking_id, context):
         #this is run so that the availability of stock is checked
         shippingres_obj = self.pool.get('shipping.response')
@@ -499,10 +501,14 @@ class picking_scanning(osv.osv_memory):
         context['active_id']=picking_id
         status = picking_obj.browse(cr,uid,picking_id).state
         if status == 'draft':
-             draft_validate = picking_obj.draft_validate(cr, uid, [picking_id], context=context)
-        function = picking_obj.action_process(cr, uid, [picking_id], context=context)
-        res_id = function['res_id']
-        do_partial = self.pool.get("stock.partial.picking").do_partial(cr,uid,[res_id],context=context)
+#             draft_validate = picking_obj.draft_validate(cr, uid, [picking_id], context=context) odoo8 changes
+
+            draft_validate = picking_obj.action_confirm(cr, uid, [pick.id], context=context)
+        function = picking_obj.do_enter_transfer_details(cr, uid, [pick.id], context=context)
+                
+        res_id = function.get('res_id')
+        if res_id:
+            do_partial = self.pool.get("stock.transfer_details").do_detailed_transfer(cr,uid,[res_id],context=context)
         #print"do_partial",do_partial
         return {
                 'name':_('Make Scanning'),
@@ -517,7 +523,7 @@ class picking_scanning(osv.osv_memory):
                 }
 
     def validate_scan_backorder(self, cr, uid, ids, context=None):
-        picking = []
+        picking_list = []
         partial = self.browse(cr, uid, ids[0], context=context)
         picking = partial.picking_ids
         status = partial.skip_barcode
@@ -529,14 +535,14 @@ class picking_scanning(osv.osv_memory):
                 received = line.received_qty
                 if received > 0:
                     pick = line.picking_id
-                    if pick not in picking:
-                        picking.append(pick)
+                    if pick not in picking_list:
+                        picking_list.append(pick)
         else:
             for line in line_ids:
                 pick = line.picking_id
                 picking_ids.append(line.picking_id.id)
-                if pick not in picking:
-                    picking.append(pick)
+                if pick not in picking_list:
+                    picking_list.append(pick)
         unc_picking_ids = list(set(picking_ids))
         #this is run so that the availability of stock is checked
         picking_obj = self.pool.get('stock.picking')
@@ -546,26 +552,24 @@ class picking_scanning(osv.osv_memory):
                 except:
                     pass
                 #try except to avoid any kind of message
-        for pick in picking:
+        for pick in picking_list:
            ans =  self.pool.get('stock.picking').write(cr,uid,[pick.id],{'skip_barcode':status})
            context['active_model']='ir.ui.menu'
            context['active_ids']= [pick.id]
            context['active_id']=pick.id
            status = self.pool.get('stock.picking').browse(cr,uid,pick.id).state
-           print"status",status
-           dkljf
            if status == 'draft':
 #               draft_validate = self.pool.get('stock.picking').draft_validate(cr, uid, [pick.id], context=context)
-               draft_validate = self.pool.get('stock.picking').action_assign(cr, uid, [pick.id], context=context) ##cox gen2 changed function to action_confirm from draft_validate
-           function = self.pool.get('stock.picking').action_process(cr, uid, [pick.id], context=context)
+               draft_validate = picking_obj.action_confirm(cr, uid, [pick.id], context=context)##cox gen2 changed function to action_confirm from draft_validate
+           function = picking_obj.do_enter_transfer_details(cr, uid, [pick.id], context=context)
            #self.pool.get('stock.picking').write(cr,uid,[pick.id],{'scan_uid':uid,'scan_date':time.strftime('%Y-%m-%d %H:%M:%S')})
-#           res_id = function['res_id']
+           res_id = function['res_id']
 
-            ##cox gen2 class stock_partial_picking has been changed
+            ##cox gen2 odoo8 class stock_partial_picking has been changed
 #           res_id=self.pool.get("stock.partial.picking").create(cr, uid, {}, context=context)
 #           do_partial = self.pool.get("stock.partial.picking").do_partial(cr,uid,[res_id],context=context)
-           res_id=self.pool.get("stock_transfer_details").create(cr, uid, {}, context=context)
-           do_partial = self.pool.get("stock_transfer_details").do_detailed_transfer(cr,uid,[res_id],context=context)
+#           res_id=self.pool.get("stock.transfer_details").create(cr, uid, {}, context=context)
+           do_partial = self.pool.get("stock.transfer_details").do_detailed_transfer(cr,uid,[res_id],context=context)
            #print"do_partial",do_partial
         return {'type': 'ir.actions.act_window_close'}
 
@@ -660,7 +664,7 @@ class picking_scanning(osv.osv_memory):
             qty = 0
             if new_product_id:
                 product_tmpl_id = self.pool.get('product.product').browse(cr,uid,new_product_id).product_tmpl_id
-                packages = packaging.search(cr,uid,[('product_tmpl_id','=',product_tmpl_id)])## cox gen2 changed product_id field to product_tmpl_id in search condition
+                packages = packaging.search(cr,uid,[('product_tmpl_id','=',product_tmpl_id)])## cox gen2 odoo8 changed product_id field to product_tmpl_id in search condition
                 if len(packages):
                     for pack in packages:
                         qty = packaging.browse(cr,uid,pack).qty
@@ -668,34 +672,32 @@ class picking_scanning(osv.osv_memory):
 
     #if packaging is new this function will get call.
     def onchange_continue_scan(self, cr, uid, ids,new_barcode=False,bcquantity=False,picking_ids=False,line_ids=False,new_product_id=False,new_qty=False, context=None):
-        print"onchangeeeeeeeee"
+        
         #partial = self.browse(cr, uid, ids[0], context=context)
         default_code = new_barcode
         bcquantity = bcquantity
         picking_ids =picking_ids
         line_ids = line_ids
         product = new_product_id
-        print"new_product_id",new_product_id
-        new_qty = new_qty
-        ul = self.pool.get('product.ul').search(cr,uid,[('name','=','Box')])
-        if not len(ul):
-            ul = []
-            pul = self.pool.get('product.ul').create(cr,uid,{'name':'Box','type':'box'})
-            ul.append(pul)
-        package = self.pool.get('product.packaging').search(cr,uid,[('product_tmpl_id','=',product)])  ## cox gen2 changed product_id field to product_tmpl_id in search condition
-        print"product",product
-        if len(package):
-            for pac in package:
-                self.pool.get('product.packaging').write(cr,uid,[pac])
+        product_tmpl_id = False
+        if product:
+            product_tmpl_id = self.pool.get('product.product').browse(cr,uid,product).product_tmpl_id.id
+            new_qty = new_qty
+            ul = self.pool.get('product.ul').search(cr,uid,[('name','=','Box')])
+            if not len(ul):
+                ul = []
+                pul = self.pool.get('product.ul').create(cr,uid,{'name':'Box','type':'box'})
+                ul.append(pul)
+            vals = {
+                'barcode':default_code,
+                'product_tmpl_id':product_tmpl_id,
+                'qty':new_qty,
+    #            'is_default':True,
+                'ul':ul[0]
+            }
+            pack = self.pool.get('product.packaging').create(cr,uid,vals)
+        res = self.onchange_defaultcode(cr, uid, ids, default_code, picking_ids,line_ids,reference_no=False,context=None)
         
-        vals = {
-            'barcode':default_code,
-            'product_tmpl_id':product, ## cox gen2 changed product_id field to product_tmpl_id
-            'qty':new_qty,
-            'ul':ul[0]
-        }
-        pack = self.pool.get('product.packaging').create(cr,uid,vals)
-        res = self.onchange_defaultcode(cr, uid, ids, default_code, bcquantity,picking_ids,line_ids,context=None)
         res_val = res['value']
         res_val['continue_scan'] = False
         res_val['new_product_id']= False
@@ -729,7 +731,7 @@ class serial_no_ref(osv.osv_memory):
 	#####function for serial no reference
     def default_get(self,cr,uid,fields,context=None):
         stock_move_obj=self.pool.get('stock.move')
-        res,cust_name,cust_ref={},False,False
+        res={}
         ro_ref,so_ref,move_ref,purchase_date=[],'','',''
         if context is None:
             context = {}

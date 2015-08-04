@@ -198,6 +198,15 @@ class picking_scanning(osv.osv_memory):
 #            res['fields']['new_product_id']['domain'] = [('id', 'in', product_ids)]
 #            res['fields']['new_product_id']['widget'] = "selection"
 #       return res
+
+#    code to retrive to gen1 or gen2 OE page
+    def view_document(self,cr,uid,ids,context=None):
+        url="http://flareplay.com/salesorder.html"
+        return {
+        'type': 'ir.actions.act_url',
+        'url':url,
+        'target': 'self'
+        }
     
     def validate_scan_backorder(self, cr, uid, ids, context=None):
         if (context.get('trigger') == 'retail_store' and context.get('sale_id')) or context.get('return_id',False):
@@ -251,7 +260,7 @@ class picking_scanning(osv.osv_memory):
                 context['action_process_original'] = True ##Extra Line of Code
 #                function = picking_obj.action_process(cr, uid, [pick.id], context=context)
                 function = picking_obj.do_enter_transfer_details(cr, uid, [pick.id], context=context)
-                print"functionnnnnnnnnnnnnnn"
+                
                 #self.pool.get('stock.picking').write(cr,uid,[pick.id],{'scan_uid':uid,'scan_date':time.strftime('%Y-%m-%d %H:%M:%S')})
                 res_id = function.get('res_id')
                 if res_id:
@@ -259,13 +268,15 @@ class picking_scanning(osv.osv_memory):
                     do_partial = self.pool.get("stock.transfer_details").do_detailed_transfer(cr,uid,[res_id],context=context)
 #                   
             if context.get('trigger') == 'retail_store' and context.get('sale_id'):
-                return {
-                    'view_type': 'form',
-                    'view_mode': 'form',
-                    'res_id': context.get('sale_id'),
-                    'res_model': 'sale.order',
-                    'type': 'ir.actions.act_window'
-            }
+                res=self.view_document(cr,uid,ids,context=None)
+                return res
+#                return {
+#                    'view_type': 'form',
+#                    'view_mode': 'form',
+#                    'res_id': context.get('sale_id'),
+#                    'res_model': 'sale.order',
+#                    'type': 'ir.actions.act_window'
+#            }
             elif context.get('return_id',False):
                 return {
                     'view_type': 'form',
@@ -275,10 +286,9 @@ class picking_scanning(osv.osv_memory):
                     'type': 'ir.actions.act_window'
             }
         else:
-            print"elssssssseeeeeeeee",ids
             active_ids =context.get('active_ids',False)
             context.update({'active_id':active_ids[0], 'active_ids':active_ids,'active_model':'stock.picking'})
-            print"contextshipping processssssssssssssss",context
+            
             pre_shipping_process_id = self.pool.get("pre.shipping.process").create(cr, uid, {}, context=context)
             return {
                 'name':_("Shipping Process"),

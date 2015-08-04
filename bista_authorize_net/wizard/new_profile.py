@@ -12,6 +12,8 @@ from openerp.tools.translate import _
 import datetime
 from urllib2 import Request, urlopen, URLError
 import openerp.netsvc
+import logging
+_logger = logging.getLogger(__name__)
 
 class customer_profile_payment(osv.osv_memory):
     _name = "customer.profile.payment"
@@ -67,23 +69,20 @@ class customer_profile_payment(osv.osv_memory):
             url=Request('%s?l=%s&bin=%s'%(server_url,licensekey,cc_first_6))
             response = urlopen(url)
             resp_val = response.read()
-            print "resp_valresp_valresp_val",resp_val
             prepaid=resp_val.split(';')
             if 'err=' not in prepaid:
                 error=resp_val.split('=')[1]
-                print "errorrrrrrrrrrrrrr23456rrr in maxmind////////////",error
                 raise osv.except_osv(_('Error!'), _('%s')%(error))
             else:
                 if 'prepaid=Yes' in prepaid:
-                    print "it is a prepiad card....................."
+                    _logger.info("it is a prepiad card.....................")
                     context['prepaid']=True
-                    print "context............",context
                     prepaid_id_search=prepaid_obj.search(cr,uid,[('card_no','=',cc_last_4),('partner_id','=',partner_id)])
                     if not prepaid_id_search:
                         prepaid_id=prepaid_obj.create(cr,uid,{'card_no':cc_last_4,'date':today,'partner_id':partner_id})
-                        print "prepaid_idprepaid_id",prepaid_id
+                        
     #                raise osv.except_osv('Warning!', 'Order declined as this is a prepaid card!')
-                    print "kittens........................",resp_val,prepaid
+                    
                 return True,context
         else:
             raise osv.except_osv('Warning!', 'Maxmind Configuration not defined')
@@ -102,7 +101,6 @@ class customer_profile_payment(osv.osv_memory):
         else:
             wizard_obj = self.browse(cr, uid, ids[0])
             transaction_type = wizard_obj.transaction_type
-            print "transaction_typetransaction_type",transaction_type
             ccv=wizard_obj.ccv
         obj_all,transaction_details = False,''
         act_model = context.get('active_model',False)
@@ -125,12 +123,12 @@ class customer_profile_payment(osv.osv_memory):
                 res,cc_number_filter = {},''
                 if id_obj:
                     customer_id = obj_all.browse(cr,uid,active_id[0]).partner_id
+                    
                     email = customer_id.emailid
                     cust_profile_Id,numberstring=False,False
                     if context.has_key('magento_orderid') or context.has_key('tru'):
                         ccn=context.get('cc_number')
                     else:
-                        print "wizard_objwizard_objwizard_obj",wizard_obj
                         ccn = wizard_obj.auth_cc_number
                     maxmind_response,context_maxmind=self.maxmind_call(cr,uid,ccn,customer_id.id)
                     if maxmind_response:
@@ -146,13 +144,13 @@ class customer_profile_payment(osv.osv_memory):
                         action_to_do = context.get('action_to_do',False)
                         if action_to_do == 'new_customer_profile':
                             response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerProfileOnly',email)
-                            print "response",response
+                            _logger.info('response %s', response)
                             if response and 'cust_profile_id' in response:
                                 cust_profile_Id = response.get('cust_profile_id')
                                 if cust_profile_Id:
                                     if not response.get('success'):
                                         profile_info = authorize_net_config.call(cr,uid,config_obj,'GetCustomerProfile',cust_profile_Id)
-                                        print "profile_info",profile_info
+                                        
                                         if not profile_info.get('payment_profile'):
                                             response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',active_id[0],False,False,False,cust_profile_Id,ccn,exp_date,ccv,act_model)
                                             numberstring = response.get('customerPaymentProfileId',False)
@@ -165,7 +163,7 @@ class customer_profile_payment(osv.osv_memory):
                                                 numberstring = response.get('customerPaymentProfileId',False)
                                     else:
                                         response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',active_id[0],False,False,False,cust_profile_Id,ccn,exp_date,ccv,act_model)
-                                        print"response",response
+                                        _logger.info("response",response)
                                         numberstring = response.get('customerPaymentProfileId',False)
                         else:
                              cust_profile_Id = customer_id.customer_profile_id
@@ -176,7 +174,7 @@ class customer_profile_payment(osv.osv_memory):
                                     numberstring = numberstring[0]
                              if not numberstring:
                                 profile_info = authorize_net_config.call(cr,uid,config_obj,'GetCustomerProfile',cust_profile_Id)
-                                print "profile_info",profile_info
+                                
                                 if not profile_info.get('payment_profile'):
                                     response = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerPaymentProfile',active_id[0],False,False,False,cust_profile_Id,ccn,exp_date,ccv,act_model)
                                     numberstring = response.get('customerPaymentProfileId',False)
@@ -195,7 +193,7 @@ class customer_profile_payment(osv.osv_memory):
                                 payment_profile_val = {ccn[-4:]: numberstring}
                                 self.pool.get('res.partner').cust_profile_payment(cr,uid,customer_id.id,cust_profile_Id,payment_profile_val,context) ##ccv changes
                                 amount =  obj_all.browse(cr,uid,active_id[0]).amount_total
-                                print "amount at authorize side.............",amount
+                                
                                 if amount>0.0:
                                     transaction_res = authorize_net_config.call(cr,uid,config_obj,'CreateCustomerProfileTransaction',active_id[0],transaction_type,amount,cust_profile_Id,numberstring,'',ccv,act_model,'',context)
                                     if context.get('recurring_billing') or context.get('captured_api'):
@@ -204,10 +202,10 @@ class customer_profile_payment(osv.osv_memory):
                                         transaction_details = transaction_res
                                     split = transaction_details.split(',')
                                     transaction_id = split[6]
-                                    print "transaction_id//////////////////",transaction_id,prepaid_id_search
+                                    
                                     if context_maxmind and context_maxmind.get('prepaid'):
                                         payment_id=payment_obj.search(cr,uid,[('credit_card_no','=',ccn[-4:])])
-                                        print "payment_idpayment_idpayment_id",payment_id
+                                        
                                         if payment_id:
                                             for each in payment_id:
                                                 payment_obj.write(cr,uid,each,{'prepaid':True})

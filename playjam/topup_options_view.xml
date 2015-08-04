@@ -86,7 +86,14 @@
                             <field name="profile_playjam"/>
                             <field name="device_playjam"/>
                             <field name="obtain_transactions_playjam"/>
+                            <field name="current_db"/>
                          </group>
+                       <notebook>
+                        <page string="Magento Config">
+                            <field name="magento_api_id">
+                            </field>
+                        </page>
+                    </notebook>
 
                     </sheet>
                 </form>

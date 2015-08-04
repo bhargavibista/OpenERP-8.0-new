@@ -5,6 +5,8 @@ from calendar import monthrange
 from datetime import date, datetime, timedelta
 import calendar
 from openerp import netsvc
+import logging
+_logger = logging.getLogger(__name__)
 
 class sale_order_line(osv.osv):
     _inherit ="sale.order.line"
@@ -28,23 +30,6 @@ class sale_order_line(osv.osv):
             if line.product_uos:
                 return line.product_uos.id
             return line.product_uom.id
-#        def _get_line_qty(line):
-#            if (line.order_id.invoice_quantity=='order') or not line.procurement_id:
-#                if line.product_uos:
-#                    return line.product_uos_qty or 0.0
-#                return line.product_uom_qty
-#            else:
-#                return self.pool.get('procurement.order').quantity_get(cr, uid,
-#                        line.procurement_id.id, context=context)
-#
-#        def _get_line_uom(line):
-#            if (line.order_id.invoice_quantity=='order') or not line.procurement_id:
-#                if line.product_uos:
-#                    return line.product_uos.id
-#                return line.product_uom.id
-#            else:
-#                return self.pool.get('procurement.order').uom_get(cr, uid,
-#                        line.procurement_id.id, context=context)
         if not account_id:
             if context.get('new_pacakge_id'):
                 product_id_brw = context.get('new_pacakge_id')
@@ -98,8 +83,6 @@ class sale_order(osv.osv):
                 [('type', '=', 'sale'), ('company_id', '=', partner_id_obj.company_id.id)],limit=1)
             for service_data in maerge_invoice_data:
                 vals={}
-#		if context.get('new_pacakge_id',False):
-#		    context.pop('new_pacakge_id')
                 policy_brw = service_data.get('policy_id_brw',False)
                 line=obj_sale_order_line.browse(cr,uid,service_data.get('line_id',False))
                 ###### changes for recurring price by yogita
@@ -110,7 +93,6 @@ class sale_order(osv.osv):
                     else:
                        product_price=line.product_id.list_price
                  ###########
-#                product_price = policy_brw.product_id.list_price
                 unit_price = product_price
                 if context.get('giftcard',False):
                     unit_price=context.get('facevalue',False)
@@ -120,7 +102,6 @@ class sale_order(osv.osv):
 		    cr.commit()
                 else:
                     context['new_pacakge_id'] = policy_brw.product_id
-		    print"contextttttttttttttttttttttttttt",context
                     data = {'name': policy_brw.product_id.name,
                             'discount':0.0,
                             'invoice_line_tax_id':[],
@@ -130,20 +111,16 @@ class sale_order(osv.osv):
                     if service_data.get('extra_days', 0)>0  and not context.get('giftcard',False):
                         extra_days=service_data.get('extra_days')
                         days=calendar.monthrange(date_inv.year,date_inv.month)[1]
-#                        days=366 if calendar.isleap(date_inv.year) else 365
-#                        partial_price=(unit_price*12/days)*int(extra_days)
                         partial_price=(unit_price/days)*int(extra_days)
                         data.update({'price_unit':partial_price})
                         policy_obj.write(cr,uid,service_data['policy_id'],{'extra_days':0,'adv_paid':True})
                     if context.get('giftcard',False):
                         account_id=context.get('account_id',False)
-                        print "account_idaccount_idaccount_id546t457578678",account_id
                     else:
                         account_id=False
                     vals = obj_sale_order_line._prepare_invoice_line_cox(cr, uid, line, account_id, data, context)
                     if vals:
                         last_amount_charged=vals.get('price_unit',False)
-                        print"last_amount_chargedlast_amount_chargedlast_amount_charged",last_amount_charged
                         cr.execute("update res_partner_policy set adv_paid=False,last_amount_charged=%s where id =%s"%(last_amount_charged,policy_brw.id))
                         invoice_lines+=[vals]
                 invoice_ref+= 'RB'+ service_data.get('order_name','') + '|'
@@ -181,7 +158,6 @@ class sale_order(osv.osv):
                     'recurring':True,
                 })
                 res=invoice.create(cr,uid,invoice_vals)
-		print"ressssssssssssssssssss",res
                 if res:
                     for invoice_line in invoice_lines:
                         sale_line_id=invoice_line.get('line_id',False)

@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
-from openerp import models, fields, api, _
 from random import randint
 import hashlib
 import json
 import ast
-from openerp.http import request
 import urllib
 import requests
 from psycopg2.extensions import ISOLATION_LEVEL_READ_COMMITTED
 from openerp import SUPERUSER_ID
 import datetime
 import os
+import logging
+from openerp import models, fields, api, _
+from openerp.addons.web.http import request
+_logger = logging.getLogger(__name__)
 
 
 
@@ -40,38 +42,26 @@ class user_auth(models.Model):
 
     
     def get_key_code(self,device_id, want_code, context=None):
-        print"self",self
-        print"device_id",device_id
-        print"want_code",want_code
         ''' Returns the code '''
         code ,values,auth_user_id,hashed_key,note= '',{},[],'',''
-        print "wantcode-----------func-",want_code
-        print "deviceid---------------func--",device_id
         if (want_code is None) or (device_id is None):
             h=int('-0x0601', 16)
-            print "hhhhhhhhhh",h
             values =json.dumps({'body':{'result':'-0x0601'}})
             return values
         random=randint(1,99999)
         key_random=randint(1,9999999999)
-        print "random---------------",random
-        print "deviceid------------++++++++",device_id,want_code
+        _logger.info('policies---------------- %s,%s', device_id,want_code)
         dev_id=device_id
         if device_id and want_code==False:
             request.cr.execute('select id from user_auth where device_id = %s', (dev_id,))
             auth_user_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
-            print "auth_user_id",auth_user_id
-            print "app_unlink====",auth_user_id
             if auth_user_id:
                 brow_obj=self.browse(auth_user_id[0])
-                print "enter-------"
                 active=brow_obj.is_registered
-                print "active-----------",active
                 if active:
                     key=brow_obj.key
                     hash_obj=hashlib.sha256(key)
                     hash_key=hash_obj.hexdigest()
-
                     h=int('0x0001', 16)
                     values=json.dumps({'body':{'result':'0x0001','key':hash_key}})
                     return values
@@ -80,11 +70,10 @@ class user_auth(models.Model):
                     values=json.dumps({'body':{'result': '-0x0001'}})
                     return values
         if device_id and want_code==True:
-            print"auth_user_id",auth_user_id
             request.cr.execute('select id from user_auth where device_id = %s',(dev_id,))
             auth_user_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
             code=str(random)+device_id
-            print "code------------",code,type(code)
+            _logger.info('code---------------- %s', code)
             note="Enter the code on website to complete registration "
             key=str(key_random)+device_id
             hash_object = hashlib.md5(key)
@@ -94,11 +83,9 @@ class user_auth(models.Model):
                 self.write(request.cr,1,auth_user_id,{'code':code,'key':hashed_key,'device_id':device_id})
             else:
                 self.create(request.cr,1,{'code':code,'key':hashed_key,'device_id':device_id})
-            #self.create(cr,uid,{'code':code,'key':hashed_key,'device_id':device_id})
             h=int('-0x0001', 16)
             values=json.dumps({'body':{'result':'-0x0001','code':str(code),'key':hashed_key}})
             return values
-
 	    values= json.dumps({'body':{'result':'-0x0601'}})
         return values
 
@@ -107,7 +94,6 @@ class user_auth(models.Model):
         if code:
             request.cr.execute('select id from user_auth where code = %s', (code,))
             auth_user_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
-            print "app_unlink====",auth_user_id
             if auth_user_id:
                 self.write(request.cr,1,auth_user_id,{'is_registered':True})
                 partner=self.browse(request.cr,1,auth_user_id[0]).partner_id
@@ -119,122 +105,45 @@ class user_auth(models.Model):
                 return json.dumps({'body':{"code":False, "message":"No such Device"}})
         else:
             return json.dumps({'body':{"code":False, "message":"Please enter the Activation code"}})
-        
-    '''def link_account(self, dict):
-        print "inside bista playjammmmmmmmmmmmmmmmmm"
-        print "dict-----------", dict
-        partner_id=dict.get('CustomerId')
-        print"*******", partner_id, type(partner_id)
-        code= dict.get('ActivationCode')
-        print "code-----------------", code
-        request.cr.execute('select id from user_auth where code= %s', (str(code),))
-        auth_user_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
-        if auth_user_id == []:
-            return {'body':{"code":False, "message":"No Such Device"}}
-        request.cr.execute('select id from res_partner where id= %s', (int(partner_id),))
-        pat_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
-        print "patid-----------------",pat_id
-        if pat_id == []:
-            return {'body':{"code":False, "message":"Partner Not Present"}}
-        if auth_user_id and partner_id:
-            self.write(auth_user_id,{'partner_id':partner_id})
-            auth_user_obj=self.pool.get('user.auth').browse(auth_user_id[0])
-            pat_obj=self.pool.get('res.partner').browse(int(partner_id))
-            accountPin= pat_obj.account_pin
-            full_name=pat_obj.name
-	        # print "pat_obj.name----------", pat_obj.name
-            x=full_name.find(' ')
-            full_name=full_name.replace(' ','')
-            first_name=full_name[:x]
-            last_name=full_name[x:]
-            code=auth_user_obj.code
-            name = first_name
-            surname = last_name
-            email = pat_obj.emailid
-            dob = pat_obj.dob
-            account_pin=pat_obj.account_pin
-            payload={'name':name,'uid':partner_id, 'surname':surname,'email':email,'dob':dob,'accountPin':account_pin,'mode':'C','code':code,'active':True}
-            res=self.account_playjam(payload)
-            print"res-------------", res, type(res)
-            dict_res=ast.literal_eval(res)
-            if 'body' in dict_res and ('result' in dict_res.get('body')):
-                if dict_res['body']['result']==4097:
-                    pat_obj.write({'active':True,'playjam_exported':True})
-                    request.cr.execute('select id from user_profile where playjam_exported = False partner_id= %s', (int(partner_id),))
-                    profile_ids = filter(None, map(lambda x:x[0], request.cr.fetchall()))
-                    pro_obj=self.pool.get('user.profile').browse(profile_ids[0])
-                    gender = pro_obj.gender
-                    dob = pro_obj.dob
-                    pin=pro_obj.pin
-                    playerTag = pro_obj.player_tag
-                    ageRating = pro_obj.age_rating
-                    avatar_id=pro_obj.avatar_id
-                    pc_params=pro_obj.pc_params
-                    payload2={'mode':'C', 'uid':partner_id, 'gender':gender, 'dob':dob,'Pin':pin,'playerTag':playerTag,'ageRating':ageRating,'avatarId':avatar_id ,'pcParams':pc_params}
-                    res2=self.profile_playjam(payload2)
-                    dict_res2 = ast.literal_eval(res2)
-                    if dict_res2.has_key('body') and (dict_res2.get('body')).has_key('result'):
-                        if dict_res2['body']['result']==4097:
-                            pro_obj.write({'playjam_exported':True})
-                            return { "code":True, "message":"Success"}
-            return {'body':{ "code":False, "message":"Partner Not Created At Playjam."}}'''
-        
+    
     def link_account(self, dict, context=None):
-        print "dict-----------",dict
+        _logger.info('dict---------------- %s', dict)
         partner_id=dict.get('CustomerId')
-	print"*******",partner_id,type(partner_id)
         code= dict.get('ActivationCode')
-        print "code-----------------",code
         order_no=False
 	product_id=False
         used = False
         request.cr.execute('select id from user_auth where code= %s', (str(code),))
         auth_user_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
         if auth_user_id==[]:
-
             return json.dumps({'body':{"code":False, "message":"No Such Device"}})
-
 	request.cr.execute('select id from res_partner where id= %s', (int(partner_id),))
         pat_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
-	print "patid-----------------",pat_id
 	if pat_id==[]:
 	    return json.dumps({'body':{"code":False, "message":"Partner Not Present"}})
-
         #check if device belongs to TRU and create a SO if yes.
 
         pat_obj=self.pool.get('res.partner').browse(request.cr,SUPERUSER_ID,int(partner_id))
         auth_user_obj=self.pool.get('user.auth').browse(request.cr,SUPERUSER_ID,auth_user_id[0])
         email_id=pat_obj.emailid
         order_dict={"CustomerId":partner_id,"Email":str(email_id),}
-
         billing_info={}
-#        if pat_obj.customer_profile_id:
-#            print "pat_obj.customer_profile_id----",pat_obj.customer_profile_id
-#            billing_info.update({'PaymentProfileId':pat_obj.customer_profile_id})
         if pat_obj.profile_ids:
-            print "profileids-------------",pat_obj.profile_ids
+            _logger.info('profileids------------- %s', profile_ids)
             for each in pat_obj.profile_ids:
                 if each.active_payment_profile==True:
                     if each.profile_id:
                         billing_info.update({'PaymentProfileId':str(each.profile_id)})
                     if each.credit_card_no :
-#                        and each.exp_date
                         cc_no=each.credit_card_no
-#                        "ExpDate":each.exp_date,
                         billing_info.update({'CreditCard':{"CCNumber":str(each.credit_card_no),}})
             if billing_info=={}:
                 return json.dumps({'body':{"code":False, "message":"Billing Info Missing!!"}})
-
-        print "billing_infobilling_infobilling_info",billing_info
-
-#      curl -X POST -d 'request=%7B%22ApiId%22%3A%22123%22%2C%22DBName%22%3A%22cox_db_12jan%22%2C%22CustomerId%22%3A%224545%22%2C%22ActivationCode%22%3A%2223456%22%2C%7D' http://localhost:8089/flare/magento/LinkAccount
-
         if pat_obj.street and pat_obj.city and pat_obj.state_id and pat_obj.zip:
             bill_add={ "Street1": str(pat_obj.street),"Street2": str(pat_obj.street2 or ""),"City": str(pat_obj.city),"State": str(pat_obj.state_id.code),"Zip": str(pat_obj.zip),}
             billing_info.update({'BillingAddress':bill_add})
         else:
             return json.dumps({'body':{"code":False, "message":"Incomplete Billing Address!!"}})
-
         order_dict.update({'BillingInfo':billing_info})
         partner_addr = self.pool.get('res.partner').address_get(request.cr,SUPERUSER_ID,[int(partner_id)],['delivery',])
         delivery_add=partner_addr.get('delivery')
@@ -248,85 +157,55 @@ class user_auth(models.Model):
                 order_dict.update({'ShippingAddress':delivery_add})
             else:
                 return json.dumps({'body':{"code":False, "message":"Incomplete Shipping Address!!"}})
-
-        print "partner_addr",partner_addr
-        print "order_dict------",json.dumps(order_dict)
         serial_obj=auth_user_obj.serial_no
-        
-	print "serial_obj----------------",serial_obj
         tru_location=False
         if serial_obj:
             current_location_type=serial_obj.location_id.usage
-	    print "current_location_type",current_location_type
             if current_location_type=='customer':
-		print "serilobj.moveids--------",serial_obj.move_prod_lot_ids
-		
                 move_ids = [move_id.id for move_id in serial_obj.move_prod_lot_ids]
-                print "move_ids--------------",move_ids
-		
 	    	if move_ids: 
                     latest_move_id=max(move_ids)
                     selling_location_id=self.pool.get('stock.move').browse(request.cr,SUPERUSER_ID,latest_move_id).location_id
-                    print "selling_location-------------",selling_location_id
                     if selling_location_id.tru==True:
                         tru_location=selling_location_id.id
-	    
             elif current_location_type=='internal' and serial_obj.location_id.tru:
-		print "innnnnnnnnnnnnnnnnnnnnn",serial_obj.location_id.tru
                 tru_location=serial_obj.location_id.id
-#        tru_already_attached=False
         if tru_location:
             if pat_obj.user_auth_ids:
                 for each in pat_obj.user_auth_ids:
                     sno=each.serial_no.name
-
                     if each.is_tru==True and sno!= serial_obj.name:
                         return json.dumps({'body':{ "code":False, "message":"A Tru Device is already attached to this Account."}})
-
             used= serial_obj.used
 
         if tru_location and not used:
-            print "tru_location-------",tru_location
-            cr.execute('select id from product_product where location_id= %s', (tru_location,))
+            request.cr.execute('select id from product_product where location_id= %s', (tru_location,))
             product_id = filter(None, map(lambda x:x[0], cr.fetchall()))
-            print "product_id-------------",product_id
             if product_id:
                 prod_obj=self.pool.get('product.product').browse(request.cr,SUPERUSER_ID,product_id[0])
                 prod_info={"ProductId":product_id[0],"Qty":"1.0","Price": prod_obj.product_tmpl_id.list_price,}
                 order_dict.update({"OrderLine":{"line1":prod_info},"tru":True})
-                print "order_dict------------------",order_dict,type(order_dict)
-#                result={"body":{ 'code':True, 'message':"Success",'OrderNo':so_name}}
-		print "serial_obj.order_created--------------------------0",serial_obj.order_created
+                _logger.info('order dict---------------- %s', order_dict)
 		if not serial_obj.order_created:
                     order_res=self.pool.get('res.partner').create_order_magento(request.cr,SUPERUSER_ID,order_dict,{})
-                    print"order_res-----------------",order_res
                     order_res=str(order_res)
                     if 'true' in order_res:
                         order_res=order_res.replace('true','True')
                     if 'false' in order_res:
                         order_res=order_res.replace('false','False')
-
                     ord_res=ast.literal_eval(str(order_res))
-                    print "ord_res---111111111----------",ord_res
-
-                    #order_no='SO060'
                     if (ord_res.get('body')).has_key('OrderNo'):
                         order_no=(ord_res.get('body')).get('OrderNo')
-                    print"(ord_res.get('body')=============----------++++",ord_res.get('body')
                     if (ord_res.get('body')).get('code')!=True:
                         return json.dumps({'body':{"code":False, "message":"Order Not Created!!"}})
                     else:
                         serial_obj.write({'order_created':True})
 			cr.commit()
                         self.write(cr,uid,auth_user_id,{'is_tru':True})
-
-#        ero
         if auth_user_id and partner_id:
             self.write(request.cr,SUPERUSER_ID,auth_user_id,{'partner_id':partner_id})
-
             accountPin= pat_obj.account_pin
             full_name=pat_obj.name
-	    print "pat_obj.name----------",pat_obj.name
             x=full_name.find(' ')
             full_name=full_name.replace(' ','')
             first_name=full_name[:x]
@@ -336,7 +215,6 @@ class user_auth(models.Model):
             surname = last_name
             email = pat_obj.emailid
             dob = pat_obj.dob
-
 	    p_exp=pat_obj.playjam_exported
 
 	    if dob:
@@ -344,37 +222,28 @@ class user_auth(models.Model):
                 dob=date_object.strftime('%Y/%m/%d')
 	    else:
 		dob=""
-		#return json.dumps({'body':{"code":False, "message":"DOB Is Required"}})
             account_pin=pat_obj.account_pin
             payload={'name':name,'uid':partner_id, 'surname':surname,'email':email,'accountPin':account_pin,'dob':dob,'mode':'C','active':True}
-	    #payload={'name':name,'uid':12345601, 'surname':surname,'email':'abc@123.com','dob':dob,'accountPin':account_pin,'mode':'C','active':True}
-	    print"account data create payload=-------====",payload
             if not p_exp:
                 res=self.account_playjam(payload)
-                print"res----account---------",res,type(res)
                 dict_res=ast.literal_eval(res)
                 if dict_res.has_key('body') and (dict_res.get('body')).has_key('result'):
                     if dict_res['body']['result']==4097:
-                    #if dict_res['body']['result']==-4101:
                         pat_obj.write({'active':True,'playjam_exported':True})
 			cr.commit()
                     else:
                         r_string=dict_res['body']['resultString']
                         return json.dumps({'body':{ "code":False, "message":"Account Call to Playjam Failed."}})
-
 		else:
 		    return json.dumps({"body":{"code":False,"message":"Account Call To Playjam Failed."}})		    
 	    if auth_user_obj.is_attached==False:
                 device_payload={'uid':partner_id,'mode':'C','code':code,'alias':'abc'}
                 device_res=self.device_playjam(device_payload)
                 device_response=ast.literal_eval(device_res)
-                print "deviceresponse-----------------",device_response
-#                print "type$$$$$$$$$$$$$$$$$$$$$$$$$$$",dict_res['body']['result'],type(dict_res['body']['result'])
                 if device_response.has_key('body') and (device_response.get('body')).has_key('result'):
                     if device_response['body']['result']==4241:
                         auth_user_obj.write({'is_attached':True})
                     else:
-                        #r_string=dict_res['body']['resultString']
                         return json.dumps({'body':{ "code":False, "message":"Device call to Playjam Failed"}})
                 else:
                      return json.dumps({'body':{ "code":False, "message":"Device Call To Playjam Failed."}})
@@ -383,10 +252,7 @@ class user_auth(models.Model):
                 return json.dumps({"body":{ "code":False, "message":"Profile Not Created Yet."}})
             request.cr.execute('select id from user_profile where playjam_exported = False and partner_id= %s', (int(partner_id),))
             profile_ids = filter(None, map(lambda x:x[0], request.cr.fetchall()))
-	    print "profile_ids---------------------------",profile_ids
             if profile_ids:
-#                return json.dumps({"body":{ "code":False, "message":"Profile Not Created Yet."}})
-
                 pro_obj=self.pool.get('user.profile').browse(request.cr,SUPERUSER_ID,profile_ids[0])
                 gender = pro_obj.gender
                 dob = pro_obj.dob
@@ -400,35 +266,26 @@ class user_auth(models.Model):
                 ageRating = pro_obj.age_rating
                 avatar_id=pro_obj.avatar_id
                 avatar_id=33
-                pc_params=pro_obj.pc_params
-
                 payload2={'mode':'C', 'uid':partner_id, 'gender':gender,'Pin':pin,'playerTag':playerTag,'dob':dob,'ageRating':ageRating,'avatarId':avatar_id }
-		#payload2={'mode':'C', 'uid':partner_id, 'gender':gender,'Pin':pin,'playerTag':playerTag,'ageRating':ageRating,'avatarId':avatar_id ,'pcParams':pc_params}
                 res2=self.profile_playjam(cr,uid,payload2)
-                print "res2222222222222222222222",res2
                 dict_res2=ast.literal_eval(res2)
                 if dict_res2.has_key('body') and (dict_res2.get('body')).has_key('result'):
                     if dict_res2['body']['result']==4225:
-                    #if dict_res2['body']['result']==-4230:
                         pro_obj.write({'playjam_exported':True})
                     else:
-                        #r_string=dict_res2['body']['result']
                         json.dumps({'body':{ "code":False, "message":"Profile Call Failed."}})
             app_id,sale_id,duration=False,False,False
-            print "product_id-------",product_id,order_no
             if product_id and order_no:
-                print "product_id-------",product_id,order_no
                 product_obj=self.pool.get('product.product').browse(request.cr,SUPERUSER_ID,int(product_id[0]))
                 for each in product_obj.ext_prod_config:
                    if each.comp_product_id.product_type=='service':
                        app_id=each.comp_product_id.app_id
-                cr.execute('select id from sale_order where name = %s', (str(order_no),))
+                request.cr.execute('select id from sale_order where name = %s', (str(order_no),))
                 order_id = filter(None, map(lambda x:x[0], cr.fetchall()))
                 sale_id=order_id[0]
                 free_days=prod_obj.free_trail_days
                 free_days=100
                 if free_days:
-                    print "enter free trialdats---------",free_days
                     mon_rel = relativedelta(months=free_days)
                     today = datetime.date.today()
                     end_free_trial=today + mon_rel
@@ -438,41 +295,28 @@ class user_auth(models.Model):
                 request.cr.execute('select id from res_partner_policy where active_service = False and agmnt_partner = %s', (str(partner_id),))
                 plociy_line_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
                 if len(plociy_line_id)>1:
-                    print "11111111111111111111"
                     return json.dumps({'body':{ "code":False, "message":"Multiple Inactive Service."}})
                 elif plociy_line_id==[]:
                     if True:
 			auth_user_obj.write({'is_activated':True})
                         return json.dumps({"body":{ "code":True, "message":"Success"}})
-                    print "222222222222222222"
                     return json.dumps({'body':{ "code":False, "message":"No Service to Activate."}})
                 policy_obj=self.pool.get('res.partner.policy').browse(request.cr,SUPERUSER_ID,plociy_line_id[0])
                 app_id=policy_obj.product_id.app_id
                 sale_id=policy_obj.sale_id
-                #sale_id=25
-                #app_id=20
                 free_days=100
-                #free_days=policy_obj.free_trail_days
-                #if free_days==0:
-                    #free_days=1
                 if free_days:
                     mon_rel = relativedelta(months=free_days)
                     todays_date = datetime.date.today()
-                    #today=todays_date.date()
                     end_free_trial=todays_date + mon_rel
                     end_date=end_free_trial.strftime('%Y/%m/%d')
                     duration=time.mktime(datetime.datetime.strptime(end_date, "%Y/%m/%d").timetuple())
-
-            print "Appid---------$$$$44444",app_id
-            print "sale_id--------------123",sale_id
-            print "duration!!!!!!!!!!!!!!!!!----------",duration
             if app_id and sale_id and duration and not used:
                 rental_resp=self.rental_playjam(partner_id,app_id,duration)
                 rental_res=ast.literal_eval(rental_resp)
-                print "rentalres---------------------",rental_res
+                _logger.info('rental response---------------- %s', rental_res)
                 if rental_res.has_key('body') and (rental_res.get('body')).has_key('result'):
                     if rental_res['body']['result']==4113:
-                    #if rental_res['body']['result']==-4230:
                         policy_active=self.pool.get('sale.order').write_selected_agreement([sale_id],{'update':True})
                         policy_active=True
                         if policy_active:
@@ -480,27 +324,73 @@ class user_auth(models.Model):
                                 serial_obj.write({'used':True})
 			    auth_user_obj.write({'is_activated':True})
                             return json.dumps({"body":{ "code":True, "message":"Success"}})
-
         return json.dumps({'body':{ "code":False, "message":"Playjam Server Issue."}})
-    
+
+    def obtaintransactions(self,user_id,start_time,end_time, context=None):
+        playjam_config=self.pool.get('playjam.config.menu')
+        config_ids = playjam_config.search(request.cr,SUPERUSER_ID,[])
+        if config_ids:
+            config_obj = playjam_config.browse(request.cr,SUPERUSER_ID,config_ids[0])
+            url=config_obj.obtain_transactions_playjam
+            if uid and start_time and end_time:
+    #            url = "http://54.172.158.69/api/rest/flare/obtaintransactions/view.json"
+                headers = {'content-type': 'application/x-www-form-urlencoded'}
+                payload = {
+                    "uid": uid,
+                    "startTime":long(start_time),
+                    "endTime":long(end_time),
+                }
+                data=json.dumps(payload)
+                requ=urllib.quote(data.encode('utf-8'))
+                response = requests.post(
+                            url, data="request="+requ, headers=headers)
+                return response.text
+            return False
+        else:
+            result={"body":{ 'code':'False', 'message':"Please Define Playjam Configuration!!"}}
+            return json.dumps(result)
     
     def account_playjam(self,dict,context=None):
-        url = "http://54.172.158.69/api/rest/flare/account/view.json"
-        headers = {'content-type': 'application/x-www-form-urlencoded'}
+        playjam_config=self.pool.get('playjam.config.menu')
+        config_ids = playjam_config.search(request.cr,SUPERUSER_ID,[])
+        if config_ids:
+            config_obj = playjam_config.browse(request.cr,SUPERUSER_ID,config_ids[0])
+            url=config_obj.account_playjam
+#        url = "http://54.172.158.69/api/rest/flare/account/view.json"
+            headers = {'content-type': 'application/x-www-form-urlencoded'}
+            data=json.dumps(dict)
+            _logger.info('data for account playjam--------------- %s', data)
+            requ=urllib.quote(data.encode('utf-8'))
+            response = requests.post(
+                        url, data="request="+requ, headers=headers)
+            return response.content
+        else:
+            result={"body":{ 'code':'False', 'message':"Please Define Playjam Configuration!!"}}
+            return json.dumps(result)
 
-        data=json.dumps(dict)
-	print"account datat========",data
-        request=urllib.quote(data.encode('utf-8'))
-        response = requests.post(
-                    url, data="request="+request, headers=headers)
+    def profile_playjam(self,dict,context=None):
+	#Sends a profile call to playjam
+        playjam_config=self.pool.get('playjam.config.menu')
+        config_ids = playjam_config.search(request.cr,SUPERUSER_ID,[])
+        if config_ids:
+            config_obj = playjam_config.browse(request.cr,SUPERUSER_ID,config_ids[0])
+            url=config_obj.profile_playjam
+#        url = "http://54.172.158.69/api/rest/flare/profile/view.json"
+            headers = {'content-type': 'application/x-www-form-urlencoded'}
 
-        return response.content
+            data=json.dumps(dict)
+            requ=urllib.quote(data.encode('utf-8'))
+            response = requests.post(
+                        url, data="request="+requ, headers=headers)
+            return response.text
+        else:
+            result={"body":{ 'code':'False', 'message':"Please Define Playjam Configuration!!"}}
+            return json.dumps(result)
 
     def user_login(self, dict, context=None):
-        print ''' Challenge Response algoooooooooooooooooo.'''
         result,auth_user_id = '',[]
         count = 0
-	print "dict---------------",dict
+        _logger.info('dict for user login--------------- %s', dict)
         device_id,auth_reply = False,False
         if 'deviceId' in dict:
             device_id=dict.get('deviceId')
@@ -509,15 +399,12 @@ class user_auth(models.Model):
         if device_id:
             request.cr.execute('select id from user_auth where device_id = %s and is_registered = True', (device_id,))
             auth_user_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
-            print "app_unlink====",auth_user_id
         else:
             h=int('-0x0601', 16)
             return json.dumps({'body':{'result':'-0x0601'}})
         if auth_user_id==[]:
-            print "auth_user_id$$$$$$$$$$$$$$$$$",auth_user_id
             h=int('-0x0012', 16)
             return json.dumps({'body':{'result':'-0x0012'}})
-        print "authreply--------------",auth_reply
         if 'authReply' in dict:
             if auth_user_id:
                 key=self.browse(request.cr,SUPERUSER_ID,auth_user_id[0]).key
@@ -526,16 +413,12 @@ class user_auth(models.Model):
                     chal_key=challenge+key
                     hash_obj=hashlib.sha256(chal_key)
                     encd_challenge=hash_obj.hexdigest()
-                    print "encd_challenge------------",encd_challenge
                     if encd_challenge==auth_reply:
                         session_token=hashlib.sha1(os.urandom(256)).hexdigest()
                         insecure_token=hashlib.sha1(os.urandom(256)).hexdigest()
-#                        duration=randint(1,99999)
                         duration=5000000
                         now = datetime.datetime.now()
-                        print "now-------------------",now
                         exp_time=now + datetime.timedelta(milliseconds=duration)
-                        print "now-----------------------",exp_time,type(exp_time)
                         self.write(request.cr,SUPERUSER_ID,auth_user_id[0],{'session_token':session_token,'insecure_token':insecure_token,'duration':duration,'token_exp_time':exp_time})
                         h=int('0x0011', 16)
                         return json.dumps({'body':{'result': '0x0011', 'sessionToken':session_token,'insecureToken':insecure_token,'duration':duration}})
@@ -544,12 +427,8 @@ class user_auth(models.Model):
                         return json.dumps({'body':{'result':'-0x0012'}})
         else:
             if auth_user_id:
-                print "enter22222222"
                 challenge=hashlib.sha1(os.urandom(128)).hexdigest()
-                print "chal--------------",challenge,type(challenge)
                 challenge=challenge.replace('A', 'a').replace('F', 'f')
-                print'chalengr=================',challenge
-
                 self.write(request.cr,SUPERUSER_ID,auth_user_id[0],{'challenge':str(challenge)})
                 h=int('-0x0011', 16)
                 return json.dumps({'body':{'result':'-0x0011','challenge':str(challenge)}})
@@ -566,7 +445,6 @@ class user_auth(models.Model):
         result = ''
         count = 0
         auth_user_id=[]
-
         if session_token:
             self._cr.execute('select id from user_auth where session_token= %s', (session_token,))
             auth_user_id = filter(None, map(lambda x:x[0], self._cr.fetchall()))
@@ -580,95 +458,71 @@ class user_auth(models.Model):
             if voucher_code:
                 self._cr.execute('select id from voucher_details where  voucher_code= %s', (voucher_code,))
                 voucher = filter(None, map(lambda x:x[0], self._cr.fetchall()))
-                print "voucher====",voucher
                 if voucher_code:
                     voucher_obj=self.pool.get('voucher.details').browse(voucher[0])
                     con=voucher_obj.consumed
                     type=voucher_obj.type
-                    print "con============",con
-                    print "typeeeeeeeeeeee",type
                 if con== True or voucher_code==[]:
                     h=int('-0x0021', 16)
                     return {'result':hex(h)}
                 if con== False and type=='facevalue':
                     user_id=auth_obj.name.id
                     value=voucher_obj.credit
-                    print "value----------",value
                     self.wallet_playjam(user_id,context)
                     return {}
                 if con==False and type=='rental':
                     user_id=auth_obj.name.id
                     apps_browse_list=voucher_obj.rental_apps
-                    print "apps_browse_listapps_browse_list",apps_browse_list
                     app_id=apps_browse_list[0].id
                     duration=0.0
                     duration=voucher_obj.expiration
                     app_id=123 #get the product id
                     self.rental_playjam(user_id,app_id,duration,context)
             return result
-            #r_string=dict_res2['body']['result']
             json.dumps({'body':{ "code":False, "message":"Profile Call Failed."}})
-
             app_id,sale_id,duration=False,False,False
-            print "product_id-------",product_id,order_no
             if product_id and order_no:
-                print "product_id-------",product_id,order_no
                 product_obj=self.pool.get('product.product').browse(cr,uid,int(product_id[0]))
                 for each in product_obj.ext_prod_config:
                    if each.comp_product_id.product_type=='service':
                        app_id=each.comp_product_id.app_id
-                       
-                cr.execute('select id from sale_order where name = %s', (str(order_no),))
+                request.cr.execute('select id from sale_order where name = %s', (str(order_no),))
                 order_id = filter(None, map(lambda x:x[0], cr.fetchall()))
                 sale_id=order_id[0]
                 free_days=prod_obj.free_trail_days
                 free_days=100
                 if free_days:
-                    print "enter free trialdats---------",free_days
                     mon_rel = relativedelta(months=free_days)
                     today = datetime.date.today()
                     end_free_trial=today + mon_rel
                     end_date=end_free_trial.strftime('%Y/%m/%d')
                     duration=time.mktime(datetime.datetime.strptime(end_date, "%Y/%m/%d").timetuple())
             else:
-                cr.execute('select id from res_partner_policy where active_service = False and agmnt_partner = %s', (str(partner_id),))
+                request.cr.execute('select id from res_partner_policy where active_service = False and agmnt_partner = %s', (str(partner_id),))
                 plociy_line_id = filter(None, map(lambda x:x[0], cr.fetchall()))
                 if len(plociy_line_id)>1:
-                    print "11111111111111111111"
                     return json.dumps({'body':{ "code":False, "message":"Multiple Inactive Service."}})
                 elif plociy_line_id==[]:
                     if True:
 			auth_user_obj.write({'is_activated':True})
                         return json.dumps({"body":{ "code":True, "message":"Success"}})
-                    print "222222222222222222"
                     return json.dumps({'body':{ "code":False, "message":"No Service to Activate."}})
                 policy_obj=self.pool.get('res.partner.policy').browse(cr,uid,plociy_line_id[0])
                 app_id=policy_obj.product_id.app_id
                 sale_id=policy_obj.sale_id
-                #sale_id=25
-                #app_id=20
                 free_days=100
-                #free_days=policy_obj.free_trail_days
-                #if free_days==0:
-                    #free_days=1
                 if free_days:
                     mon_rel = relativedelta(months=free_days)
                     todays_date = datetime.date.today()
-                    #today=todays_date.date()
                     end_free_trial=todays_date + mon_rel
                     end_date=end_free_trial.strftime('%Y/%m/%d')
                     duration=time.mktime(datetime.datetime.strptime(end_date, "%Y/%m/%d").timetuple())
-
-            print "Appid---------$$$$44444",app_id
-            print "sale_id--------------123",sale_id
-            print "duration!!!!!!!!!!!!!!!!!----------",duration
             if app_id and sale_id and duration and not used:
                 rental_resp=self.rental_playjam(cr,uid,partner_id,app_id,duration)
                 rental_res=ast.literal_eval(rental_resp)
-                print "rentalres---------------------",rental_res
+                _logger.info('rental response--------------- %s', rental_res)
                 if rental_res.has_key('body') and (rental_res.get('body')).has_key('result'):
                     if rental_res['body']['result']==4113:
-                    #if rental_res['body']['result']==-4230:
                         policy_active=self.pool.get('sale.order').write_selected_agreement(cr,uid,[sale_id],{'update':True})
                         policy_active=True
                         if policy_active:
@@ -676,83 +530,176 @@ class user_auth(models.Model):
                                 serial_obj.write({'used':True})
 			    auth_user_obj.write({'is_activated':True})
                             return json.dumps({"body":{ "code":True, "message":"Success"}})
-
         return json.dumps({'body':{ "code":False, "message":"Playjam Server Issue."}})
-        
+    
     def wallet_playjam(self, user_id, quantity, context=None):
-        url = "http://54.75.245.17/api/rest/flare/wallet/view.json"
-        headers = {'content-type': 'application/x-www-form-urlencoded'}
+        playjam_config=self.pool.get('playjam.config.menu')
+        config_ids = playjam_config.search(request.cr,SUPERUSER_ID,[])
+        if config_ids:
+            config_obj = playjam_config.browse(request.cr,SUPERUSER_ID,config_ids[0])
+            url=config_obj.wallet_playjam
+#        url = "http://54.75.245.17/api/rest/flare/wallet/view.json"
+            headers = {'content-type': 'application/x-www-form-urlencoded'}
 
-        payload = {
-                        "uid": 'FLARE1093',
-                        "quantity":float(quantity),
-                    }
+            payload = {
+                            "uid": 'FLARE1093',
+                            "quantity":float(quantity),
+                        }
 
-        data=json.dumps(payload)
-        print "data.......................",data
-        request=urllib.quote(data.encode('utf-8'))
-        response = requests.post(
-                    url, data="request="+request, headers=headers)
-        print"response.content",response.content
-        return response.content
+            data=json.dumps(payload)
+            _logger.info('data for wallet--------------- %s', data)
+            requ=urllib.quote(data.encode('utf-8'))
+            response = requests.post(
+                        url, data="request="+requ, headers=headers)
+            _logger.info('response for wallet--------------- %s', response.content)
+            return response.content
+        else:
+            result={"body":{ 'code':'False', 'message':"Please Define Playjam Configuration!!"}}
+            return json.dumps(result)
+        
+    def wallet_top_up(self, dict, context=None):
+	'''The function is called while making the topup from console'''
+        quantity=False
+        session_token=dict.get('sessionToken')
+        if dict.has_key('quantity'):
+            quantity=dict.get('quantity')
+        option_list=[]
+        top_optns_obj=self.pool.get('topup.options')
+        check=False
+        if session_token:
+            check=self.validate_token(session_token,context=None)
+
+        if check==False:
+            h=int('-0x0011', 16)
+            return json.dumps({'result':-17})
+        if check:
+            if not quantity:
+                request.cr.execute('select id from topup_options')
+                top_up_options = filter(None, map(lambda x:x[0], cr.fetchall()))
+                for each in top_up_options:
+                    cdt=top_optns_obj.browse(request.cr,SUPERUSER_ID,each).credit
+                    fb=top_optns_obj.browse(request.cr,SUPERUSER_ID,each).value
+                    option_list.append({'credit':cdt,'value':fb})
+                return json.dumps({'body':{'result': 50,'options':option_list}})
+
+            else:
+                request.cr.execute('select partner_id from user_auth where session_token=%s', (session_token,))
+                partner_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
+                if partner_id==[]:
+                    return json.dumps({'body':{'result':-49}})
+                wallet_dict={}
+                billing_info={}
+                wallet_dict.update({'CustomerId':partner_id[0]})
+                pat_obj=self.pool.get('res.partner').browse(request.cr,SUPERUSER_ID,partner_id[0])
+                cust_pro_id=pat_obj.customer_profile_id
+                if not cust_pro_id:
+                    return json.dumps({'body':{'result':-49}})
+                request.cr.execute('select profile_id from custmer_payment_profile where customer_profile_id=%s and active_payment_profile = True', (cust_pro_id,))
+                cpp = filter(None, map(lambda x:x[0], request.cr.fetchall()))
+                if cpp==[]:
+                    return json.dumps({'body':{'result':-49}})
+                billing_info.update({'PaymentProfileId':str(cpp[0])})
+                wallet_dict.update({'PaymentType': 'CC'})
+                partner_addr = self.pool.get('res.partner').address_get(request.cr,SUPERUSER_ID, [int(partner_id[0])],['default',])
+                billing_add=partner_addr.get('default')
+                if not billing_add:
+                    return json.dumps({'body':{'result':-49}})
+                if billing_add:
+                    delivery_obj=self.pool.get('res.partner').browse(request.cr,SUPERUSER_ID, billing_add)
+                    if delivery_obj.street and delivery_obj.city and delivery_obj.state_id and delivery_obj.zip:
+                        billing_add={ "Street1": str(delivery_obj.street),"Street2": 'abc',"City": str(delivery_obj.city),"State": str(delivery_obj.state_id.code),"Zip": str(delivery_obj.zip),}
+                        billing_info.update({'BillingAddress':billing_add})
+                        billing_info.update({'CreditCard': {'CCNumber': '', 'CCV': '', 'ExpDate': ''}})
+                wallet_dict.update({'BillingInfo':billing_info})
+                wallet_dict.update({'FillAmount':quantity})
+                response=self.pool.get('res.partner').wallet_topup(request.cr,SUPERUSER_ID,wallet_dict,{})
+                if 'true' in response:
+		    response=response.replace('true','True')
+		if 'false' in response:
+                    response=response.replace('false','False')
+                response=ast.literal_eval(str(response))
+                if (response.get('body')).get('code')=="-49":
+                    return json.dumps({'body':{'result':-50}})
+                elif (response.get('body')).get('code')=="-50":
+                    return json.dumps({'body':{'result':-49}})
+                elif (response.get('body')).get('code')=="-55":
+                    return json.dumps({'body':{'result':-51}})
+                else:
+                    return json.dumps({'body':{'result':49}})
     
     def device_playjam(self, dict, context=None):
-        url = "http://54.172.158.69/api/rest/flare/device/view.json"
-        headers = {'content-type': 'application/x-www-form-urlencoded'}
-
-
-        data=json.dumps(dict)
-        request=urllib.quote(data.encode('utf-8'))
-        response = requests.post(
-                    url, data="request="+request, headers=headers)
-
-        print "response.text----------",response.content
-
-        return response.content
+        playjam_config=self.pool.get('playjam.config.menu')
+        config_ids = playjam_config.search(request.cr,SUPERUSER_ID,[])
+        if config_ids:
+            config_obj = playjam_config.browse(request.cr,SUPERUSER_ID,config_ids[0])
+            url=config_obj.device_playjam
+#        url = "http://54.172.158.69/api/rest/flare/device/view.json"
+            headers = {'content-type': 'application/x-www-form-urlencoded'}
+            data=json.dumps(dict)
+            requ=urllib.quote(data.encode('utf-8'))
+            response = requests.post(
+                        url, data="request="+requ, headers=headers)
+            _logger.info('response for device playjam--------------- %s', response.content)
+            return response.content
+        else:
+            result={"body":{ 'code':'False', 'message':"Please Define Playjam Configuration!!"}}
+            return json.dumps(result)
     
     
     def rental_playjam(self, user_id, appId, expiration, context=None):
-        url = "http://54.172.158.69/api/rest/flare/rental/view.json"
-        headers = {'content-type': 'application/x-www-form-urlencoded'}
-        print "appid------------",appId
-	expiration=int(expiration)
-        print "expiration-------",expiration
-        payload = {
-            "uid":long(user_id),
-            "appId":long(appId),
-            "expiration":(expiration)*1000,
-	    "charge":0.0
-            }
-	print"payloaddddddddddddddddddddddddddddddddddddddddddddd",payload
-#	payload = {
-#           "uid":"FLARE1093",
-#           "appId": 128,
-#           "expiration": 0
-#            }
+        playjam_config=self.pool.get('playjam.config.menu')
+        config_ids = playjam_config.search(request.cr,SUPERUSER_ID,[])
+        if config_ids:
+            config_obj = playjam_config.browse(request.cr,SUPERUSER_ID,config_ids[0])
+            url=config_obj.rental_playjam
+#            url = "http://54.172.158.69/api/rest/flare/rental/view.json"
+            headers = {'content-type': 'application/x-www-form-urlencoded'}
+            _logger.info('App ID---------- %s', appId)
+            expiration=int(expiration)
+            _logger.info('Expiration---------- %s', expiration)
+            payload = {
+                "uid":long(user_id),
+                "appId":long(appId),
+                "expiration":(expiration)*1000,
+                "charge":0.0
+                }
+            data=json.dumps(payload)
+            requ=urllib.quote(data.encode('utf-8'))
+            response = requests.post(
+                        url, data="request="+requ, headers=headers)
+            return response.content
+        else:
+            result={"body":{ 'code':'False', 'message':"Please Define Playjam Configuration!!"}}
+            return json.dumps(result)
+        
+    def validate_token(self,session_token, context=None):
+	'''This function validates the session token'''
+        request.cr.execute('select id from user_auth where session_token= %s', (session_token,))
+        auth_user_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
+        if auth_user_id==[]:
+            return False
+        if auth_user_id:
+            cur_datetime = datetime.datetime.now()
+            _logger.info('cur_datetime------------ %s', cur_datetime)
+            token_exp_time=self.browse(request.cr,SUPERUSER_ID,auth_user_id[0]).token_exp_time
+            _logger.info('tok_exp_time------------ %s', token_exp_time)
+            dt=datetime.datetime.strptime(token_exp_time, "%Y-%m-%d %H:%M:%S.%f")
+            _logger.info('dt------------ %s', dt)
+            if cur_datetime > dt:
+                return False
+        return True
 
-        data=json.dumps(payload)
-        request=urllib.quote(data.encode('utf-8'))
-        response = requests.post(
-                    url, data="request="+request, headers=headers)
-
-        return response.content
-    
     def validate_insecure_token(self,session_token, context=None):
-
         request.cr.execute('select id from user_auth where insecure_token= %s', (session_token,))
         auth_user_id = filter(None, map(lambda x:x[0], request.cr.fetchall()))
         if auth_user_id==[]:
             return False
         if auth_user_id:
             cur_datetime = datetime.datetime.now()
-            print "cur----------------",cur_datetime
             token_exp_time=self.browse(request.cr,SUPERUSER_ID,auth_user_id[0]).token_exp_time
-            print "tok_exp_time-------------------------",token_exp_time
             dt=datetime.datetime.strptime(token_exp_time, "%Y-%m-%d %H:%M:%S")
-            print "dt-----------------------",dt
             if cur_datetime > dt:
                 return False
-
         return True
     
     

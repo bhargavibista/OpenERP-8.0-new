@@ -265,20 +265,26 @@ class res_partner(osv.Model):
                         'type': 'ir.actions.act_window',
                         'domain': [('id','in',lot_ids)]
                         }	
-    def onchange_name(self,cr,uid,ids,name,context={}):
+    def onchange_name(self,cr,uid,ids,name,is_company,context={}):
        res={}
        warning = {'title': _('Warning!')}
        if name:
            name=name.split(' ')
-           if len(name) < 2:
+           if len(name) < 2 and is_company != True:
                warning.update({'message' : _('Please enter the last name')})
-	   elif len(name) >= 2 and name[1]=='':
+	   elif len(name) >= 2 and name[1]=='' and is_company != True:
               warning.update({'message' : _('Please enter the last name')})
            if warning and warning.get('message'):
                res['warning'] = warning
 	       res['value'] = {}
 	       res['value']['name'] = False	 
 	      
+       return res
+   
+    def onchange_is_company(self,cr,uid,ids,is_company, context={}):
+       res={}   
+       res['value'] = {}           
+       res['value']['name'] = False
        return res
     def onchange_emailid(self,cr,uid,ids,emailid,context={}):
         res,res['value'],res['warning']={},{},{}

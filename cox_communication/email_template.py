@@ -105,7 +105,6 @@ class email_template(osv.osv):
                 values.update({'subject':context.get('subject',False)})
             if context.get('email_to',False):
                 values.update({'email_to':context.get('email_to',False)})
-            print"valuesssssssssssss",values
             # Add report in attachments: generate once for all template_res_ids
             if template.report_template:
                 for res_id in template_res_ids:
@@ -131,7 +130,6 @@ class email_template(osv.osv):
                     
             
             if context.get('my_attachments',False):
-                print"myattachment",context.get('my_attachments',False)
                 attachments=[]
                 for each in context.get('my_attachments',False):
                     result = each.get('data')

@@ -41,11 +41,7 @@ class sale_order_line(osv.osv):
             #else:
                 #return super(sale_order_line, self).create(cr, uid, vals, context=context)
     def create(self,cr,uid,vals,context=None):
-#        cr._cnx.set_isolation_level(ISOLATION_LEVEL_READ_COMMITTED)
-#        print"vals",vals
-#        print"context",context
         res=super(sale_order_line,self).create(cr,uid,vals,context)
-        print"res",res
         return res
     def write(self,cr,uid,ids,vals,context={}):
          if vals and vals.get('product_id'):
@@ -107,103 +103,6 @@ class sale_order_line(osv.osv):
                 res[line.id] = cur_obj.round(cr, uid, cur, taxes['total'])
         return res
 
-#    def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,uom=False, qty_uos=0, uos=False, name='', partner_id=False,  lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False, context=None):
-#        print"context sale order",context
-#        res = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product,qty,uom,qty_uos,uos,name,partner_id ,lang,update_tax,date_order,packaging,fiscal_position,flag, context)
-#        print"res",res
-#        if not res:
-#            res,res['value'],res['warning'] = {},{},{}
-#        if context==None:
-#            context={}
-#        message,child_product_ids = '',[]
-#        if res.get('warning',{}):
-#            message = res.get('warning',{}).get('message','')
-#        
-#        if not context.get('skip',False):
-#            existing_order_line = context.get('order_line')
-#            if res.get('value',{}).get('sub_components',[]):
-#                [child_product_ids.append(each_comp[2].get('product_id',False)) if each_comp[2].get('product_id',False) and each_comp[2].get('product_type',False) == 'service' else '' for each_comp in res.get('value',{}).get('sub_components',[])]
-#            else:
-#                child_product_ids.append(product)
-#            cr.execute("select product_id from res_partner_policy where agmnt_partner=%s and active_service = True"%(partner_id))
-#            existing_pack_id = filter(None, map(lambda x:x[0], cr.fetchall()))
-#            final_list = set(child_product_ids) & set(existing_pack_id)
-#            cr.execute("select product_id from res_partner_policy where agmnt_partner=%s and cancel_date<=CURRENT_DATE"%(partner_id))
-#            cancel_pack_id1 = filter(None, map(lambda x:x[0], cr.fetchall()))
-#            cancel_final_list=set(child_product_ids) & set(cancel_pack_id1)
-#
-#            if cancel_pack_id1 and cancel_final_list==final_list:
-#                final_list=[]
-#            if len(final_list) > 0:
-#                message += message + '\n Customer already has same active subscription.'
-#                print"message",message
-#                if res['warning']==False:
-#                    res['warning']={}
-#                res['warning']['message'] = message
-#                res['value'].update({'product_id':False,'name':'','sub_components':[]})
-#                print"res",res
-#            elif existing_order_line:
-#                for each_line in  existing_order_line:
-#                    lines_product_ids = []
-#                    if each_line[0]==2:
-#                        continue
-#                    if not each_line[1]:
-#                        [lines_product_ids.append(each_comp[2].get('product_id',False)) if each_comp[2].get('product_id',False) and each_comp[2].get('product_type',False) == 'service' else '' for each_comp in each_line[2].get('sub_components',[])]
-#                    else:
-#                        cr.execute("select product_id from sub_components where so_line_id =%s and product_type='service'"%(each_line[1]))
-#                        lines_product_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
-#                    if child_product_ids:
-#                        if child_product_ids==lines_product_ids:
-#                                message += message + '\n You cannot select same pack at same time.'
-#                                
-#                                res['warning']['message'] = message
-#                                res['value'].update({'product_id':False,'name':'','sub_components':[]})
-#         #Modification starts from here
-#        if product:
-#            product_id_obj = self.pool.get('product.product').browse(cr,uid,product)
-#            res['value']['start_date']=False
-#            res['value']['end_date']=False
-#            if product_id_obj.type=='service' and product_id_obj.recurring_service==True:
-#                if date_order:
-#                    res['value']['start_date']=date_order
-#                    res['value']['end_date']=str(datetime.strptime(date_order, "%Y-%m-%d %H:%M:%S")+relativedelta(months=24)) ##x=cox gen2 date_order field is datetime now
-#                res['value']['hide_date']=False
-#            ##To check whether added product is shipping product or not
-##            product_ref = ('base_sale_multichannels', 'product_product_shipping')
-#            product_ref = ('bista_shipping', 'product_product_shipping')  ##cox gen2
-#            model, product_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, *product_ref)
-#            if product_id == product:
-#                call_center_pickup = context.get('call_center_pickup')
-#                if call_center_pickup:
-#                    message += message + '\n You cannot add shipping Cost because you have choosen Pick UP'
-#                    if res['warning']==False:
-#                        res['warning']={}
-#                    res['warning']['message'] = message
-#                    res['value'].update({'product_id':False,'name':'','sub_components':[]})
-#        if message:
-#            if not res.get('warning',{}).get('title'):
-#                res['warning']['title'] = _('Warning!')
-#        product_categ_ids=[]
-#        if context.get('all_lines',False) and product:
-#            for each_line in all_lines:
-#                print"each_line[0]",each_line[0]
-#                if each_line[0] == 4:
-#                   product_categ_ids.append(self.browse(cr,uid,each_line[1]).product_id.id)
-#                   
-#                elif each_line[0] in (0,1) and isinstance(each_line[2], (dict)):
-#                   print"elseeeeeeeeeeeee"
-#                   product_categ_ids.append(each_line[2].get('product_id',0.0))
-#                   print"product_categ_ids---------------",product_categ_ids
-#            if product_categ_ids and product in product_categ_ids:
-#
-#                warning = {
-#                'title': _('Warning!'),
-#                'message' : _('Record is already selected . Please just increase the quantity of that line.')
-#                   }
-#                res['warning']  = warning
-#                res['value']['product_id'] = False
-#        return res
-
     def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
             uom=False, qty_uos=0, uos=False, name='', partner_id=False, 
             all_lines=False,lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False, context=None):
@@ -217,7 +116,6 @@ class sale_order_line(osv.osv):
         existing_parent_services,existing_child_services,existing_parent_services2=[],[],[]
         if not res:
             res,res['value'],res['warning'] = {},{},{}
-            print"desired_service_id",res
         if context==None:
             context={}
         message,child_product_ids = '',[]
@@ -241,27 +139,19 @@ class sale_order_line(osv.osv):
             #end code preeti
             #start code Preeti
             for each_child_product_id in child_product_ids:
-                print"child_product_ids",child_product_ids
                 desired_id =product_obj.browse(cr,uid,each_child_product_id)
-                print"desired_id",desired_id
                 if desired_id.id != 0:
                     desired_service=desired_id.product_tmpl_id.categ_id  ##cox gen2
-                    print"desired_service",desired_service
                     desired_service_id=desired_id.product_tmpl_id.categ_id.id  ##cox gen2
                     if partner_id:
                         current_active_ids = policy_obj.search(cr,uid,[('agmnt_partner','=',partner_id),('active_service', '=', True)])
                         for each_existing_id in policy_obj.browse(cr,uid,current_active_ids):
                             prod_id = each_existing_id.product_id
-                            print"prod_id",prod_id
                             existing_service_brw = product_category_obj.browse(cr,uid,prod_id.product_tmpl_id.categ_id.id)
-                            print "existing_service_brw",existing_service_brw##cox gen2
-#                            print"existing_service_brwexisting_service_brw",existing_service_brw
                             if (existing_service_brw.parent_id):
                                 existing_parent_services.append(existing_service_brw.parent_id.id)
-#                            else:
-#                                existing_parent_services2.append(existing_service_brw.id)
                             existing_child_services.append(existing_service_brw.id)
-                        print"existing_child_services",existing_child_services,existing_parent_services
+                        
                         if desired_service_id:
                             if desired_service.parent_id and (desired_service.parent_id.id in existing_child_services) :
                                 message += message + '\n Customer already has same active subscription.'
@@ -271,26 +161,12 @@ class sale_order_line(osv.osv):
                                 message += message + '\n Customer already has same active subscription.'
                                 res['warning']['message'] = message
                                 res['value'].update({'product_id':False,'name':'','sub_components':[]})
-#                    if desired_service_id:
-#                        if (desired_service_id in existing_child_services) or (desired_service_id in existing_parent_services):
-#                            message += message + '\n Customer already has same active subscription.'
-#                            print"(desired_service.parent_id.id in existing_parent_services2)(desired_service.parent_id.id in existing_parent_services2)"
-#                            res['warning']['message'] = message
-#                            res['value'].update({'product_id':False,'name':'','sub_components':[]})
-##                                break;
-#                        elif (desired_service.parent_id.id in existing_child_services) or (desired_service.parent_id.id in existing_parent_services): #here
-#                            if (desired_service_id in existing_child_services) or (desired_service.parent_id.id in existing_parent_services2):
-#                                message += message + '\n Customer already has same active subscription.'
-#                                res['warning']['message'] = message
-#                                res['value'].update({'product_id':False,'name':'','sub_components':[]})
-##                                    break;
-
         #end code Preeti
 ##########code done by yogita
                         elif existing_order_line:
-                            print"existing_order_lineexisting_order_lineexisting_order_line",existing_order_line
+                            
                             for each_line in existing_order_line:
-                                print"each_line[1]",each_line[1]
+                                
                                 lines_product_ids = []
                                 existing_parent_services=[]
                                 existing_child_services=[]
@@ -303,49 +179,37 @@ class sale_order_line(osv.osv):
                                             
                                             [lines_product_ids.append(each_comp[2].get('product_id',False)) if each_comp[2].get('product_id',False) and each_comp[2].get('product_type',False) == 'service' else '' for each_comp in each_line[2].get('sub_components',[])]
                                         else:
-                                            print"each_line[2].get('product_id',False)",each_line[2].get('product_id',False)
+                                            
                                             [lines_product_ids.append(each_line[2].get('product_id',False)) if each_line[2].get('product_id',False) else '']
                                 else:
                                     cr.execute("select product_id from sub_components where so_line_id =%s and product_type='service'"%(each_line[1]))
                                     lines_product_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
-                                    print"lines_product_ids",lines_product_ids
+                                    
                                 for each_child_product_id in lines_product_ids:
                                     existing_id =product_obj.browse(cr,uid,each_child_product_id)
                                     if existing_id.id != 0:
                                         existing_service=existing_id.product_tmpl_id.categ_id  ##cox gen2
-                                        print"existing_service***************************",existing_service,desired_service_id,desired_service.parent_id
+                                        
                                         existing_service_id=existing_id.product_tmpl_id.categ_id.id ##cox gen2
                                         if partner_id and existing_service_id:
             #                                if desired_service_id:
                                             if existing_service.parent_id:
-                                                print"existing_parent_services.append(existing_service_id)",existing_service.parent_id
+                                                
                                                 existing_parent_services.append(existing_service.parent_id.id)
 #                                            else:
 #                                                existing_parent_services2.append(existing_service_id)
                                             existing_child_services.append(existing_service_id)
 #                                                existing_parent_services2.append(existing_service_id)
-                                            print"existing_child_servicesexisting_child_services",existing_child_services
-                                            print"existing_parent_servicesexisting_parent_services",existing_parent_services
-                                            print"existing_parent_servicesexisting_parent_services",existing_parent_services2
+                                            
                                             if desired_service.parent_id and (desired_service.parent_id.id in existing_child_services) :
-#                                                if (desired_service.parent_id.id in existing_child_services) :
-#                                                or (desired_service.parent_id.id in existing_parent_services): #here
-                #                                    print "active"
                                                 message += message + '\n You cannot select same pack at same time.'
                                                 res['warning']['message'] = message
                                                 res['value'].update({'product_id':False,'name':'','sub_components':[]})
                                             elif (desired_service_id in existing_child_services) or (desired_service_id in existing_parent_services):
-                                                    print "active------------------"
                                                     message += message + '\n You cannot select same pack at same time.'
                                                     res['warning']['message'] = message
                                                     res['value'].update({'product_id':False,'name':'','sub_components':[]})
                                                     break;
-#                                            elif (desired_service.parent_id.id in existing_child_services) or (desired_service.parent_id.id in existing_parent_services): #here
-#                                                if (desired_service_id in existing_child_services) or (desired_service.parent_id.id in existing_parent_services2):
-#                #                                    print "active"
-#                                                  message += message + '\n You cannot select same pack at same time.'
-#                                                  res['warning']['message'] = message
-#                                                  res['value'].update({'product_id':False,'name':'','sub_components':[]})
                                         
 ############code done by yogita
 #          #Modification starts from here
@@ -512,7 +376,6 @@ class sale_order(osv.osv):
                     for sub_line in line.sub_components:
                         result = sub_component_obj.need_procurement(cr, uid, [sub_line.id], context=context)
                         if result:
-                            print"sub_line",sub_line.id
                             if not sub_line.product_id:
                                 continue
                             vals = self._prepare_order_line_procurement(cr, uid, order, line, sub_line, group_id=order.procurement_group_id.id,  context=context)
@@ -823,7 +686,6 @@ class sale_order(osv.osv):
         avatax_config = avatax_config_obj._get_avatax_config_company(cr, uid)
         for order in self.browse(cr, uid, ids):
             if order.cox_sales_channels != 'ecommerce':#Extra Code
-                print"order.location_id.",order.location_id
                 tax_amount = 0.0
                 if avatax_config and not avatax_config.disable_tax_calculation and \
                 avatax_config.default_tax_schedule_id.id == order.partner_id.tax_schedule_id.id:
@@ -842,7 +704,6 @@ class sale_order(osv.osv):
                                                                         order.name, 'SalesOrder', order.partner_id, address,
                                                                         order.partner_invoice_id.id, lines, order.shipcharge, order.user_id,
                                                                         context=context).TotalTax
-                        print"tax_amount",tax_amount
                     self.write(cr, uid, [order.id], {'tax_amount': tax_amount, 'order_line': []})
         return True
     #Function is to delete shipping and costs product on selecting of Pick UP
@@ -888,31 +749,11 @@ class sale_order(osv.osv):
     #Function Is inheited to do change location_id for Retail Store Orders
     def _prepare_order_line_procurement(self, cr, uid, order, line, sub_comp = False, group_id=False, context=None):
         date_planned = self._get_date_planned(cr, uid, order, line, order.date_order, context=context)
-#        cr.execute("select id from sale_order_line where parent_so_line_id='%s' and product_id in (select id from product_product where product_tmpl_id in (select id from product_template where type !='service'))"%(line.id))
-#        sale_line_id = filter(None, map(lambda x:x[0], cr.fetchall()))
-#        print"sale_line_id",sale_line_id
-#        sale_line_id = self.pool.get('sale.order.line').search(cr,uid,[('parent_so_line_id','=',line.id)])
-        #Extra code
-#        rule_id= False
-#        location_id = self.pool.get('stock.location').search(cr,uid,[('name','ilike','stock')])
-#        if location_id:
-#            location_id = location_id[0]
-#        if order.order_type:
-#            location_id = (order.location_id.id if order.location_id else location_id)
-#        else:
-#            location_id = (order.warehouse_id.wh_output_stock_loc_id.id if order.warehouse_id else location_id)
         rule_id= self.pool.get('procurement.rule').search(cr,uid,[('location_src_id','=',order.location_id.id),('warehouse_id','=',order.warehouse_id.id)])
         if rule_id:
             rule_id = rule_id[0]
-#        print"rule_idrule_idrule_idrule_id",rule_id
-#        output_id = order.warehouse_id.wh_output_stock_loc_id.id
-#        print"output_idoutput_id",output_id
-#        partner_dest_id = order.partner_id.id
-#        print"partner_dest_id",partner_dest_id
         #########end
         location_id = order.partner_shipping_id.property_stock_customer.id
-#        vals['location_id'] = location_id
-#        print"rule_id",rule_id
         #Ends here
         if not sub_comp:
             vals= {
@@ -1008,7 +849,6 @@ class sale_order(osv.osv):
         return super(sale_order, self).copy(cr, uid, ids, vals,context=context)
     
     def onchange_partner_id(self, cr, uid, ids, part,context=None):
-        print"onchange"
         val = {}
         if not part:
             return {'value': {'partner_invoice_id': False, 'partner_shipping_id': False,  'payment_term': False, 'fiscal_position': False}}
@@ -1062,122 +902,12 @@ class sale_order(osv.osv):
                 if billing_date_compare < billing_date:
                     billing_date = billing_date_compare
                 billing_date = billing_date.strftime("%Y-%m-%d")     
-        print"billing_datebilling_date",billing_date
         return billing_date,free_trial_date
     def shipping_product(self,cr,uid,ids,context={}):
         product_ref = ('bista_shipping', 'product_product_shipping')
         model, product_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, *product_ref)
         return product_id
     
-    '''def write_selected_agreement(self, cr, uid, ids,context={}):
-        if context is None:
-            context = {}
-        sale_id_brw = self.browse(cr,uid,ids[0])
-        policy_object=self.pool.get('res.partner.policy')
-        line_obj =self.pool.get('sale.order.line')
-        billing_date = False
-        so_name=sale_id_brw.name
-        partner_id=sale_id_brw.partner_id.id
-        if sale_id_brw.cox_sales_channels == 'playjam':
-            return True
-        order_date=datetime.strptime(str(date.today()), "%Y-%m-%d")
-#        confirm_date=sale_id_brw.date_confirm
-#        sales_channel = sale_id_brw.cox_sales_channels
-#        if sale_id_brw.cox_sales_channels == 'ecommerce':
-#           confirm_date=sale_id_brw.date_order
-#        if sale_id_brw.cox_sales_channels == 'call_center':
-#            confirm_date=datetime.now()
-#            confirm_date = confirm_date.strftime("%Y-%m-%d")
-#        print "sale_id_brw.cox_sales_channels",sale_id_brw.cox_sales_channels,confirm_date
-#        order_date=datetime.strptime(confirm_date, "%Y-%m-%d")
-#        print "order date......................",order_date
-#        jkhkjhj
-#        nextmonth = order_date + relativedelta(months=1)
-#        days=calendar.monthrange(order_date.year,order_date.month)[1]
-#        if order_date.day==31:
-#            days=calendar.monthrange(nextmonth.year,nextmonth.month)[1]
-#            nextmonth=str(nextmonth.year)+'-'+str(nextmonth.month)+'-'+str(days)
-        order_lines = sale_id_brw.order_line
-        active_services=policy_object.search(cr,uid,[('agmnt_partner','=',partner_id),('active_service','=',True)])
-        billing_date = sale_id_brw.partner_id.billing_date
-        shipping_prod_id = self.shipping_product(cr,uid,[],{})
-        for order_line in order_lines:
-            free_trial_date,no_recurring = '',False
-            if order_line.product_id.type=='service' and order_line.product_id.id != shipping_prod_id:
-		if order_line.product_id.start_date:
-                   order_date=datetime.strptime(order_line.product_id.start_date, "%Y-%m-%d")
-                order_line.write({'start_date':order_date})
-                free_trail_days = order_line.product_id.free_trail_days
-                if sales_channel == 'ecommerce':
-                    free_trail_days = (order_line.free_trial_days)
-		    if not free_trail_days:
-                        free_trail_days = order_line.product_id.free_trail_days 	
-                billing_date_fun,free_trial_date  = self.get_billing_date(cr,uid,order_date,free_trail_days,billing_date)
-                if billing_date_fun:
-                    billing_date = billing_date_fun
-                if order_line.sub_components:
-#                    changes done by yogita
-                    for each_sub_com in order_line.sub_components:
-                        if each_sub_com.product_id.type=='service':
-                            no_recurring=each_sub_com.no_recurring
-#                changes done by yogita
-                    child_sol_id = line_obj.search(cr,uid,[('parent_so_line_id','=',order_line.id)])
-                    for each_child_sol in line_obj.browse(cr,uid,child_sol_id):
-                        if each_child_sol.product_id.type=='service':
-                            if each_child_sol.product_id.recurring_service:
-                                search_policy_id = policy_object.search(cr,uid,[('sale_id','=',ids[0]),('sale_line_id','=',each_child_sol.id),('sale_order','=',so_name)])
-                                if not search_policy_id:
-                                    vals={'sale_order':so_name,
-                                        'active_service':(False if sale_id_brw.cox_sales_channels == 'call_center' else True),
-                                        'product_id':each_child_sol.product_id.id,
-                                        'start_date':(False if sale_id_brw.cox_sales_channels == 'call_center' else order_date),
-                                        'agmnt_partner':partner_id,
-                                        'sale_id':ids[0],
-                                        'sale_line_id':each_child_sol.id,
-                                        'free_trial_date': (False if sale_id_brw.cox_sales_channels == 'call_center' else free_trial_date),
-                                        'free_trail_days':order_line.product_id.free_trail_days,
-					'last_amount_charged': float(each_child_sol.price_unit) * float(each_child_sol.product_uom_qty),
-                                        'no_recurring':no_recurring,
-                                        'recurring_reminder':False,
-                                        }
-                                    policy_object.create(cr,uid,vals)
-                                else:
-                                    policy_object.write(cr,uid,search_policy_id,{'active_service':True,
-                                    'start_date':order_date,
-                                    'free_trial_date':free_trial_date,
-                                    })
-                else:
-                    if order_line.product_id.recurring_service:
-                        search_policy_id = policy_object.search(cr,uid,[('sale_id','=',ids[0]),('sale_line_id','=',order_line.id),('sale_order','=',so_name)])
-                        if not search_policy_id:
-                            vals={'sale_order':so_name,
-                                'active_service':(False if sale_id_brw.cox_sales_channels == 'call_center' else True),
-                                'product_id':order_line.product_id.id,
-                                'start_date':(False if sale_id_brw.cox_sales_channels == 'call_center' else order_date),
-                                'agmnt_partner':partner_id,
-                                'sale_id':sale_id_brw.id,
-                                'sale_line_id':int(order_line.id),
-                                'free_trial_date': (False if sale_id_brw.cox_sales_channels == 'call_center' else free_trial_date),
-                                'free_trail_days':order_line.product_id.free_trail_days,
-				'last_amount_charged': float(order_line.price_unit) * float(order_line.product_uom_qty),
-                                'no_recurring':no_recurring,
-                                'recurring_reminder':False,	
-                                }
-                            policy_object.create(cr,uid,vals)
-                        else:
-                            policy_object.write(cr,uid,search_policy_id,{'active_service':True,
-                            'start_date':order_date,
-                            'free_trial_date':free_trial_date,
-                            })
-        if billing_date and ((sale_id_brw.cox_sales_channels != 'call_center') or (context.get('update'))) :
-            value = "billing_date='%s'"%billing_date
-            if not active_services:
-                value += ",start_date='%s'"%order_date
-            if value:
-                if sale_id_brw.cox_sales_channels != 'amazon':
-                    cr.execute('update res_partner set %s where id=%s'%(value,partner_id))
-            self.calculate_extra_days(cr,uid,partner_id,billing_date)
-        return True'''
     
     def write_selected_agreement(self, cr, uid, ids,context={}):
         if context is None:
@@ -1215,7 +945,6 @@ class sale_order(osv.osv):
             free_trial_date,no_recurring,recurring_price='',False,0.0
             if order_line.product_id.type=='service' and order_line.product_id.id != shipping_prod_id:
 		if order_line.product_id.start_date:
-                   print"order_date",order_date
                    order_date=datetime.strptime(order_line.product_id.start_date, "%Y-%m-%d")
                 order_line.write({'start_date':order_date})
                 free_trail_days = order_line.product_id.free_trail_days
@@ -1242,7 +971,6 @@ class sale_order(osv.osv):
                             if each_child_sol.product_id.recurring_service:
                                 search_policy_id = policy_object.search(cr,uid,[('sale_id','=',ids[0]),('sale_line_id','=',each_child_sol.id),('sale_order','=',so_name)])
                                 if not search_policy_id:
-                                    print"search_policy_id",search_policy_id
                                     vals={'sale_order':so_name,
                                        # 'active_service':(False if sale_id_brw.cox_sales_channels == 'call_center' else True),
                                         'product_id':each_child_sol.product_id.id,
@@ -1259,7 +987,6 @@ class sale_order(osv.osv):
                                         }
                                     policy_object.create(cr,uid,vals)
                                 else:
-                                    print"eeeeelllllllllllllllseeeeeeeee"
                                     policy_object.write(cr,uid,search_policy_id,{'active_service':True,
                                     'start_date':order_date,
                                     'free_trial_date':free_trial_date,
@@ -1267,8 +994,6 @@ class sale_order(osv.osv):
                                     'rental_response':True
                                     })
                 else:
-                    
-                    print"eleeeeeeeeeeeeeeeeeeeee"
                     if order_line.product_id.recurring_service:
                         search_policy_id = policy_object.search(cr,uid,[('sale_id','=',ids[0]),('sale_line_id','=',order_line.id),('sale_order','=',so_name)])
                         if not search_policy_id:
@@ -1292,8 +1017,7 @@ class sale_order(osv.osv):
                             rental_resp=user_auth_obj.rental_playjam(partner_id,order_line.product_id.product_tmpl_id.app_id,duration)
 #                            rental_res=ast.literal_eval(rental_resp)
                             if ast.literal_eval(str(rental_resp)).has_key('body') and ast.literal_eval(str(rental_resp)).get('body')['result'] == 4113:
-                                print "rentalres---------------------",rental_resp
-#                            if rental_res.has_key('body') and (rental_res.get('body')).has_key('result'):
+                                _logger.info('rentalres------------ %s', rental_resp)
                                 vals.update({
                                 'start_date':order_date,
                                 'active_service':True,
@@ -1306,7 +1030,6 @@ class sale_order(osv.osv):
                                     context['update']=True
                             else:
                                 vals.update({'rental_response':False})
-                            print"valsvalsvalsvalsvalsvalsvalsvalsvalsvalsvalsvals",vals
                             policy_object.create(cr,uid,vals)
                         else:
                             policy_object.write(cr,uid,search_policy_id,{'active_service':True,
@@ -1316,23 +1039,22 @@ class sale_order(osv.osv):
                             'rental_response':True
                             })
         #if billing_date and ((sale_id_brw.cox_sales_channels != 'call_center') or (context.get('update'))) :
-        print"contextttttttttttttttt",context
+        
         if billing_date and (context.get('update')) :
-            print"ifffffffffffffff"
+            
             value = "billing_date='%s'"%billing_date
             if not active_services:
                 value += ",start_date='%s'"%order_date
             if value:
-                print"value",value,sale_id_brw.cox_sales_channels
                 if sale_id_brw.cox_sales_channels != 'amazon':
-                    print"ffffffffffffffffff"
+                    
                     result=partner_obj.write(cr,uid,partner_id,{'billing_date':billing_date})
-                    print"resultttttttttttttt",result
+                    
 #                    cr.execute('update res_partner set %s where id=%s'%(value,partner_id))
 #                    cr.commit()
             self.calculate_extra_days(cr,uid,partner_id,billing_date)
             billing=partner_obj.browse(cr,uid,partner_id)
-            print"billingbillingbillingbillingbilling",billing,billing.billing_date
+            
             partner_obj.cal_next_billing_amount(cr,uid,partner_id)
         return True
 
@@ -1385,7 +1107,6 @@ class sale_order(osv.osv):
 	#To check smtp permission
         '''smtp_obj = self.pool.get('email.smtpclient')
         search_smtp_ids = smtp_obj.search(cr,uid,[('pstate','=','running'),('active','=',True)])'''
-#        print "search_smtp",search_smtp_ids
 
         ###cox gen2 stmp.client module is not needed now
 #        if search_smtp_ids:
@@ -1415,7 +1136,6 @@ class sale_order(osv.osv):
 	#Extra Code
         for o in self.browse(cr, uid, ids):
             date_confirm = self.date_order_confirm(cr,uid,context)
-            print"date_confirm",date_confirm
             self.write(cr, uid, [o.id], {'date_confirm': date_confirm})
         self.write_selected_agreement(cr,uid,ids,context=context)
         return True
@@ -1467,7 +1187,7 @@ class sale_order(osv.osv):
                             attr_conn = referential_id_obj.external_connection(True)
                             attr_conn.call('sales_order.status_change',[sale_id_obj.magento_incrementid,'canceled','canceled'])
                     except Exception, e:
-                        print "Error in URLLIB",str(e)
+                        _logger.info("Exception.....%s",e)
         return True
 
     def paid_and_update(self, cr, uid, external_session, order_id, resource, context=None):
@@ -1507,14 +1227,10 @@ class sale_order(osv.osv):
         date1 = datetime.strptime(str(service_start_dt), '%Y-%m-%d')
         date2 = datetime.strptime(str(current_dt), '%Y-%m-%d')
         x = (date2.year - date1.year) * 12 + date2.month - date1.month
-#        r = relativedelta(date2, date1)
-#        return r.months
-	#print "x",x
         return x
         
     def action_invoice_merge(self, cr, uid,maerge_invoice_data, date_inv, nextmonth, service_start_date,customer_profile_id=False, context=None):
         returnval,res,invoice_lines,sale_ids,invoice_ref,invoice_vals= False,False,[],[],'',{}
-    #    print "actioinv merge function",context  
 	invoice = self.pool.get('account.invoice')
         policy_obj=self.pool.get('res.partner.policy')
         invoice_line_obj = self.pool.get('account.invoice.line')
@@ -1526,24 +1242,17 @@ class sale_order(osv.osv):
         if partner_id_obj:
             journal_ids = self.pool.get('account.journal').search(cr, uid,
                 [('type', '=', 'sale'), ('company_id', '=', partner_id_obj.company_id.id)],limit=1)
-         #   if service_start_date and service_start_date.day==31:
-          #      days_prevmonth=calendar.monthrange(prev_month.year,prev_month.month)[1]
-           #     prev_month=str(prev_month.year)+'-'+str(prev_month.month)+'-'+str(days_prevmonth)
-            #    prev_month=datetime.strptime(prev_month, "%Y-%m-%d").date()
             for service_data in maerge_invoice_data:
                 vals={}
-#		print "service_data",service_data
                 line=obj_sale_order_line.browse(cr,uid,service_data.get('line_id',False))
                 product_price=line.product_id.list_price
                 line_start_date=datetime.strptime(line.start_date, "%Y-%m-%d").date()
-		#print"line start data",line_start_date,customer_profile_id
                 order_id = line.order_id
                 if not customer_profile_id:
                     customer_profile_id=order_id.customer_payment_profile_id
                 unit_price = product_price
                 #Newly added Code
                 month_diff = self.calculate_month(cr,uid,date_inv,line_start_date)
-#		print "month_difff",month_diff
                 if month_diff:
 #                    service_charge_id = service_charges.search(cr,uid,[('start_range_month','>=',month_diff),('end_range_month','<',month_diff),('product_id','=',line.product_id.id)])
                     cr.execute('select service_charge_amt from service_charges where product_id=%s and %s between start_range_month and end_range_month'%(line.product_id.id,int(month_diff)))
@@ -1552,7 +1261,6 @@ class sale_order(osv.osv):
                         unit_price = advance_price[0]
                 #################
                 vals = obj_sale_order_line._prepare_order_line_invoice_line_cox(cr, uid, line, False, context)
-#		print "vals after prepare",vals
                 if vals:
                     vals.update({'price_unit':unit_price})
                 if service_data.get('extra_days', 0)>0 :
@@ -1603,7 +1311,6 @@ class sale_order(osv.osv):
                     'next_billing_date':str(nextmonth),
                     'recurring':True,
                 })
- #               print "invoice_vals",invoice_vals 
                 res=invoice.create(cr,uid,invoice_vals)
                 if res:
                     for invoice_line in invoice_lines:
@@ -1776,10 +1483,8 @@ class sale_order(osv.osv):
             if customer_id:
                 bill_add_id,ship_add_id = self.customer_address(cr,uid,sale_obj.partner_invoice_id,sale_obj.partner_shipping_id,customer_id,context)
             oe_product_details = self.get_product_details(cr, uid, sale_obj.order_line,order_line_obj,customer_id)
-#            print"oe_product_details",oe_product_details
             if oe_product_details.get('product_data'):
                 result = self.create_order(cr, uid, ids,conn,customer_id,oe_product_details.get('product_data'),bill_add_id,ship_add_id,sale_obj,mag_shop_brw.default_storeview_integer_id,context)
-                #print "mag_order_details",result
                 if result.get('increment_id',False):
                     so_obj.write(cr,uid,[sale_obj.id],{'magento_exported':True,'magento_incrementid':result.get('increment_id',''),'magento_so_id':result.get('increment_id',''),'magento_db_id':result.get('db_id','')})
                     id_val = self.extid_to_existing_oeid(cr, uid,mag_shop_brw.referential_id.id,result.get('increment_id',''),context=context)
@@ -1907,7 +1612,6 @@ class sale_order(osv.osv):
             returnid = conn.call(model_name,vals)
             return returnid
         except Exception, e:
-            #print e
             if e.message != '':
                 return e.message
             else:
@@ -1917,7 +1621,6 @@ class sale_order(osv.osv):
         raise osv.except_osv(_('Warning!'), _('%s')%(str(message)))
 
     def email_to_customer(self, cr, uid, ids_obj,model,email_type,email_to,context={}):
-        print"emaillllllllllllllllll",email_type
         
 #        smtp_obj = self.pool.get('email.smtpclient')
         template_obj=self.pool.get('email.template')
@@ -1929,7 +1632,6 @@ class sale_order(osv.osv):
         else:
             template_search = template_obj.search(cr,uid,[('model','=',model),('email_type','=',email_type)])
         if template_search:
-            print"template_search",template_search
 #        template_id_obj = template_obj.browse(cr,uid,template_search[0])
             self.pool.get('email.template').send_mail(cr,uid,template_search[0],ids_obj.id,'True',False,context)
 #        if smtpserver_id:
@@ -1991,26 +1693,9 @@ class sale_order(osv.osv):
                     if cust_id_obj.ref:
                         mag_profile_id = external_session.connection.call('sales_order.magento_Authorize_profile',[cust_id_obj.ref,payment_info.get('authorizenetcim_customer_id')])
         #    external_session.connection.call('sales_order.process_invoice', [payment_info.get('entity_id',''),resource.get('increment_id',''),'checkmo'])
-
         return vals
     #Function is inherited because want to set order is complete on the magento site
-#    def action_ship_end(self, cr, uid, ids, context=None):
-#        print "def action_ship_enddddddddddddd"
-#        res = super(sale_order, self).action_ship_end(cr, uid, ids,context)
-        ##cox gen2 this code was for magento update
-#        sale_id_obj = self.browse(cr,uid,ids[0])
-#        if sale_id_obj.magento_incrementid:
-#            referential_obj = self.pool.get('external.referential')
-#            search_referential = referential_obj.search(cr,uid,[])
-#            if search_referential:
-#                referential_id_obj = referential_obj.browse(cr,uid,search_referential[0])
-#                try:
-#                    attr_conn = referential_id_obj.external_connection(True)
-#                    attr_conn.call('sales_order.status_change',[sale_id_obj.magento_incrementid,'complete','complete'])
-#                except Exception, e:
-#                    print "error string",e
-        return res
-    #Function is inherited because want to pass location address in the invoice
+    
     def _prepare_invoice(self, cr, uid, order, lines, context=None):
         invoice_vals = super(sale_order, self)._prepare_invoice(cr, uid, order, lines, context=context)
         invoice_vals['location_address_id'] = (order.location_id.partner_id.id if order.location_id.partner_id else False)
@@ -2076,8 +1761,6 @@ class schedular_function(osv.osv):
                    "from sale_order so,sale_shop sp "\
                    "where so.shop_id=sp.id and sp.name ilike '%s' and cox_sales_channels ='call_center' and agreement_approved=False and magento_incrementid is not null"%('%play%'))
         increment_ids= filter(None, map(lambda x:x[0], cr.fetchall()))
-        #print "increment_ids",increment_ids
-#         increment_ids = ['200000298']
         if increment_ids:
             referential_obj = self.pool.get('external.referential')
             invoice_obj = self.pool.get('account.invoice')
@@ -2088,7 +1771,6 @@ class schedular_function(osv.osv):
                 referential_id_obj = referential_obj.browse(cr,uid,search_referential[0])
                 attr_conn = referential_id_obj.external_connection(True)
                 return_val = attr_conn.call('sales_order.agreement_acceptance_check', [increment_ids])
-                #print "return_val",return_val
                 if return_val:
                     wf_service = netsvc.LocalService("workflow")
                     for each in return_val:
@@ -2121,7 +1803,6 @@ class schedular_function(osv.osv):
                                             sale_obj.email_to_customer(cr,uid,partner_id_obj,'res.partner','welcome_email',partner_id_obj.emailid,context)
                                             ##Payment Confirmation Mail
                                             sale_obj.email_to_customer(cr,uid,sale_id_obj,'sale.order','payment_confirmation',partner_id_obj.emailid,context)
-#                                        print "invoice_id_obj.state",invoice_id_obj.state
                                         if each_invoice.state == 'draft':
                                             wf_service.trg_validate(uid, 'account.invoice', each_invoice.id, 'invoice_open', cr)
                                             returnval = invoice_obj.make_payment_of_invoice(cr, uid, [each_invoice.id], context=context)
@@ -2136,7 +1817,7 @@ class schedular_function(osv.osv):
                                             if increment_id:
                                                 attr_conn.call('sales_order.process_invoice', ['',increment_id,'authorizenetcim'])
                                     except Exception, e:
-                                        #print "error string",e
+                                        _logger.info("Exception.....%s",e)
                                         invoice_obj.write(cr,uid,[each_invoice.id],{'comment':str(e)})
 
     ######## scheduler to activate subscription if error comes while placing SO for it.
@@ -2164,7 +1845,6 @@ class schedular_function(osv.osv):
             return True
         
     def recurring_billing(self,cr,uid,context={}):
-        print"context",context
         self.pool.get('res.partner').recurring_billing(cr,uid,context)
     def sch_for_unprovision_list(self,cr,uid,context={}):
         self.pool.get('unprovision.customer').sch_for_unprovision_list(cr,uid,context)
@@ -2246,49 +1926,11 @@ class schedular_function(osv.osv):
                                                 result = cancel_service.cancel_service(cr,uid,policy_brw,policy_brw.agmnt_partner.billing_date,False,context)
                         #################Ends here ################################
             except Exception, e:
-                print "Error in URLLIB",str(e)
-                
-    
-                
-#    #    function to send mail to customer for expired credit card or no credit card
-#    def expiry_credit_card_check(self,cr,uid,ids,context):
-#        no_of_days=context.get('no_of_days')
-#        now = datetime.datetime.now()
-#        print "nownownownownownownownownownownow",now,context
-#        sale_obj=self.pool.get('sale.order')
-#        partner_obj=self.pool.get('res.partner')
-#        billing_after_no_of_days=now+datetime.timedelta(days=no_of_days)
-#        print "billing_after_no_of_days//////////////////",billing_after_no_of_days
-#        billing_date=billing_after_no_of_days.strftime("%Y-%m-%d")
-#        billing_month=billing_after_no_of_days.strftime("%Y-%m")
-#        print "billing_monthbilling_month",billing_month
-#        customer_id=partner_obj.search(cr,uid,[('billing_date','=',billing_date)])
-#        print "customer_idcustomer_idcustomer_id",customer_id
-#        if customer_id:
-#            for each in customer_id:
-#                partner_brw=partner_obj.browse(cr,uid,each)
-#                cust_profile_id=partner_brw.customer_profile_id
-#                if cust_profile_id:
-#                    cr.execute("select exp_date from custmer_payment_profile where customer_profile_id='%s' and active_payment_profile=True"%(str(cust_profile_id)))
-#                    payment_profile_data=cr.dictfetchall()
-#                    if payment_profile_data:
-#                        expiration_date=payment_profile_data[0].get('exp_date')
-#                        if expiration_date<billing_month:
-#                            partner_obj.write(cr,uid,each,{'comment':'Credit Card Expired'})
-#                            sale_obj.email_to_customer(cr,uid,partner_brw,'res.partner','expiry_card_mail',partner_brw.emailid,context)
-#                    else:
-#                        partner_obj.write(cr,uid,each,{'comment':'No Credit Card'})
-#                        sale_obj.email_to_customer(cr,uid,partner_brw,'res.partner','expiry_card_mail',partner_brw.emailid,context)
-#                else:
-#                    partner_obj.write(cr,uid,each,{'comment':'No Credit Card'})
-#                    sale_obj.email_to_customer(cr,uid,partner_brw,'res.partner','expiry_card_mail',partner_brw.emailid,context)
-#            return True
-        
+                _logger.info("Exception.....%s",e)
         
     def expiry_credit_card_check_14_days(self,cr,uid,context={}):
         config_obj=self.pool.get('service.configuration')
         config_ids=config_obj.search(cr,uid,[('scheduler_type','=','expiry_credit_card_check_14_days')])
-        print"config_idsconfig_idsconfig_idsconfig_ids",config_ids
         if config_ids:
             no_of_days=config_obj.browse(cr,uid,config_ids[0]).no_days
         else:
@@ -2301,7 +1943,6 @@ class schedular_function(osv.osv):
     def expiry_credit_card_check_7_days(self,cr,uid,context={}):
         config_obj=self.pool.get('service.configuration')
         config_ids=config_obj.search(cr,uid,[('scheduler_type','=','expiry_credit_card_check_7_days')])
-        print"config_idsconfig_idsconfig_idsconfig_ids",config_ids
         if config_ids:
             no_of_days=config_obj.browse(cr,uid,config_ids[0]).no_days
         else:
@@ -2312,7 +1953,6 @@ class schedular_function(osv.osv):
     ##### schedular to send mail before 10 days of billing date
     def advance_billing_notice(self,cr,uid,context={}):
         self.pool.get('res.partner').advance_billing_notice(cr,uid,[],{})
-        
         
     def recurring_payment_reminder(self,cr,uid,context={}):
         so_obj = self.pool.get('sale.order')
@@ -2378,7 +2018,6 @@ class schedular_function(osv.osv):
         self.pool.get('partner.payment.error').charge_weekly_exceptions(cr,uid,[],{})
     ##### scheduler to generate recurring journal entry
     def post_revenue_recognition(self,cr,uid,context={}):
-        print"post_revenue_recognition"
         self.pool.get('account.invoice').post_revenue_recognition(cr,uid,[],{})
     def cancel_service_not_paid(self,cr,uid,context={}):
         self.pool.get('partner.payment.error').cancel_service_not_paid(cr,uid,[],{})
@@ -2397,7 +2036,6 @@ class cancel_service(osv.osv):
     #  Start code Preeti for RMA
     
     def cancel_service(self,cr,uid,ids,service_id,billing_date,credit_line,context={}):
-        print"cancel serviceeeeeeeeeeeeeeeeeee"
 	res,main_reason,cancellation_reason = {},'',''
 	return_obj= self.pool.get('return.order')
         user_auth_obj = self.pool.get('user.auth')
@@ -2421,45 +2059,24 @@ class cancel_service(osv.osv):
 #                                    app_id=284
             today = date.today().strftime('%Y-%m-%d')
             cancel_time=time.strftime('%Y-%m-%d')
-            print "user_id---------",user_id
-            print "app_id---------",app_id
-            print "expiry_epoch---------",today
-#            expiry_epoch=time.mktime(datetime.strptime(str(cancel_time), "%Y-%m-%d").timetuple())
-#            print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch,type(expiry_epoch),int(expiry_epoch)
-#            expiry_epoch=expiry_epoch+3600.0
-#            print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
             old_policy_result = user_auth_obj.rental_playjam(cr,uid,user_id,app_id,0)
-            print "voucher_return----------",old_policy_result
-#            result=4113
             if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
                 #4113 is the result response value for successfull rental update
-#            if result==4113:
                 cr.execute("update res_partner_policy set active_service=False,cancel_date=%s,no_recurring=False,additional_info=%s,return_cancel_reason=%s where id=%s",(time.strftime('%Y-%m-%d'),cancellation_reason,main_reason,service_id.id))
                 res['state'] = 'done'
             return res
         
         if (context and context.get('immediate_cancel')):
-            print "Context=======> ", context.get('immediate_cancel')
             cancellation_date = date.today().strftime('%Y-%m-%d')
         else:
             cancellation_date = billing_date
         if service_id.free_trial_date:
-                print"hereeeeeeeeeeeeeeeee"
 		if (context and context.get('refund_cancel_service')) or (time.strftime('%Y-%m-%d') >= billing_date) or (context and context.get('immediate_cancel')):
                         user_id = return_object.partner_id.id
                         app_id=service_id.product_id.app_id
                         today = date.today().strftime('%Y-%m-%d')
-#                        cancel_time=time.strftime('%Y-%m-%d')
-                        print "user_id---------",user_id
-                        print "app_id---------",app_id
-#                        print "expiry_epoch---------",today
-#                        expiry_epoch=time.mktime(datetime.strptime(str(cancel_time), "%Y-%m-%d").timetuple())
-#                        expiry_epoch=time.mktime(datetime.now().timetuple())
-#                        print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch,type(expiry_epoch),int(expiry_epoch)
-#                        expiry_epoch=expiry_epoch+3600.0
-#                        print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
+                        _logger.info('app_id---------- %s', app_id)
                         old_policy_result = user_auth_obj.rental_playjam(user_id,app_id,0)
-                        print "voucher_return----------",old_policy_result
                         if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
                             if (context and  (context.get('refund_cancel_service') or (context.get('active_model')=='credit.service'))) or (context and context.get('immediate_cancel')):
                                 cr.execute("update res_partner_policy set active_service=False,cancel_date=%s,additional_info=%s,no_recurring=False,return_cancel_reason=%s where id=%s",(time.strftime('%Y-%m-%d'),cancellation_reason,main_reason,service_id.id))
@@ -2476,8 +2093,6 @@ class cancel_service(osv.osv):
                 	cancellation_date= free_trial_date + relativedelta(days=1)
             	else:
                 	cancellation_date = billing_date
-                print"str(cancellation_date)",str(cancellation_date)
-#                cancellation_date = datetime.strptime(str(cancellation_date), "%Y-%m-%d").date()
             	res['state'] = 'done'
         search_id = self.search(cr,uid,[('sale_id','=',service_id.sale_id),('sale_line_id','=',service_id.sale_line_id),('partner_policy_id','=',service_id.id)])
         if search_id:
@@ -2494,11 +2109,8 @@ class cancel_service(osv.osv):
 
                 cr.execute("update res_partner_policy set cancel_date=%s,additional_info=%s,no_recurring=False,return_cancel_reason=%s where id=%s",(cancellation_date,cancellation_reason,main_reason,service_id.id))	
                 res['state'] = 'done'
-
         return res
     
-
-    #End code preeti for RMA
     #End code preeti for RMA
 	
     def cancellation_of_service(self,cr,uid,ids,context={}):
@@ -2516,15 +2128,7 @@ class cancel_service(osv.osv):
                     app_id= each_rec.partner_policy_id.product_id.app_id 
                     today = date.today().strftime('%Y-%m-%d')
                     cancel_time=time.strftime('%Y-%m-%d')
-                    print "user_id---------",user_id
-                    print "app_id---------",app_id
-#                    print "expiry_epoch---------",today
-#                    expiry_epoch=time.mktime(datetime.strptime(str(cancel_time), "%Y-%m-%d").timetuple())
-#                    print"expiry_epochexpiry_epochexpiry_epochexpiry_epoch",expiry_epoch,type(expiry_epoch),int(expiry_epoch)
-#                    expiry_epoch=expiry_epoch+3600.0
-#                    print"expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1expiry_epoch1",expiry_epoch
                     old_policy_result = user_auth_obj.rental_playjam(cr,uid,user_id,app_id,0)
-                    print "voucher_return----------",old_policy_result
                     if ast.literal_eval(str(old_policy_result)).has_key('body') and ast.literal_eval(str(old_policy_result)).get('body')['result'] == 4113:
 		    #Code to write cancellation data and marking service as deactive
                         additional_info = {'source':'COX','cancel_return_reason':each_rec.cancellation_reason}
@@ -2534,31 +2138,9 @@ class cancel_service(osv.osv):
                         return_obj.update_billing_date(cr,uid,each_rec.partner_policy_id.agmnt_partner.id,each_rec.partner_policy_id.agmnt_partner.billing_date,each_rec.sale_line_id)
                         ######################
                         service_to_cancel.append(each_rec.id)
-                    #if each_rec.sale_id.magento_so_id:
-                     #   data={}
-                      #  data = {'customer_id':each_rec.sale_id.partner_id.ref,
-                       # 'order_id':each_rec.sale_id.magento_so_id}
-                        #if 'mag' not in each_rec.sale_id.name:
-                        #    data.update({'product_id': each_rec.sale_line_id.product_id.magento_product_id})
-                        #if data:
-                        #    need_to_update_data.append(data)
-                        #if not each_rec.sale_id.shop_id.referential_id.id in final_dict.iterkeys():
-                         #   final_dict[each_rec.sale_id.shop_id.referential_id.id] = need_to_update_data
-                        #else:
-                         #   value = final_dict[each_rec.sale_id.shop_id.referential_id.id]
-                          #  new_value = value + need_to_update_data
-                           # final_dict[each_rec.sale_id.shop_id.referential_id.id] = new_value
-        #print "final_dict",final_dict
         if service_to_cancel:
             self.write(cr,uid,service_to_cancel,{'cancelled':True})
         ##cox gen2 this one is for magento update
-#        if final_dict:
-#            referential_obj = self.pool.get('external.referential')
-#            for each_key in final_dict.iterkeys():
-#                value = final_dict[each_key]
-#                referential_id_obj = referential_obj.browse(cr,uid,each_key)
-#                attr_conn = referential_id_obj.external_connection(True)
-#                deactived_services = attr_conn.call('sales_order.recurring_services', ['update',value,''])
         return True
 
     _columns = {

@@ -10,6 +10,7 @@ from openerp.osv import osv, fields
 #import time
 import authorize_osv
 from openerp.tools.translate import _
+
 class authorize_net_config(authorize_osv.authorize_osv):
     _name = "authorize.net.config"
     _rec_name = "api_username"
@@ -20,9 +21,7 @@ class authorize_net_config(authorize_osv.authorize_osv):
         config_obj = authorize_net_config.browse(cr,uid,config_ids[0])
         transactions = self.call(cr,uid,config_obj,'getUnsettledTransactionListRequest')
         if transactions and transactions.has_key(id_obj.name):
-            print"transactionnnnnnn",transactions
-            data = transactions.get(id_obj.name)
-	    print "dataaaaaaaaaaaaaaaaaaaa",data,id_obj.amount_total,id_obj	
+            data = transactions.get(id_obj.name)	
             if id_obj.amount_total == float(data.get('amount')):
 		vals = {}
                 vals['auth_transaction_id'] = data.get('transid')
@@ -37,7 +36,7 @@ class authorize_net_config(authorize_osv.authorize_osv):
                 else:
                     vals['customer_profile_id'] = id_obj.partner_id.customer_profile_id
                 self.pool.get(model_name).write(cr,uid,[id_obj.id],vals)
-		print"adfjkgjfdk-----------------------"
+		
                 return ",,,'Transansaction is approved',,,%s"%(data.get('transid'))
             else:
                 raise osv.except_osv(_('Warning !'),_('Transaction with these %s already exists on the Authorize.net'%(id_obj.name)))
@@ -65,7 +64,6 @@ class authorize_net_config(authorize_osv.authorize_osv):
 #           customerPaymentProfileId = []
            for each_id in profile_ids:
                 profile_ids = self.call(cr,uid,config_obj,'GetCustomerProfile',each_id)
-                print "profile_ids",profile_ids
                 if profile_ids.get('email',False):
                     email = profile_ids.get('email',False)
 #                    search_partner = partner_obj.search(cr,uid,[('emailid','=',email)])
