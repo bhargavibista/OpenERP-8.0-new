@@ -31,6 +31,7 @@ class extra_prod_config(osv.osv):
         'qty':fields.float('Qty',digits=(12,4)),
         'comp_product_id':fields.many2one('product.product','Product ID'),
         'product_id':fields.many2one('product.product','Product ID'),
+        'no_recurring':fields.boolean('No Recurring'),
     }
     _defaults = {
     'qty':1.0}
