@@ -30,13 +30,10 @@ class picking_scanning(osv.osv_memory):
 			procurement_id = context.get('procurement_id').replace('[','').replace(']','')
 			if ',' in procurement_id:
         			procurement = procurement_id.split(',')
-        			print"procuementprocuement",procurement
         			procurement_ids = procurement
 			else:
         			procurement_ids = [procurement_id]
-			print"idddddddd procuement",procurement_ids
                         for each in procurement_ids:
-#                            print"procurement_id",type(procurement_id),procurement_id[0]
                             cr.execute("select product_id from stock_move where state not in ('done','cancel') and procurement_id =%s"%(each))        ##cox gen2
                             product_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
                             if product_ids:
@@ -60,7 +57,6 @@ class picking_scanning(osv.osv_memory):
            if new_product_ids:
                product_obj = self.pool.get('product.product')
                [move_prod_id.append((each_prod.id,each_prod.name))for each_prod in product_obj.browse(cr,uid,new_product_ids)]
-               print"move_prod_id",move_prod_id
         return list(move_prod_id)
     
     #Function is inherited to show only main product in the Packing Lines
@@ -78,7 +74,6 @@ class picking_scanning(osv.osv_memory):
         picking_ids,pick,scanning_line = [],[],[]
         if context is None:
             context = {}
-        print"context",context
         picking_obj = self.pool.get('stock.picking')
         if context.get('active_model', False):
             if context['active_model'] in ('stock.picking'):
@@ -90,7 +85,6 @@ class picking_scanning(osv.osv_memory):
                     picking_ids = pick_id
         res = super(picking_scanning, self).default_get(cr, uid, fields, context=context)
         if picking_ids:
-            print"picking_idspicking_ids",picking_ids
             res.update({'stock_picking_id':picking_ids[0]})
         for picking in picking_obj.browse(cr, uid, picking_ids, context=context):
             if picking.state == 'done' or picking.shipping_process == 'wait':
@@ -104,7 +98,6 @@ class picking_scanning(osv.osv_memory):
 		    if (not stock.parent_stock_mv_id) and (stock.state != 'cancel'):	
                         scanning_line.append(stock.id)
             pick.append(picking.id)
-            print"pick",pick
         if 'bcquantity' in fields:
             res.update({'bcquantity': 1})
         res.update({'picking_ids':pick})
@@ -114,41 +107,21 @@ class picking_scanning(osv.osv_memory):
         move_ids=[]
         if context.get('trigger'):
             ######cox gen2
-#             if context.get('so_line_ids'):
-#                 so_line_id = [context.get('so_line_ids')]
-#                 
-#                 for each_so in so_line_id:
-# #                   cr.execute("select id from stock_move where sale_line_id in %s and state not in ('done','cancel')", (tuple(so_line_id),))
-#                     cr.execute("select id from stock_move where state not in ('done','cancel') and procurement_id in (select id from procurement_order where sale_line_id = '%s')"%(int(each_so)))        ##cox gen2
-#                     move_ids.append(filter(None, map(lambda x:x[0], cr.fetchall())))
-#                print"move_ids",move_ids
             ########end
 	    procurement_ids=[]
             if context.get('procurement_id'):
-                print"context.get('procurement_id')",context.get('procurement_id')
-#                if not isinstance(context.get('procurement_id'), list):
-#                    print"listttttttttttt"
-#                    procurement_id = [context.get('procurement_id')]
-#                else:
-#                    procurement_id = procurement_id
                 procurements = context.get('procurement_id')
-		print"context.get('procurement_id').replace('[','').replace(']','')",context.get('procurement_id').replace('[','').replace(']','')
 		procurement_id = context.get('procurement_id').replace('[','').replace(']','')
 		if ',' in procurement_id:
 			procurement = procurement_id.split(',')
-			print"procuementprocuement",procurement
 			procurement_ids = procurement
 		else:
 			procurement_ids = [procurement_id]
-		print"idddddddd procuement",procurement_ids
                 for each in procurement_ids:
-                    print"each",each
                     cr.execute("select id from stock_move where state not in ('done','cancel') and procurement_id =%s"%(each))        ##cox gen2
                     move_id = filter(None, map(lambda x:x[0], cr.fetchall()))
-                    print"move_id",move_id
                     if move_id and not move_id in move_ids:
                         move_ids.append(move_id[0])
-                print"move_ids",move_ids
                 if move_ids:
                     res.update({'line_ids':move_ids})
                 res.update({'active_model':'sale.order'})
@@ -158,46 +131,6 @@ class picking_scanning(osv.osv_memory):
             res.update({'src_location':context.get('src_location')})
         return res
     
-#    ##Funcition is inherited to show only main product while scanning product
-#    def fields_view_get(self, cr, uid, view_id=None, view_type='form',
-#                       context=None, toolbar=False, submenu=False):
-#       """
-#        Changes the view dynamically
-#        @param self: The object pointer.
-#        @param cr: A database cursor
-#        @param uid: ID of the user currently logged in
-#        @param context: A standard dictionary
-#        @return: New arch of view.
-#       """
-#       product_ids, picking_ids= [],[]
-#       if context is None:
-#           context={}
-#       picking_obj = self.pool.get('stock.picking')
-#       if context.get('active_model',''):
-#           if context['active_model'] in ('stock.picking.out','stock.picking'):
-#               picking_ids = context.get('active_ids', [])
-#           elif context['active_model']=='sale.order':
-#               pick_id=picking_obj.search(cr,uid,[('sale_id','=',context['active_ids'])])
-#               if pick_id:
-#                    picking_ids = pick_id
-#           for picking_id in picking_ids:
-#               picking_id_obj = self.pool.get('stock.picking').browse(cr, uid, picking_id)
-#               if context.get('trigger') == 'retail_store':
-#                   if context.get('so_line_ids'):
-#                        so_line_id = context.get('so_line_ids')
-#                        if so_line_id:
-#                            cr.execute("select product_id from stock_move where sale_line_id in %s", (tuple(so_line_id),))
-#                            product_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
-#               else:
-#                   for moveline in picking_id_obj.move_lines:
-#                       if moveline.sale_line_id:
-#                           if moveline.sale_line_id and moveline.state != 'cancel' and (not moveline.parent_stock_mv_id):
-#                                product_ids.append(moveline.product_id.id)
-#       res = super(picking_scanning, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar,submenu=False)
-#       if res.get('fields').get('new_product_id'):
-#            res['fields']['new_product_id']['domain'] = [('id', 'in', product_ids)]
-#            res['fields']['new_product_id']['widget'] = "selection"
-#       return res
 
 #    code to retrive to gen1 or gen2 OE page
     def view_document(self,cr,uid,ids,context=None):
@@ -213,12 +146,9 @@ class picking_scanning(osv.osv_memory):
             picking_list,picking_ids = [],[]
             move_obj = self.pool.get('stock.move')
             partial = self.browse(cr, uid, ids[0], context=context)
-            print"partial",partial
             picking = partial.picking_ids
-            print"picking",picking
             status = partial.skip_barcode
             line_ids =  partial.line_ids
-            print"picking_ids",picking_ids
             if status == False:
                 for line in line_ids:
                     picking_ids.append(line.picking_id.id)
@@ -323,7 +253,6 @@ class picking_scanning(osv.osv_memory):
             type = picking_obj.browse(cr, uid, search_picking_ids[0]).type
         calltracking,picking_obj1,line_scanned_ids = False,False,[]
 # Updatation for wizard SCANNED_QTY
-        print"picking_ids",picking_ids
         if picking_ids and picking_ids[0][2]:
             picking_obj1 = picking_obj.browse(cr, uid, picking_ids[0][2][0])
         if not line_ids:
@@ -418,7 +347,6 @@ class picking_scanning(osv.osv_memory):
             if picking:
                 for pick in picking:
                     shipping_type = self.pool.get('stock.picking').browse(cr,uid,pick).picking_type_id.code
-                    print"shipping_type",shipping_type
                     if shipping_type == 'incoming':
                         type = 'in'
 		    elif shipping_type == 'internal':   ###changes for BOM product in internal moves
@@ -433,7 +361,6 @@ class picking_scanning(osv.osv_memory):
                     if picking:
                         for pick in picking:
                             po_name= picking_obj.browse(cr,uid,pick).origin
-                            print "purchaseeeeeeeeeeeee",po_name
                             search_ids= po_obj.search(cr,uid,[('name','=',po_name)])
                             if search_ids and search_ids[0]:
                                 purchase_status = True
@@ -653,14 +580,12 @@ class picking_scanning(osv.osv_memory):
                                 received_qty = 0
                                 if each_move.received_qty:
                                     received_qty = each_move.received_qty
-                                    print"received_qty",received_qty
                                 if not new_product_id:
                                     raise osv.except_osv(_('Product ERROR !'), _('Please select a product'))
                                 scan_product_id = new_product_id
                                 if each_move.product_id.id != scan_product_id:
                                     continue
 				stock_lot_id= prodlot_obj.search(cr,uid,[('name', '=', default_code),('product_id','=',scan_product_id),('location_id','=',each_move.location_id.id)])    ####changes for assiging serial no.
-                                print"stock_lot_idstock_lot_id",stock_lot_id        
 #                                if each_move.status != 'done':
                                 if each_move.product_qty == each_move.received_qty:
                                     return {'value': {'bcquantity': 1,'is_new_pick':False,'note':'Product Already scanned'}}

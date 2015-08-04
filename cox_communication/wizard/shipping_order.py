@@ -46,10 +46,8 @@ class similar_packages(osv.osv):
     _name = 'similar.packages'
 
     def _get_dimension_data(self, cr, uid, context=None):
-        print"contexttttt0",context
         package_obj=self.pool.get('package.dimension')
         package_dim_id=package_obj.search(cr,uid,[])
-        print"package_dim_idpackage_dim_id",package_dim_id
         return package_dim_id and package_dim_id[0] or False
 
     _columns = {
@@ -100,7 +98,6 @@ class pre_shipping_process(osv.osv):
         picking_id=context.get('active_ids')
         picking_obj = self.pool.get('stock.picking')
         skip_barcode=picking_obj.browse(cr, uid, picking_id[0]).skip_barcode
-        print"skip_barcode",skip_barcode
 #        changes done for stock_partial
         partial_id = self.pool.get("stock.transfer_details").create(cr, uid, {'picking_id':picking_id[0]}, context=context)
         if skip_barcode:
@@ -152,7 +149,6 @@ class shipping_response_processing(osv.osv):
         product_obj=self.pool.get('product.product')
         shippingresp_lnk = self.browse(cr,uid,ids[0])
         ship_id=shippingresp_lnk.shipment_id
-        print"ship_id",ship_id
         picking=shippingresp_lnk.shipment_id.picking_id
         cust_address = picking.partner_id
         use_mps=ship_id.use_mps
@@ -168,7 +164,6 @@ class shipping_response_processing(osv.osv):
                     rate=each.product_id.list_price
         else:
             for each in picking.move_lines:
-                print each.product_qty
                 product_qty += each.product_qty
 
         if picking_date:
@@ -248,7 +243,6 @@ class shipping_response_processing(osv.osv):
                     # This is very generalized, top-level information.
                     # REGULAR_PICKUP, REQattachUEST_COURIER, DROP_BOX, BUSINESS_SERVICE_CENTER or STATION
                     shipment.RequestedShipment.DropoffType = ship_id.dropoff_type_fedex #'REGULAR_PICKUP'
-#                        print "ship_id.dropoff_type_fedex",ship_id.service_type_fedex
                     # See page 355 in WS_ShipService.pdf for a full list. Here are the common ones:
                     # STANDARD_OVERNIGHT, PRIORITY_OVERNIGHT, FEDEX_GROUND, FEDEX_EXPRESS_SAVER
                     shipment.RequestedShipment.ServiceType = ship_id.service_type_fedex #'PRIORITY_OVERNIGHT'
@@ -292,7 +286,6 @@ class shipping_response_processing(osv.osv):
                     shipment.RequestedShipment.Recipient.Address.Residential = False
                     # Who pays for the shipment?
                     # RECIPIENT, SENDER or THIRD_PARTY
-                    print"shippingfedex_ptr.account_no",shippingfedex_ptr.account_no
                     shipment.RequestedShipment.ShippingChargesPayment.PaymentType = ship_id.payment_type_fedex #'SENDER'
                     shipment.RequestedShipment.ShippingChargesPayment.Payor.ResponsibleParty.AccountNumber = shippingfedex_ptr.account_no #####cox gen2 changes saziya
                     if ship_id.service_type_fedex in ['INTERNATIONAL_ECONOMY','INTERNATIONAL_ECONOMY_FREIGHT','INTERNATIONAL_FIRST','INTERNATIONAL_PRIORITY','INTERNATIONAL_PRIORITY_FREIGHT','INTERNATIONAL_GROUND','EUROPE_FIRST_INTERNATIONAL_PRIORITY']:
@@ -444,15 +437,6 @@ class shipping_response_processing(osv.osv):
 
             write_result = picking_obj.write(cr,uid,picking.id,vals)
             context.update({'active_id':picking.id, 'active_ids':[picking.id],'active_model':'stock.picking' if picking.picking_type_id.code=="outgoing" else 'stock.picking'})
-            print"contextcontextcontextcontext",context
-#                label_string ='"""'+str(b64decode(ascii_label_data))+'"""'
-# printing label after creating attacjments
-#                print_label=vals.get('print_label')
-#                if (print_label==True):
-#                    if (picking.type=="out"):
-#                        self.pool.get('stock.picking.out').print_label(cr,uid,[picking.id],context)
-#                    else:
-#                        self.pool.get('stock.picking').print_label(cr,uid,[picking.id],context)
         else:
             raise osv.except_osv(_('Warning !'),_("This shipping quotes has been already accepted"))
 #        except Exception, exc:
@@ -469,17 +453,6 @@ class shipping_response_processing(osv.osv):
                 'target': 'new',
                 'domain': '[]',
                 'context': context,}
-#        return{
-#                'name':_("Delivery Order"),
-#                'view_mode': 'form',
-#                'res_id': picking.id,
-#                'view_type': 'form',
-#                'res_model': 'stock.picking.out',
-#                'type': 'ir.actions.act_window',
-#                'nodestroy': True,
-#                'target': 'current',
-#                'domain': '[]',
-#                'context': context,}
     _order = 'sr_no'
     _columns = {
         'name': fields.char('Service Type', size=100, readonly=True),
@@ -537,7 +510,6 @@ class shipping_order_processing(osv.osv):
 #        rate_request.RequestedShipment.ShippingChargesPayment.PaymentType = payment_type_fedex
         ############## Rate Request for MULTIPLE PACKAGE SHIPMENT###############################
         total_packages = stockpicking_lnk.total_packages
-        print"total_packages",total_packages
         if total_packages:
             rate_request.RequestedShipment.PackageCount = int(total_packages)
         similar_packages = stockpicking_lnk.similar_packages
@@ -567,7 +539,6 @@ class shipping_order_processing(osv.osv):
                 #can be other values this is probably the most common
                 package1.PhysicalPackaging = physical_packaging_fedex
                 # Un-comment this to see the other variables you may set on a package.
-                #print package1
                 # This adds the RequestedPackageLineItem WSDL object to the rate_request. It
                 # increments the package count and total weight of the rate_request for you.
                 rate_request.add_package(package1)
@@ -594,9 +565,7 @@ class shipping_order_processing(osv.osv):
             package1.Dimensions = package1_dimensions
             package1.PhysicalPackaging = physical_packaging_fedex
             rate_request.add_package(package1)
-            print"rate_request.RequestedShipment.RequestedPackageLineItems",rate_request.RequestedShipment.RequestedPackageLineItems
             rate_request.RequestedShipment.RequestedPackageLineItems[0].GroupPackageCount = 1 ##cox gen2 packageCaount should be atleast 1
-        print "rate_request...............",rate_request.RequestedShipment
 #new lines added
         try:
             rate_request.send_request()

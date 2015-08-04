@@ -63,7 +63,6 @@ class export_account_report_csv(osv.osv_memory):
                                             service_price+=each_line.price_subtotal
                             if sale_obj_brw.amount_tax >= 0.0:
                                 sales_tax += sale_obj_brw.amount_tax
-#                                print"salessssssssssssstexghhhhhhhhhhhhhhhh",sale_obj_brw.amount_tax,sales_tax
                         else:
                                 for move_lines in inv_account_obj.move_id.line_id:
                                     if inv_account_obj.move_id.journal_id.type=='sale':
@@ -71,7 +70,6 @@ class export_account_report_csv(osv.osv_memory):
                                             device_price+=move_lines.credit
                                         if move_lines.product_id.type=='service':
                                             if (('SO' or 'RB') not in inv_account_obj.origin) and ('mag' not in inv_account_obj.origin) :
-                                                print"inv_account_obj.origininv_account_obj.origin00",inv_account_obj.origin
                                                 rental_price+=move_lines.credit
                                             elif move_lines.product_id.default_code=='SHIP':
                                                 ship_cost+=move_lines.credit
@@ -79,7 +77,6 @@ class export_account_report_csv(osv.osv_memory):
                                                 service_price+=move_lines.credit
                                         if move_lines.tax_amount:
                                             sales_tax+=move_lines.tax_amount
-#                                            print"move_lines.tax_amountmove_lines.tax_amountmove_lines.tax_amount",move_lines.tax_amount,sales_tax
                                     if inv_account_obj.move_id.journal_id.type=='sale_refund':
                                         if move_lines.product_id.type=='product':
                                             ro_device_price+=move_lines.debit
@@ -128,7 +125,6 @@ class export_account_report_csv(osv.osv_memory):
             writer=csv.writer(buf, 'UNIX')
             pls_write = writer.writerow(datas)
             while strt_date<=end_date:
-#                print"strt_datestrt_datestrt_datestrt_datestrt_datestrt_date",strt_date
                 cr.execute("select id from account_invoice where date_invoice='%s' and state='paid'"%(strt_date))
                 invoice_list=filter(None, map(lambda x:x[0], cr.fetchall()))
                 if invoice_list:
@@ -143,16 +139,13 @@ class export_account_report_csv(osv.osv_memory):
                                 datas1[2]=inv_account_obj.partner_id.emailid
                                 datas1[3]=inv_account_obj.date_invoice
                                 if inv_account_obj.origin:
-                                    print"inv_account_obj.origin:inv_account_obj.origin:inv_account_obj.origin:inv_account_obj.origin:",inv_account_obj.origin,inv_account_obj
                                     if 'RB' in inv_account_obj.origin:
                                         datas1[4]='Recurring Bill'
                                     elif ('SO' in inv_account_obj.origin) or ('mag' in inv_account_obj.origin):
                                         cr.execute("select order_id from sale_order_invoice_rel where invoice_id='%s'"%(inv_account_obj.id))
                                         so_id=filter(None, map(lambda x:x[0], cr.fetchall()))
-                                        print"so_idso_idso_idso_idso_id",so_id
                                         if so_id:
                                             location_id=self.pool.get('sale.order').browse(cr,uid,so_id[0]).location_id
-                                            print"location_brwlocation_brwlocation_brwlocation_brw",location_id
                                         if 'mag' in inv_account_obj.origin:
                                              datas1[4]='Magento Order'
                                         else:
@@ -163,7 +156,6 @@ class export_account_report_csv(osv.osv_memory):
                                         return_id=filter(None, map(lambda x:x[0], cr.fetchall()))
                                         if return_id:
                                             location_id=self.pool.get('return.order').browse(cr,uid,return_id[0]).source_location
-                                            print"lreturn_idreturn_idreturn_idreturn_idlocation_brw",location_id
                                     elif 'PO' in inv_account_obj.origin:
                                         datas1[4]='Purchase Order'
                                     datas1[5]=inv_account_obj.origin
@@ -173,9 +165,7 @@ class export_account_report_csv(osv.osv_memory):
                                          datas1[6]='N/A'
                                     datas1[7]=each_line.product_id.name
                                 if move_lines.product_id and move_lines.invoice_line_id.id==each_line.id:
-#                                if move_lines.product_id.id in sub_comp:
                                     product_list.append(move_lines.product_id.id)
-#                                    print"move_lines.product_id:move_lines.product_id:move_lines.product_id:",move_lines.product_id
                                     if inv_account_obj.move_id.journal_id.type=='sale':
                                         datas1[8]=move_lines.product_id.name
                                         datas1[9]=(move_lines.credit)
@@ -243,10 +233,8 @@ class export_recurring_report_csv(osv.osv_memory):
             ro_device_price,cs_service_price,ro_tax,ro_ship_cost=0.0,0.0,0.0,0.0
             cr.execute("select id from account_invoice where date_invoice>='%s' and date_invoice<='%s' and state='paid' and recurring=True "%(strt_date,end_date))
             invoice_list=filter(None, map(lambda x:x[0], cr.fetchall()))
-            print "invoice list.................................",invoice_list
             if invoice_list:
                 count=len(invoice_list)
-                print "count////////////////////////////",count
                 for inv_account_obj in account_inv_obj.browse(cr,uid,invoice_list):
                     for invoice_line in inv_account_obj.invoice_line:
                         count=count-1
@@ -258,7 +246,6 @@ class export_recurring_report_csv(osv.osv_memory):
                         else:
                             datas += ","+str('0.0')
                         datas += ","+str(inv_account_obj.user_id.name)+"\n"
-                    print "datasssssssssssssssssssssssssssssssssss///////////",datas
                     f.write(datas)
                     datas=""
             f = open("/tmp/Recurring Report.csv","rb")

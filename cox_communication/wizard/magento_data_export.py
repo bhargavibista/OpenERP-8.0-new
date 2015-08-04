@@ -3,6 +3,8 @@ from openerp.osv import fields, osv
 from openerp.tools.translate import _
 import random
 import string
+import logging
+_logger = logging.getLogger(__name__)
 #from openerp.addons.base_external_referentials.external_osv import ExternalSession
 
 class magento_data_export(osv.osv_memory):
@@ -77,7 +79,7 @@ class magento_data_export(osv.osv_memory):
                             attr_conn = referential_id_obj.external_connection(True)
                             attr_conn.call('sales_order.status_change',[each_so_brw.magento_incrementid,'complete','complete'])
                         except Exception, e:
-                            print "error string",e
+                            _logger.info('Exception %s', e)
         elif ids_obj.type == 'sale_order_export':
             exporting_sale_order = ids_obj.exporting_so
             if exporting_sale_order:
@@ -153,7 +155,7 @@ class magento_data_export(osv.osv_memory):
                     try:
                         service_id = conn.call('sales_order.export_services',[service_data])
                     except Exception, e:
-                        print e
+                        _logger.info('Exception %s', e)
 	elif ids_obj.type == 'service_update':
              cr.execute("select * from res_partner_policy where (create_date >= '2013-10-31') and active_service= False and sale_line_id is not null and agmnt_partner is not null")
              search_inactive_policy = filter(None, map(lambda x:x[0], cr.fetchall()))
@@ -181,7 +183,6 @@ class magento_data_export(osv.osv_memory):
             context['conn_obj'] = conn
             for cust_id_obj in active_customers:
                 customer_id = conn.call('ol_customer.customerExists',[cust_id_obj.emailid,website_mag_id,cust_id_obj.name])
-                #print "customer_id",customer_id
                 if not customer_id:
                     name=(cust_id_obj.name.lstrip().rstrip() if cust_id_obj.name else '')
                     firstname,lastname = partner_obj.func_customer_name(name)

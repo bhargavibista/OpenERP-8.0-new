@@ -25,7 +25,6 @@ class refund_against_invoice(osv.osv_memory):
     
     def cancel_service(self,cr,uid,ids,context={}):
         active_id=ids[0]
-#	print"context",context
         active_model='return.order'
         sale_obj = self.pool.get('sale.order')
         sale_line_obj = self.pool.get('sale.order.line')
@@ -105,13 +104,11 @@ class refund_against_invoice(osv.osv_memory):
         cancel_service = self.pool.get('cancel.service')
         account_refund = self.pool.get('account.invoice')
         credit_object=self.pool.get('return.order').browse(cr,uid,ids[0])
-        print"credit_object",credit_object
         config_ids = authorize_obj.search(cr,uid,[])
         for invoice in invoice_lines:
             total_amount=0.0
             lines=invoice_lines[invoice]
             for line in return_line_obj.browse(cr,uid,lines):
-                print"line",line
                 sub_total= line.price_subtotal
                 total_amount+=sub_total
             if total_amount == 0.0:
@@ -137,7 +134,6 @@ class refund_against_invoice(osv.osv_memory):
 #                try:
                 if payment_profile_data.get('auth_transaction_id'):
                     transaction_status = authorize_obj.call(cr,uid,config_obj,'getTransactionDetailsRequest',auth_transaction_id)
-#                        print "transaction_status",transaction_status
                     if (transaction_status) and (transaction_status.get('transactionStatus') == 'settledSuccessfully'):
                         api_call =self.pool.get('authorize.net.config').check_authorize_net(cr,uid,'return.order',credit_object.id,context)
 			if not api_call:
@@ -198,7 +194,6 @@ class refund_against_invoice(osv.osv_memory):
 
                                 })
 			    account_refund.api_response(cr,uid,refund_invoice_id,api_call,cust_payment_profile_id,'profileTransRefund',context) 	
-                            print"credit_object.idcredit_object.id",credit_object.id
                             cr.execute("insert into return_order_invoice_rel (order_id,invoice_id) values(%s,%s)",(credit_object.id,refund_invoice_id))
                             netsvc.LocalService("workflow").trg_validate(uid, 'account.invoice', refund_invoice_id, 'invoice_open', cr)
                             account_refund.make_payment_of_invoice(cr, uid, [refund_invoice_id], context=context)
@@ -225,12 +220,7 @@ class refund_against_invoice(osv.osv_memory):
             return_object=self.pool.get('return.order').browse(cr,uid,ids[0])
             policy_obj = self.pool.get('res.partner.policy')
             sale_obj = self.pool.get('sale.order')
-#             search_policy_id = policy_obj.search(cr,uid,[('product_id','=',return_object.service_id),('agmnt_partner','=',return_object.partner_id.id)])
-            print"service======>",return_object.service_id
-            
-#             policy_so = policy_obj.browse(cr,uid,return_object.partner_id.id)
             sale_name = sale_obj.browse(cr,uid,return_object.service_id.sale_id)
-            print"name===>",sale_name.name
             partner_id=return_object.partner_id
             order_lines=return_object.order_line
             invoice_id,service_to_deactivate,invoice_line_ids=[],[],{}

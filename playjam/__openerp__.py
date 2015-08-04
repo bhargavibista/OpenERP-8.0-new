@@ -37,6 +37,7 @@
         'topup_options_view.xml',
         'tru_serial.xml',
         'voucher_view.xml',
+        'security/ir.model.access.csv'
 
     ],
     'demo': [

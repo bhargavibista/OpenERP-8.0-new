@@ -91,10 +91,8 @@ class receive_goods(osv.osv_memory):
     def create_parent_stock_mv(self,cr,uid,browse_id,model,picking_id_obj,serial_num,source_id,dest_id,context):
         if context is None: context = {}
         model_id_obj = self.pool.get(model).browse(cr,uid,browse_id)
-        print"model_id_obj",model_id_obj
         obj_stock_move = self.pool.get('stock.move')
         sale_line_id = browse_id
-        print"model_id_obj.product_uom_qty",model_id_obj.product_uom_qty
         order_line_details = {
             'product_id' : model_id_obj.product_id.id,
             'location_id' : source_id,
@@ -210,14 +208,12 @@ class receive_goods(osv.osv_memory):
                         raise osv.except_osv(_('Warning!'),_('Products are not Shipped yet so you cannot do Incoming shipment'))
 #                    source_picking = obj_picking.search(cr, uid, [('sale_id','=',obj_self.linked_sale_order.id)])
                     source_picking = obj_self.linked_sale_order.picking_ids
-                    print"source_picking",source_picking
                     if len(source_picking):
                         obj_stock_previous_move = obj_picking.browse(cr, uid, source_picking.id).move_lines
                     else:
                         raise osv.except_osv(_('Warning!'),_('No Delivery Order is Created for %s')%(obj_self.linked_sale_order.name))
                     for each_move in obj_stock_previous_move:
                         source_id = each_move.location_dest_id.id
-                        print"source_id",source_id
                         break
                 # the code ends here for the source loation
                 return_type = obj_self.return_type

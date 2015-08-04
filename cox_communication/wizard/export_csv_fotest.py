@@ -80,7 +80,6 @@ class export_csv(osv.osv_memory):
         cr.execute("select * from res_partner_policy where (create_date is null or create_date >= '2013-10-31') and sale_id is null")
         search_active_policy = filter(None, map(lambda x:x[0], cr.fetchall()))
 	search_active_policy.sort(reverse=True)
-#        print"search_active_policy",search_active_policy
         if search_active_policy:
             datas = []
             datas.append("Customer Name")
@@ -141,7 +140,6 @@ class export_csv(osv.osv_memory):
 	partner_obj = self.pool.get('res.partner')
         cr.execute("select * from res_partner_policy where (create_date is null or create_date >= '2013-10-31') and sale_id is not null")
         search_active_policy = filter(None, map(lambda x:x[0], cr.fetchall()))
-#        print"search_active_policy",search_active_policy
         if search_active_policy:
             datas = []
             datas.append("Customer Name")
@@ -265,8 +263,6 @@ class export_csv(osv.osv_memory):
             i = 0
             while(i<len(search_so)):
                 so_id_obj = so_obj.browse(cr, uid, search_so[i])
-#            for so_id_obj in so_obj.browse(cr,uid,search_so):
-#                print"so_id_objso_id_objso_id_objso_id_obj",so_id_obj
                 count+=1
                 street,city,zip,phone,country_state,sales_channel,sales_tax,return_tax ='','','','','','',0.0,0.0
                 if so_id_obj.cox_sales_channels:
@@ -312,7 +308,6 @@ class export_csv(osv.osv_memory):
                                     ser_name=(ser_name.strip('\n'))
                                     datas += ","+str(pro_name)+","+str(pro_price if pro_name else '')+","+str(ser_name)+","+str(serv_price if ser_name else '')
                                     if ((pro_name and pro_price==0.0) and (ser_name and serv_price==0.0)) and (line.product_id.list_price==0.00):
-#                                        print"'Both are Free''Both are Free''Both are Free'"
                                         datas += ","+'Both are Free'
                                     elif pro_name and pro_price==0.0:
                                         datas += ","+'Free Device'
@@ -387,7 +382,6 @@ class export_csv(osv.osv_memory):
                                 ,"+str('-')+"\
                                 ,"+str('0.0')+","+str('0.0')+","+str('0.0')
                     if line_ids and prod_ids:
-                        print"line_idsline_idsline_idsline_ids",so_id_obj,line_ids,prod_ids
                         search_partner_policy = policy_obj.search(cr,uid,[('sale_line_id','in',line_ids),('product_id','in',prod_ids)])
                         if search_partner_policy:
                             search_partner_policy.sort()
@@ -498,9 +492,6 @@ class export_cancel_service_csv(osv.osv_memory):
             cancelled_orders=policy_obj.search(cr,uid,[('cancel_date','>=',self_obj.date_from),('cancel_date','<=',self_obj.date_to),('active_service','=',False)])
             return_orders=policy_obj.search(cr,uid,[('return_date','>=',self_obj.date_from),('return_date','<=',self_obj.date_to),('active_service','=',False)])
             suspended_orders=policy_obj.search(cr,uid,[('suspension_date','>=',self_obj.date_from),('suspension_date','<=',self_obj.date_to)])
-#            print "cancelled_orderscancelled_orders",cancelled_orders
-#            print "return_ordersreturn_ordersreturn_ordersreturn_orders",return_orders
-            print "suspended_orderssuspended_orderssuspended_orders",suspended_orders
             datas = ["Sale No.","Return No/Credit No","Customer Name","Customer No",
            "Email ID","Phone Number",
             "Order State","Return Type",
@@ -517,7 +508,6 @@ class export_cancel_service_csv(osv.osv_memory):
                 phone,return_type,sales_tax,return_tax ='','',0.0,0.0
                 sale_ref=return_policy.sale_order
                 sale_id=sale_obj.search(cr,uid,[('name','=',sale_ref)])
-#                print "sale id................",sale_id
                 sale_brw=sale_obj.browse(cr,uid,sale_id[0])
                 return_id = return_obj.search(cr,uid,[('linked_sale_order','=',sale_ref),('state','=','done')])
                 if return_id:
@@ -556,14 +546,9 @@ class export_cancel_service_csv(osv.osv_memory):
                             datas = []
 
         if cancelled_orders:
-
-#            print "lenghth of cancel purderssssssssssssss",len(cancelled_orders)
             for cancel_policy in policy_obj.browse(cr,uid,cancelled_orders):
-                print "cancel_policycancel_policy",cancel_policy
                 sale_ref=cancel_policy.sale_order
-                print "sale_refsale_refsale_ref",sale_ref
                 sale_id=sale_obj.search(cr,uid,[('name','=',sale_ref)])
-#                print "sale id................",sale_id
                 if sale_id:
                     sale_brw=sale_obj.browse(cr,uid,sale_id[0])
                     purchase_date=sale_brw.date_order
@@ -577,7 +562,6 @@ class export_cancel_service_csv(osv.osv_memory):
                         if credit_line_id:
                             credit_line_brw=self.pool.get('credit.service.line').browse(cr,uid,credit_line_id)
                             for line in credit_line_brw:
-#                                print "lineeeeeeeeeeeeeeeeeee",line
                                 phone,sales_tax,return_tax ='',0.0,0.0
                                 line_ids,prod_ids,cancel_return_reason = [],[],''
                                 datas.append((line.service_id.sale_order if line.service_id else line.name))
@@ -610,7 +594,6 @@ class export_cancel_service_csv(osv.osv_memory):
                     if credit_line_id:
                         credit_line_brw=self.pool.get('credit.service.line').browse(cr,uid,credit_line_id)
                         for line in credit_line_brw:
-#                            print "lineeeeeeeeeeeeeeeeeee",line
                             phone,sales_tax,return_tax ='',0.0,0.0
                             line_ids,prod_ids,cancel_return_reason = [],[],''
                             datas.append((line.service_id.sale_order if line.service_id else line.name))
@@ -644,7 +627,6 @@ class export_cancel_service_csv(osv.osv_memory):
                 sale_ref=suspension_obj.sale_order
                 sale_id=sale_obj.search(cr,uid,[('name','=',sale_ref)])
                 if sale_id:
-                    print "sale id................",sale_id
                     sale_brw=sale_obj.browse(cr,uid,sale_id[0])
                     purchase_date=sale_brw.date_order
                     location=sale_brw.location_id.name
@@ -653,19 +635,15 @@ class export_cancel_service_csv(osv.osv_memory):
                 if cancel_date and sus_date:
                     active_inactive=suspension_obj.active_service
                     if sus_date<cancel_date:
-                        print "11111111111111111111111111111",sus_date,cancel_date
                         so_ref=suspension_obj.sale_order
                         sale_ref='RB'+suspension_obj.sale_order
-                        print "sale_refsale_refsale_ref",sale_ref
                         cr.execute("select id,invoice_date from partner_payment_error where invoice_name = '%s' order by invoice_date desc"%(sale_ref),)
                         exceptions = filter(None, map(lambda x:x[0], cr.fetchall()))
-                        print "exceptionsvexceptionsexceptions",exceptions
                         if exceptions:
                             payment_brw=payment_obj.browse(cr,uid,exceptions[0])
                             inv_id=acc_inv_obj.search(cr,uid,[('origin','=',sale_ref),('state','=','draft')])
                             if inv_id:
                                 for inv_id in acc_inv_obj.browse(cr,uid,inv_id):
-                                    print "invoice id...............",inv_id
                                     for each_line in inv_id.invoice_line:
 #                                        if each_line.product_id.type =='product':
 				    	datas.append(so_ref if so_ref else '')
@@ -695,24 +673,18 @@ class export_cancel_service_csv(osv.osv_memory):
 					datas.append(inv_id.date_invoice if inv_id else '')
 					datas.append(purchase_date)
 					datas.append(location)
-#                                       print "datass of suspensionnnnnnnnnnnnnnnnn",datas
 					pls_write = writer.writerow(datas)
 					datas = []
                 elif sus_date and not cancel_date:
                     so_ref=suspension_obj.sale_order
                     active_inactive=suspension_obj.active_service
                     sale_ref='RB'+suspension_obj.sale_order
-                    print "sale_refsale_refsale_ref",sale_ref
                     exceptions=payment_obj.search(cr,uid,[('invoice_name','=',sale_ref),('partner_id','=',suspension_obj.agmnt_partner.name)])
-                    print "exceptionsvexceptionsexceptions",exceptions
                     if exceptions:
-                        print "exceptionsexceptionsexceptions",exceptions
                         for each in payment_obj.browse(cr,uid,exceptions):
                             inv_id=acc_inv_obj.search(cr,uid,[('origin','=',sale_ref),('state','=','draft')])
-                            print "invoce id..............",inv_id
                             if inv_id:
                                 for inv_id in acc_inv_obj.browse(cr,uid,inv_id):
-                                    print "invoice id...............",inv_id
                                     for each_line in inv_id.invoice_line:
 #                                        if each_line.product_id.type=='product':
                                         datas.append(so_ref if so_ref else '')
@@ -722,7 +694,6 @@ class export_cancel_service_csv(osv.osv_memory):
                                         datas.append(each.partner_id.emailid if each.partner_id else '' )
                                         datas.append(each.partner_id.phone if each.partner_id else '')
                                         datas.append(inv_id.state if inv_id else '')
-                                        print "dats.................",datas
                                         datas.append('')
                                         if each_line.product_id.name!='Shipping costs':
                                             datas.append((each_line.product_id.name if each_line.product_id else ''))
@@ -743,7 +714,6 @@ class export_cancel_service_csv(osv.osv_memory):
                                         datas.append(inv_id.date_invoice if inv_id else '')
                                         datas.append(purchase_date)
                                         datas.append(location)
-#                                            print "datass of suspensionnnnnnnnnnnnnnnnn",datas
                                         pls_write = writer.writerow(datas)
                                         datas = []
 
