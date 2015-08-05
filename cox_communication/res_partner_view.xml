@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
     <data>
+        
+<!--        <record id="view_partner_simple_form_inherit" model="ir.ui.view">
+            <field name="name">res.partner.select.inherit</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_simple_form" />
+            <field name="arch" type="xml">
+                <xpath expr="/form/group/field[@name='email']" position="attributes">
+                    <attribute name="attrs">{}</attribute>
+                </xpath>
+            </field>
+            
+        </record>-->
         <!-- This search view is added to show billing_date on search form -->
         <record id="view_res_partner_filter" model="ir.ui.view">
             <field name="name">res.partner.select</field>
@@ -338,6 +350,8 @@
                     <attribute name="invisible">1</attribute>
                     <attribute name="required">0</attribute>
                     <attribute name="context">{}</attribute>
+                    <attribute name="attrs">{}</attribute>
+                    
                 </xpath>
                 <!--cox gen2-->
                 <xpath expr="/form/sheet/group/group[2]/field[@name='fax']" position="after">
@@ -390,10 +404,10 @@
                     <attribute name="context">{'default_supplier': False, 'default_customer': False}</attribute>
                 </xpath>
                 <xpath expr="/form/sheet/div/h1/field[@name='name']" position="attributes">
-                    <attribute name="on_change">onchange_name(name, is_company context)</attribute>
+                    <attribute name="on_change">onchange_name(name, is_company, context)</attribute>
                 </xpath>
                 <xpath expr="/form/sheet/notebook/page[@string='Contacts']/field[@name='child_ids']/form/sheet/div[1]/h1/field[@name='name']" position="attributes">
-                    <attribute name="on_change">onchange_name(name, is_company, context)</attribute>
+                    <attribute name="on_change">onchange_name(name, context)</attribute>
                 </xpath>
                 <xpath expr="/form/sheet/div/div/field[@name='is_company']" position="attributes">
                     <attribute name="on_change">onchange_is_company(is_company, context)</attribute>

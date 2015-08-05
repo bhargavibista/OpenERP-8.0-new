@@ -6,7 +6,7 @@ import ast
 import urllib
 from openerp.modules.registry import RegistryManager
 from openerp import SUPERUSER_ID
-database = 'odoo_8_new'
+#database = 'odoo_8_new'
 import logging
 _logger = logging.getLogger(__name__)
 
@@ -18,6 +18,10 @@ class Playjam(http.Controller):
         t='true'
         f='false'
         want_code=False
+        request.cr.execute('select current_db from playjam_config_menu')
+        current_db=filter(None, map(lambda x:x[0], request.cr.fetchall()))
+        if current_db:
+            current_db=current_db[0]
         if kw.has_key('request'):
             requ=kw.get('request')
             string_con=str(requ)
@@ -38,7 +42,7 @@ class Playjam(http.Controller):
             dev_id=dict_req.get('deviceId')
             if wc==u'True':
                 want_code=True            
-            registry = RegistryManager.get(database)
+            registry = RegistryManager.get(current_db)
             with registry.cursor() as cr:
                 u = registry['user.auth']
                 result = u.get_key_code(dev_id, wc)
@@ -51,10 +55,13 @@ class Playjam(http.Controller):
         result={}
         t='true'
         f='false'
-        want_code=False        
+        request.cr.execute('select current_db from playjam_config_menu')
+        current_db=filter(None, map(lambda x:x[0], request.cr.fetchall()))
+        if current_db:
+            current_db=current_db[0]
         if 'request' in kw:
-            request=kw.get('request')
-            string_con=str(request)
+            requ=kw.get('request')
+            string_con=str(requ)
             if '%' in string_con:
                 if '+' in string_con:
                     string_con=string_con.replace('+','')
@@ -65,7 +72,7 @@ class Playjam(http.Controller):
                 return (str({"body":{'result':-1537}}))
             device_id=dict_req.get('deviceId')
             auth_reply=dict_req.get('authReply')
-            registry = RegistryManager.get(database)
+            registry = RegistryManager.get(current_db)
             with registry.cursor() as cr:
                 u = registry['user.auth']
                 result = u.user_login(dict_req)
@@ -78,11 +85,14 @@ class Playjam(http.Controller):
         result={}
         t='true'
         f='false'
-        want_code=False
+        request.cr.execute('select current_db from playjam_config_menu')
+        current_db=filter(None, map(lambda x:x[0], request.cr.fetchall()))
+        if current_db:
+            current_db=current_db[0]
         user = osv_pool.get('user.auth')
         if 'request' in kw:
-            request=kw.get('request')
-            string_con=str(request)
+            requ=kw.get('request')
+            string_con=str(requ)
             if '%' in string_con:
                 if '+' in string_con:
                     string_con=string_con.replace('+','')
@@ -93,7 +103,7 @@ class Playjam(http.Controller):
                 return (str({"body":{'result':-1537}}))
             session_token=dict_req.get('deviceId')
             auth_reply=dict_req.get('authReply')
-            registry = RegistryManager.get(database)
+            registry = RegistryManager.get(current_db)
             with registry.cursor() as cr:
                 u = registry['user.auth']
                 result = u.wallet_top_up(dict_req)            
@@ -108,10 +118,13 @@ class Playcast(http.Controller):
         result={}
 	t='true'
         f='false'
-        want_code=False
+        request.cr.execute('select current_db from playjam_config_menu')
+        current_db=filter(None, map(lambda x:x[0], request.cr.fetchall()))
+        if current_db:
+            current_db=current_db[0]
         if 'request' in kw:
-            request=kw.get('request')
-            string_con=str(request)
+            requ=kw.get('request')
+            string_con=str(requ)
             if '%' in string_con:
                 if '+' in string_con:
                     string_con=string_con.replace('+','')
@@ -126,7 +139,7 @@ class Playcast(http.Controller):
             except Exception ,e:
                 return str({"body":{'result':-1537}})
 	    token=dict_req.get('Token')
-            registry = RegistryManager.get(database)
+            registry = RegistryManager.get(current_db)
             with registry.cursor() as cr:
                 user = registry['user.auth']
                 result=user.validate_insecure_token(token,{})
@@ -145,7 +158,6 @@ class Playcast(http.Controller):
         result={}
 	t='true'
         f='false'
-        osv_pool = pooler.get_pool('test_odoo8_1')
         if 'request' in kw:
             response={"body":{"code": 1, "message": "Call Succesful" }}
             return str(response)
@@ -158,12 +170,13 @@ class Playcast(http.Controller):
         result={}
 	t='true'
         f='false'
-        want_code=False
-        osv_pool = pooler.get_pool(database)
-        user = osv_pool.get('res.partner')
+        request.cr.execute('select current_db from playjam_config_menu')
+        current_db=filter(None, map(lambda x:x[0], request.cr.fetchall()))
+        if current_db:
+            current_db=current_db[0]
         if kw.has_key('request'):
-            request=kw.get('request')
-            string_con=str(request)
+            requ=kw.get('request')
+            string_con=str(requ)
             if '%' in string_con:
                 if '+' in string_con:
                     string_con=string_con.replace('+','')
@@ -176,7 +189,7 @@ class Playcast(http.Controller):
                 dict_req = ast.literal_eval(str(string_con))
             except Exception ,e:
                 return req.make_response(str({"body":{'result':-1537}}), [('Content-Type', 'application/json; charset=UTF-8')])
-            registry = RegistryManager.get(database)
+            registry = RegistryManager.get(current_db)
             with registry.cursor() as cr:
                 u = registry['res.partner']
                 result = u.push_transactions(dict_req)    
