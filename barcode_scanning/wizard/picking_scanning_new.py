@@ -30,7 +30,6 @@ class picking_scanning(osv.osv_memory):
     }
 
     def default_get(self, cr, uid, fields, context=None):
-        print"default gettttttttt"
         """
              To get default values for the object.
 
@@ -78,28 +77,6 @@ class picking_scanning(osv.osv_memory):
         res.update({'start_range':1})
         return res
 
-#    def view_init(self, cr , uid , fields, context=None):
-#        picking_ids = []
-#        if context is None:
-#            context = {}
-#        if context.get('active_model', False):
-#            if context['active_model'] != 'stock.picking':
-#                picking_ids = self.pool.get('stock.picking').search(cr, uid, [('shipping_process','=','printed')])
-#            elif context['active_model'] == 'stock.picking':
-#                picking_ids = context.get('active_ids', [])
-#        order_obj = self.pool.get('stock.picking')
-#        for order in order_obj.browse(cr, uid, picking_ids, context=context):
-#            if order.purchase_id:
-#                if not order.state in ('assigned'):
-#                    raise osv.except_osv(_('Incoming Shipment not in Available state !'),_('To do scanning Incoming Shipment should be in Available state'))
-#            if order.sale_id:
-#                if not order.state in ('assigned'):
-#                    raise osv.except_osv(_('Delivery Shipment not in Available state !'),_('To do scanning Delivery Shipment should be in Available state'))
-                #code to populate image
-                #for line_id in order_obj.browse(cr, uid, order).move_lines:
-                    #put the product which doesnt have a barcode into the grid lines
-                #    tryit = 'need to code'
-#        pass
 
     # To add domain filter for product
     def fields_view_get(self, cr, uid, view_id=None, view_type='form',
@@ -112,9 +89,6 @@ class picking_scanning(osv.osv_memory):
         @param context: A standard dictionary
         @return: New arch of view.
        """
-       
-                    
-       print"field view get"
        product_ids,picking_ids = [],[]
        if context is None:
            context={}
@@ -132,7 +106,6 @@ class picking_scanning(osv.osv_memory):
                 #   raise osv.except_osv(_('Warning!'),_('You cannot Scan this Order %s because Its in Done State')%(picking_id_obj.name))
                for moveline in picking_id_obj.move_lines:
                    product_ids.append(moveline.product_id.id)
-               print"product_ids",product_ids
        res = super(picking_scanning, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar,submenu=False)
        
        if res.get('fields').get('new_product_id'):
@@ -158,12 +131,9 @@ class picking_scanning(osv.osv_memory):
 #    def onchange_defaultcode(self, cr, uid, ids, default_code=False, bcquantity=False,picking_ids=False ,line_ids=False, new_product_id=False,start_range=False, range_scan=False,reference_no=False,carrier_track_done=False,note=False,check_note=False,context=None):
     def onchange_defaultcode(self, cr, uid, ids, default_code=False,picking_ids=False ,line_ids=False, new_product_id=False,range_scan=False,reference_no=False,carrier_track_done=False,note=False,check_note=False,context=None):
         #bar code scanning
-        #print ids, default_code, quantity, context
         #search the product in stock move
         #search packaging and find out product and its quantity. Update stock move as per packaging details
-        ##line_ids
         #search delivery orders and populate the products from them
-        print"picking_idssss",picking_ids
         prodlot_obj = self.pool.get('stock.production.lot')
         tr_barcode_obj = self.pool.get('tr.barcode')
         start_range = 1
@@ -259,8 +229,6 @@ class picking_scanning(osv.osv_memory):
             #raise osv.except_osv(_('Error !'), _('Please enter the order reference no'))
             return {'value': {'default_code': False,'note':'Please enter the order reference no'}}
          ##this scanning is for product
-        #print"carrier_track_done",carrier_track_done
-#       elif len(search_prod_barcode) != 0 and len(line_ids[0][2]) != 0 or shipping_type == 'in':
         else:
             product_ids = []
             scanning_line = []
@@ -303,7 +271,6 @@ class picking_scanning(osv.osv_memory):
                         for pick in picking:
                             ##cox gen2 
                             pick_browse = picking_obj.browse(cr,uid,pick)
-                            print"pick_browse",pick_browse,pick_browse.move_lines
                             
                             if pick_browse.move_lines :
                                 for each_move in pick_browse.move_lines:
@@ -481,15 +448,6 @@ class picking_scanning(osv.osv_memory):
         shippingres_obj = self.pool.get('shipping.response')
         picking_obj = self.pool.get('stock.picking')
         error_required = False
-#        response_ids = shippingres_obj.search(cr,uid,[('picking_id','=',picking_id)])
-#        print"response_ids",response_ids
-#        if not response_ids:
-#            message = _('Problem getting quotes for %s' % (picking_obj.browse(cr,uid,picking_id).name))
-#            picking_obj.log(cr, uid, picking_id, message)
-#        response = shippingres_obj.generate_tracking_no(cr,uid,response_ids,context,error_required)
-#        print 'response',response
-#        if not response:
-#            message = _('Problem getting label for %s' % (picking_obj.browse(cr,uid,picking_id).name))
         if picking_id:
             try:
                 picking_obj.action_assign(cr, uid, [picking_id])
@@ -509,7 +467,6 @@ class picking_scanning(osv.osv_memory):
         res_id = function.get('res_id')
         if res_id:
             do_partial = self.pool.get("stock.transfer_details").do_detailed_transfer(cr,uid,[res_id],context=context)
-        #print"do_partial",do_partial
         return {
                 'name':_('Make Scanning'),
                 'view_mode': 'form',
@@ -570,7 +527,6 @@ class picking_scanning(osv.osv_memory):
 #           do_partial = self.pool.get("stock.partial.picking").do_partial(cr,uid,[res_id],context=context)
 #           res_id=self.pool.get("stock.transfer_details").create(cr, uid, {}, context=context)
            do_partial = self.pool.get("stock.transfer_details").do_detailed_transfer(cr,uid,[res_id],context=context)
-           #print"do_partial",do_partial
         return {'type': 'ir.actions.act_window_close'}
 
 

@@ -14,7 +14,6 @@ class stock_partial_picking(osv.osv_memory):
     _inherit = 'stock.partial.picking'
 
     def _partial_move_for(self, cr, uid, move):
-#        print "partialllllll velodyne"
         partial_move = {
             'product_id' : move.product_id.id,
             'quantity' : move.state in ('assigned','new') and move.received_qty or 0,
@@ -39,7 +38,6 @@ class stock_partial_picking(osv.osv_memory):
          @return: A dictionary which of fields with values.
         """
 
-#        print "default getting called in barcode scanning"
         if context is None:
             context = {}
 
@@ -61,11 +59,8 @@ class stock_partial_picking(osv.osv_memory):
 #            res.update({'product_moves_in': result})
 #        if 'product_moves_out' in fields:
 #            res.update({'product_moves_out': result})
-#        print "result append",result
-#        print "res previous",res
         if 'move_ids' in fields:
             res.update({'move_ids':result})
-#        print "res append",res
         if 'date' in fields:
             res.update({'date': time.strftime('%Y-%m-%d %H:%M:%S')})
         return res
@@ -78,7 +73,6 @@ class stock_partial_picking(osv.osv_memory):
             validate_received_qty = validate_qty
         else:
             validate_received_qty = validate_qty
-#        print "validate qty",validate_qty
         #quantity availble in selected source location
         product_id = picking.product_id
         location_id = picking.location_id.id
@@ -110,7 +104,6 @@ class stock_partial_picking(osv.osv_memory):
 
             qty_available = wh_qty_recieved - qty_with_reserve
 #        ##TODO
-#        print "picking type ",picking.picking_id.skip_barcode
 #        if picking.picking_id.type == 'out' and picking.picking_id.skip_barcode == True:
 #            if validate_qty <= qty_available:
 #                validate_qty = picking.product_qty
@@ -124,7 +117,6 @@ class stock_partial_picking(osv.osv_memory):
 #            if validate_qty <= qty_available:
 #                validate_qty = picking.product_qty
         #end
-#        print "validate quantity barcode true move menory",validate_qty,validate_received_qty
         move_memory = {
             'product_id' : picking.product_id.id,
             'quantity' : validate_qty,
@@ -205,8 +197,6 @@ class stock_partial_picking(osv.osv_memory):
                 'product_uom': wizard_line.product_uom.id,
                 'prodlot_id': wizard_line.prodlot_id.id,
             }
-#            print "partial_data",partial_data
-#            fdffd
             if (picking_type == 'in') and (wizard_line.product_id.cost_method == 'average'):
                 partial_data['move%s' % (wizard_line.move_id.id)].update(product_price=wizard_line.cost,
                                                                  product_currency=wizard_line.currency.id)
