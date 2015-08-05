@@ -386,7 +386,7 @@ class res_partner(models.Model):
             else:
 		result={"body":{'code':'-5633','message':'Technical problem from Incomm end'}}
         except Exception, e:
-            print 'Error on line {}'.format(sys.exc_info()[-1].tb_lineno)
+            _logger.info('Exception----------------- %s', e)
             gift_card_reversal=gift_card_obj.api_call_toincomm_reversal(request.cr,SUPERUSER_ID,dict_gift_card.get('card_no'),context=context)
             result={"body":{'code':'-5633','message':'Technical problem'}}
         return json.dumps(result)
@@ -403,7 +403,6 @@ class res_partner(models.Model):
                     'billing_info':dict.get('BillingInfo'),'lines':dict.get('OrderLine'),'partner_id':dict.get('CustomerId'),
                     }
         if dict.has_key('tru') or dict.has_key('wallet_purchase'):
-            print "dict_existdict_existdict_existdict_exist",dict_exist
             dict_exist.pop('magento_orderid')
         for key, value in dict_exist.iteritems():
             if value is '':
@@ -411,7 +410,6 @@ class res_partner(models.Model):
                 return json.dumps(result)
         try:
             today=datetime.date.today()
-            print"today",today
             partner_obj=self.pool.get('res.partner')
             sale_obj=self.pool.get("sale.order")
             billing_info=dict_exist.get('billing_info')
@@ -451,7 +449,6 @@ class res_partner(models.Model):
             zip_inv=inv_add.get('Zip')
             _logger.info('invoice details of address---------------- %s,%s,%s,%s,%s,%s', state_id,state_id_inv,country_id,country_id_inv,zip,zip_inv)
             if state_id and country_id:
-                print street1,street2,zip
                 ship_add=partner_obj.search(request.cr,SUPERUSER_ID,[('id','=',int(dict_exist.get('partner_id'))),('street','ilike',street1),('street2','ilike',street2),('city','=',city),('zip','=',zip),('state_id','=',state_id[0]),('country_id','=',country_id)])
                 if not ship_add:
                     vals1 = {'parent_id': int(dict_exist.get('partner_id')),'name':partner_brw.name,'address_type': 'delivery','city':city,'phone': partner_brw.phone,'street':street1,'street2': street2 or '', 'state_id':state_id[0],'country_id':country_id,'zip':zip}
@@ -459,7 +456,6 @@ class res_partner(models.Model):
                 else:
                     ship_add=ship_add[0]
             if state_id_inv and country_id_inv:
-                print street1_inv,street2_inv,city_inv,state_id_inv,country_id_inv
                 invoice_add=partner_obj.search(request.cr,SUPERUSER_ID,[('id','=',int(dict_exist.get('partner_id'))),('street','ilike',street1_inv),('street2','ilike',street2_inv),('city','=',city_inv),('zip','=',zip_inv),('state_id','=',state_id_inv[0]),('country_id','=',country_id_inv)])
                 if not invoice_add:
                     vals2 = {'city':city_inv,'street':street1_inv,'street2': street2_inv or '', 'state_id':state_id_inv[0],'country_id':country_id_inv,'zip':zip_inv}
@@ -522,7 +518,6 @@ class res_partner(models.Model):
 		    ship_dict_price=float(dict.get('Shipping'))
 		    ship_list_price=product_obj.browse(cr,uid,ship_product_id[0]).list_price
 		    if ship_list_price!=ship_dict_price:
-		        print "shipping price updated////////////////////////////"
 			product_obj.write(cr,uid,ship_product_id[0],{'list_price':float(dict.get('Shipping'))})
 			cr.commit()
 		    ship_prdct_name=str(product_obj.browse(cr,uid,ship_product_id[0]).name)
@@ -720,7 +715,6 @@ class res_partner(models.Model):
                                     return json.dumps({'body':{'code':'4113','message':'Subscription Updated'}})
                         else:
                             new_policy_cancel_result = user_auth_obj.rental_playjam(user_id,new_pack_oe_brw.app_id,0)
-                            print "new_policy_cancel_resultnew_policy_cancel_resultnew_policy_cancel_result",new_policy_cancel_result
 			    return json.dumps({'body':{'code':'-4113','message':'Subscription Update Failed'}})
                     else:
                             return json.dumps({'body':{'code':'-4113','message':'Subscription Update Failed'}})
@@ -849,7 +843,6 @@ class res_partner(models.Model):
 		return json.dumps({"body":{"code":False,"message":"Password Not Present."}})
             password = str(password)
             hash= str(hash)
-            print type(hash),type(password),hash,password
             result=pbkdf2_sha256.verify(password, hash)
             if result:
                 name=pat_obj.name

@@ -12,8 +12,6 @@ database = 'odoo_8_new'
 
 class Magento(http.Controller):
 
-#
-
     @http.route('/flare/magento/LinkAccount', type='http', auth="none")
     def LinkAccount(self, **kw):
         result={}
@@ -273,7 +271,7 @@ class Magento(http.Controller):
             try:
                 dict_req = ast.literal_eval(str(string_con))
             except Exception ,e:
-                print"e",e
+                _logger.info('Exception----------------- %s', e)
                 return str({"body":{'result':-1537}})
             api_id=dict_req.get('ApiId')
             db_name=dict_req.get('DBName')
