@@ -407,7 +407,7 @@
                     <attribute name="on_change">onchange_name(name, is_company, context)</attribute>
                 </xpath>
                 <xpath expr="/form/sheet/notebook/page[@string='Contacts']/field[@name='child_ids']/form/sheet/div[1]/h1/field[@name='name']" position="attributes">
-                    <attribute name="on_change">onchange_name(name, is_company, context)</attribute>
+                    <attribute name="on_change">onchange_name(name, context)</attribute>
                 </xpath>
                 <xpath expr="/form/sheet/div/div/field[@name='is_company']" position="attributes">
                     <attribute name="on_change">onchange_is_company(is_company, context)</attribute>
