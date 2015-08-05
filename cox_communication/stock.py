@@ -164,7 +164,28 @@ class stock_picking(osv.osv):
         if picking:
             ids_obj =self.browse(cr,uid,picking[0])
             context = dict(context, active_ids=picking, active_model='stock.picking')
-            if ids_obj.picking_type_id.code in ('outgoing', 'incoming'):
+            if ids_obj.picking_type_id.code == 'incoming':
+                check_track_incoming = False
+                for move_lns in ids_obj.move_lines:
+                    print "move_lnsssssssssss",move_lns.product_id.track_incoming
+                    if move_lns.product_id.track_incoming is True:
+                        check_track_incoming = True
+                        break
+                print "check_track_incominggggggggggggg",check_track_incoming
+                if not context.get('action_process_original') and check_track_incoming is True:
+                    return {
+                            'name':_("Bar Code Scanning"),
+                            'view_mode': 'form',
+                            'view_type': 'form',
+                            'res_model': 'pre.picking.scanning',
+                            'type': 'ir.actions.act_window',
+                            'nodestroy': True,
+                            'target': 'new',
+                            'domain': '[]',
+                            'context': context,
+                        } 
+            elif ids_obj.picking_type_id.code =='outgoing':
+                
                 if not context.get('action_process_original'):
                     return {
                             'name':_("Bar Code Scanning"),
