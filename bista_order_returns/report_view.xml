@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<openerp>
-    <data>
-        <report auto="False" id="sale.report_sale_return_report" model="return.order"
-                name="webkitaccount.return" file="bista_order_returns/report/report_webkit_sale_return.mako" header="True"
-                string="Sale Return" report_type="webkit"/>
-    </data>
-</openerp>

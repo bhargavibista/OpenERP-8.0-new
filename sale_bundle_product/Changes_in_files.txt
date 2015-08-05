@@ -1,6 +1,0 @@
-Following are the changes which are done::::
-1) Commmented default_get function in the product_configurator file (in wizard folder)
-2) In the class named as "product.item.set.line" in the sale_bundle_product.py file, added one new field (product_name)
-as related field because it was not containing name field and because of that when we select product it was showing product id instead
-of product name
-3) Added one xpath to show button in the tree view.

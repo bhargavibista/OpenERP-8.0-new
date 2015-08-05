@@ -1,2 +1,0 @@
-import magento_controller
-#test
