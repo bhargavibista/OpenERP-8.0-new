@@ -14,9 +14,26 @@ from openerp import release
 import base64
 from email import Encoders
 import openerp.netsvc
+from openerp import SUPERUSER_ID, api
+from email.utils import formataddr
 #logger = Logger() # commented logger statement 
 
 
+class mail_message(osv.Model):
+    _inherit='mail.message'
+    
+    def _get_default_from(self, cr, uid, context=None):
+        print"coxxxxxxxx mail message"
+        this = self.pool.get('res.users').browse(cr, SUPERUSER_ID, uid, context=context)
+        if this.alias_name and this.alias_domain:
+            return formataddr((this.name, '%s@%s' % (this.alias_name, this.alias_domain)))
+        elif this.emailid:
+            print"this.emailid",this.emailid
+            return formataddr((this.name, this.emailid))
+        raise osv.except_osv(_('Invalid Action!'), _("Unable to send email, please configure the sender's email address or alias."))
+    
+mail_message
+    
 class email_template(osv.osv):
     _inherit='email.template'
     _columns = {
